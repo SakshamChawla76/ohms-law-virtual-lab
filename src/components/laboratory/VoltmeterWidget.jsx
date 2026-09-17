@@ -5,111 +5,204 @@ export const VoltmeterWidget = ({
   voltage,
   isActive,
 }) => {
-  const maxScale = 10.0;
+  const maxScale = 12.0;
   const clampedVoltage = Math.min(Math.max(voltage, 0), maxScale);
-  const needleAngle = -60 + (clampedVoltage / maxScale) * 120;
+  const needleAngle = -50 + (clampedVoltage / maxScale) * 100;
+
+  // Generate 60 fine calibration division ticks (0 to 12V in 0.2V increments)
+  const ticks = [];
+  for (let i = 0; i <= 60; i++) {
+    const val = (i / 60) * maxScale;
+    const isMajor = i % 10 === 0; // 0, 2, 4, 6, 8, 10, 12 V
+    const isMedium = i % 5 === 0 && !isMajor;
+    const angle = -50 + (i / 60) * 100;
+    const rad = (angle - 90) * (Math.PI / 180);
+    
+    // Radii
+    const rOuter = 82;
+    const rInner = isMajor ? 68 : isMedium ? 73 : 76;
+    const rText = 58;
+
+    const x1 = 110 + rOuter * Math.cos(rad);
+    const y1 = 118 + rOuter * Math.sin(rad);
+    const x2 = 110 + rInner * Math.cos(rad);
+    const y2 = 118 + rInner * Math.sin(rad);
+    const xt = 110 + rText * Math.cos(rad);
+    const yt = 118 + rText * Math.sin(rad);
+
+    ticks.push({
+      id: i,
+      x1, y1, x2, y2, xt, yt,
+      isMajor,
+      val: val.toFixed(0),
+    });
+  }
 
   return (
-    <div className="w-64 rounded-2xl bg-gradient-to-b from-slate-800 to-slate-900 border-2 border-slate-700 shadow-2xl p-4 flex flex-col items-center select-none">
-      {/* Top Banner */}
-      <div className="w-full flex items-center justify-between border-b border-slate-700 pb-2 mb-2">
-        <div className="flex items-center gap-1.5 text-xs font-bold text-cyan-400 font-mono">
-          <Activity className="w-4 h-4" />
-          <span>DC VOLTMETER</span>
+    <div className="w-72 rounded-2xl lab-chassis p-4 select-none relative overflow-hidden">
+      {/* Corner Fastener Screws */}
+      <div className="absolute top-2 left-2 screw-head" />
+      <div className="absolute top-2 right-2 screw-head" />
+      <div className="absolute bottom-2 left-2 screw-head" />
+      <div className="absolute bottom-2 right-2 screw-head" />
+
+      {/* Instrument Nameplate */}
+      <div className="flex items-center justify-between border-b border-chassis-border/80 pb-2 mb-3 px-1">
+        <div>
+          <div className="flex items-center gap-1.5 text-xs font-bold text-slate-200 tracking-wider font-mono">
+            <span className="w-2 h-2 rounded-full bg-cyan-400 inline-block animate-pulse" />
+            <span>PRECISION DC VOLTMETER</span>
+          </div>
+          <div className="text-[10px] font-mono text-slate-400">MODEL V-120 • 20,000 Ω/V</div>
         </div>
-        <span className="text-[10px] px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-300 font-mono border border-cyan-500/30">
+        <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-chassis-raised border border-chassis-border text-cyan-300">
           PARALLEL
         </span>
       </div>
 
-      {/* Analog Voltmeter Arc Dial */}
-      <div className="relative w-52 h-28 overflow-hidden flex items-end justify-center bg-slate-950/70 rounded-t-2xl border border-slate-800 p-2 shadow-inner">
-        {/* Scale SVG */}
-        <svg className="w-full h-full" viewBox="0 0 200 110">
-          {/* Main Dial Arc */}
+      {/* Analog Galvanometer Bezel & Faceplate */}
+      <div className="relative w-full h-36 rounded-xl bg-gradient-to-b from-slate-200 via-slate-100 to-slate-200 border-2 border-slate-700 shadow-meter-dial overflow-hidden flex items-end justify-center">
+        {/* Anti-Parallax Mirrored Arc Strip */}
+        <div className="absolute top-[28px] w-48 h-20 rounded-t-full border-t-8 border-slate-300/80 pointer-events-none opacity-80" />
+
+        {/* Dial Face SVG */}
+        <svg className="w-full h-full" viewBox="0 0 220 130">
+          {/* Mirrored stripe backing */}
           <path
-            d="M 25 100 A 75 75 0 0 1 175 100"
+            d="M 28 118 A 82 82 0 0 1 192 118"
             fill="none"
-            stroke="#475569"
-            strokeWidth="3"
+            stroke="#cbd5e1"
+            strokeWidth="10"
+            strokeLinecap="butt"
           />
-          {/* Active Progress Arc */}
-          {isActive && (
-            <path
-              d="M 25 100 A 75 75 0 0 1 175 100"
-              fill="none"
-              stroke="#00f2fe"
-              strokeWidth="2"
-              strokeDasharray={`${(clampedVoltage / maxScale) * 235} 235`}
-            />
-          )}
 
-          {/* Scale Ticks & Numbers */}
-          {[0, 2, 4, 6, 8, 10].map((val) => {
-            const angle = -60 + (val / maxScale) * 120;
-            const rad = (angle - 90) * (Math.PI / 180);
-            const x1 = 100 + 75 * Math.cos(rad);
-            const y1 = 100 + 75 * Math.sin(rad);
-            const x2 = 100 + 64 * Math.cos(rad);
-            const y2 = 100 + 64 * Math.sin(rad);
-            const tx = 100 + 52 * Math.cos(rad);
-            const ty = 100 + 52 * Math.sin(rad);
+          {/* Graduation Arc Line */}
+          <path
+            d="M 28 118 A 82 82 0 0 1 192 118"
+            fill="none"
+            stroke="#1e293b"
+            strokeWidth="1.8"
+          />
 
-            return (
-              <g key={val}>
-                <line x1={x1} y1={y1} x2={x2} y2={y2} stroke="#94a3b8" strokeWidth="1.5" />
+          {/* Ticks and Numerals */}
+          {ticks.map((t) => (
+            <g key={t.id}>
+              <line
+                x1={t.x1}
+                y1={t.y1}
+                x2={t.x2}
+                y2={t.y2}
+                stroke={t.isMajor ? '#0f172a' : '#475569'}
+                strokeWidth={t.isMajor ? '2' : '1'}
+              />
+              {t.isMajor && (
                 <text
-                  x={tx}
-                  y={ty + 3}
-                  fontSize="8"
-                  fill="#94a3b8"
+                  x={t.xt}
+                  y={t.yt + 3}
+                  fontSize="9.5"
+                  fontWeight="700"
+                  fill="#0f172a"
                   textAnchor="middle"
-                  fontFamily="monospace"
+                  fontFamily="'Space Grotesk', sans-serif"
                 >
-                  {val}
+                  {t.val}V
                 </text>
-              </g>
-            );
-          })}
+              )}
+            </g>
+          ))}
 
-          <text x="100" y="82" fontSize="9" fill="#00f2fe" textAnchor="middle" fontWeight="bold" fontFamily="monospace">
-            VOLTS (V)
+          {/* Galvanometer Sub-Label */}
+          <text
+            x="110"
+            y="98"
+            fontSize="10"
+            fontWeight="800"
+            fill="#0369a1"
+            textAnchor="middle"
+            fontFamily="'Space Grotesk', monospace"
+            letterSpacing="0.08em"
+          >
+            POTENTIAL DIFFERENCE (V)
+          </text>
+          <text
+            x="110"
+            y="108"
+            fontSize="7"
+            fontWeight="600"
+            fill="#64748b"
+            textAnchor="middle"
+            fontFamily="monospace"
+          >
+            HIGH IMPEDANCE SENSING: 10 MΩ
           </text>
         </svg>
 
-        {/* Pivot Needle */}
+        {/* Dynamic Cast Shadow Beneath Needle */}
         <div
-          className="absolute bottom-0 w-1 h-24 bg-rose-500 origin-bottom transition-transform duration-300 ease-out shadow-lg"
+          className="absolute bottom-1 w-0.5 h-24 bg-black/40 origin-bottom transition-transform duration-300 ease-out blur-[1.5px] pointer-events-none"
+          style={{
+            transform: `rotate(${needleAngle + 2}deg) translate(2px, 0)`,
+          }}
+        />
+
+        {/* Precision Knife-Edge Needle Pointer */}
+        <div
+          className="absolute bottom-1 w-1 h-25 origin-bottom transition-transform duration-300 ease-out z-20 pointer-events-none"
           style={{
             transform: `rotate(${needleAngle}deg)`,
           }}
         >
-          <div className="w-1.5 h-3 bg-cyan-400 rounded-t-full -ml-[1px]" />
+          {/* Vermilion pointer arm */}
+          <div className="w-0.5 h-20 bg-rose-600 mx-auto rounded-t-sm shadow-sm" />
+          {/* Counter-weight teardrop tail */}
+          <div className="w-2 h-4 bg-slate-800 rounded-full mx-auto -mt-1 border border-slate-600" />
         </div>
 
-        {/* Needle Hub */}
-        <div className="absolute bottom-[-6px] w-5 h-5 rounded-full bg-slate-300 border-2 border-slate-900 shadow-md z-10" />
+        {/* Mechanical Pivot Hub / Brass Cap */}
+        <div className="absolute bottom-[-10px] w-8 h-8 rounded-full bg-gradient-to-b from-amber-200 via-amber-400 to-amber-600 border-2 border-slate-900 shadow-md z-30 flex items-center justify-center">
+          <div className="w-2.5 h-2.5 rounded-full bg-slate-900 border border-amber-200" />
+        </div>
+
+        {/* Convex Glass Reflection Glare */}
+        <div className="absolute inset-0 meter-glass-glare z-40 rounded-xl" />
       </div>
 
-      {/* Digital OLED Readout */}
-      <div className="w-full mt-3 p-2 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between font-mono">
-        <span className="text-[11px] text-slate-500 uppercase">DIGITAL READOUT</span>
-        <div className="flex items-baseline gap-1">
-          <span className={`text-xl font-bold tracking-wider ${
+      {/* Zero Mechanical Adjustment Screw */}
+      <div className="flex items-center justify-center gap-1.5 mt-2">
+        <div className="w-3.5 h-3.5 rounded-full bg-slate-700 border border-slate-500 shadow-inner relative">
+          <div className="w-2 h-0.5 bg-slate-950 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+        </div>
+        <span className="text-[9px] font-mono text-slate-400 uppercase tracking-wider">Zero Adjust</span>
+      </div>
+
+      {/* Recessed Digital Instrument Readout */}
+      <div className="mt-2.5 p-2 rounded-lg lab-inset flex items-center justify-between border border-slate-800">
+        <div className="flex items-center gap-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
+          <span className="text-[10px] font-mono text-slate-400 tracking-wider uppercase">TELEMETRY</span>
+        </div>
+        <div className="flex items-baseline gap-1 font-digital">
+          <span className={`text-xl font-bold tracking-widest ${
             isActive && voltage > 0 
-              ? 'text-cyan-400 text-glow-cyan' 
+              ? 'glow-emerald-text' 
               : 'text-slate-600'
           }`}>
             {isActive ? voltage.toFixed(2) : '0.00'}
           </span>
-          <span className="text-xs text-cyan-400 font-bold">V</span>
+          <span className="text-xs font-bold text-emerald-500">V</span>
         </div>
       </div>
 
-      {/* Terminal Label Helper */}
-      <div className="w-full flex justify-between px-4 mt-2 text-[10px] font-mono text-slate-400">
-        <span className="text-rose-400">● (+) Red Pos</span>
-        <span className="text-slate-300">● (-) Black Neg</span>
+      {/* Color-Coded Banana Binding Terminals */}
+      <div className="flex justify-between items-center px-2 mt-2 pt-2 border-t border-chassis-border/60 text-[10px] font-mono">
+        <div className="flex items-center gap-1.5 text-rose-400 font-semibold">
+          <span className="w-2 h-2 rounded-full bg-rose-600 ring-2 ring-rose-950 inline-block" />
+          <span>(+) SENSE RED</span>
+        </div>
+        <div className="flex items-center gap-1.5 text-slate-300 font-semibold">
+          <span className="w-2 h-2 rounded-full bg-slate-800 ring-2 ring-slate-950 inline-block" />
+          <span>(-) RETURN BLK</span>
+        </div>
       </div>
     </div>
   );

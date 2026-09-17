@@ -58,32 +58,43 @@ export const Header = ({
   );
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-white/10 bg-[#0c1322]/90 backdrop-blur-md px-4 py-2.5">
-      <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3">
-        {/* Brand & Title */}
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-glow-cyan text-white">
-            <Zap className="h-6 w-6 animate-pulse" />
+    <header className="sticky top-0 z-40 w-full border-b border-[#2a364f] bg-[#0c1018] shadow-chassis-raised select-none">
+      {/* Top Rack Rail Screw & Status Bar */}
+      <div className="h-1 bg-gradient-to-r from-[#1c2436] via-[#334155] to-[#1c2436] border-b border-black/40" />
+
+      <div className="max-w-7xl mx-auto px-4 py-2 flex flex-col md:flex-row items-center justify-between gap-3">
+        {/* Brand & Instrument Nomenclature */}
+        <div className="flex items-center gap-3.5">
+          <div className="relative w-10 h-10 rounded-lg bg-gradient-to-b from-[#1e273a] to-[#0f1420] border border-[#3b4863] flex items-center justify-center shadow-inner group">
+            <Zap className="h-5 w-5 text-amber-400 filter drop-shadow-[0_0_6px_rgba(245,158,11,0.6)]" />
+            <div className="absolute -top-1 -left-1 w-1.5 h-1.5 rounded-full bg-[#3a4760] border border-black" />
+            <div className="absolute -bottom-1 -right-1 w-1.5 h-1.5 rounded-full bg-[#3a4760] border border-black" />
           </div>
+
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-lg font-bold tracking-tight text-white flex items-center gap-2">
-                Ohm's Law Virtual Lab
-                <span className="text-xs px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 font-mono border border-cyan-500/30">
-                  V = IR
+              <h1 className="text-sm md:text-base font-bold tracking-wider text-slate-100 uppercase font-mono flex items-center gap-2">
+                Ohm's Law Precision Lab
+                <span className="text-[10px] px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 font-mono font-bold border border-amber-500/30">
+                  V = I·R
                 </span>
               </h1>
             </div>
-            <p className="text-xs text-slate-400">Interactive Verification & Precision Circuit Simulation</p>
+            <div className="flex items-center gap-2 text-[11px] font-mono text-slate-400">
+              <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 shadow-led-emerald animate-pulse" />
+              <span>STATION: AP-04 // DC CALIBRATION WORKBENCH</span>
+            </div>
           </div>
         </div>
 
-        {/* Screen Navigation Tabs */}
-        <nav className="flex items-center gap-1 bg-slate-900/80 p-1 rounded-xl border border-white/10 text-xs font-medium">
+        {/* Screen Navigation Selector (Tactile Instrument Bar) */}
+        <nav className="flex items-center gap-1 bg-[#131926] p-1 rounded-lg border border-[#26334d] text-xs font-mono">
           <button
             onClick={() => { sounds.playTick(); setScreen('intro'); }}
-            className={`px-2.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
-              currentScreen === 'intro' ? 'bg-cyan-500 text-slate-950 font-semibold shadow-sm' : 'text-slate-300 hover:text-white hover:bg-white/5'
+            className={`px-3 py-1.5 rounded transition-all flex items-center gap-1.5 ${
+              currentScreen === 'intro' 
+                ? 'bg-[#1e2b45] text-amber-400 font-bold border border-amber-500/40 shadow-sm' 
+                : 'text-slate-400 hover:text-slate-200 hover:bg-[#182133]'
             }`}
           >
             <BookOpen className="w-3.5 h-3.5" />
@@ -91,33 +102,41 @@ export const Header = ({
           </button>
           <button
             onClick={() => { sounds.playTick(); setScreen('theory'); }}
-            className={`px-2.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
-              currentScreen === 'theory' ? 'bg-cyan-500 text-slate-950 font-semibold shadow-sm' : 'text-slate-300 hover:text-white hover:bg-white/5'
+            className={`px-3 py-1.5 rounded transition-all flex items-center gap-1.5 ${
+              currentScreen === 'theory' 
+                ? 'bg-[#1e2b45] text-amber-400 font-bold border border-amber-500/40 shadow-sm' 
+                : 'text-slate-400 hover:text-slate-200 hover:bg-[#182133]'
             }`}
           >
             <span>Theory</span>
           </button>
           <button
             onClick={() => { sounds.playTick(); setScreen('apparatus'); }}
-            className={`px-2.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
-              currentScreen === 'apparatus' ? 'bg-cyan-500 text-slate-950 font-semibold shadow-sm' : 'text-slate-300 hover:text-white hover:bg-white/5'
+            className={`px-3 py-1.5 rounded transition-all flex items-center gap-1.5 ${
+              currentScreen === 'apparatus' 
+                ? 'bg-[#1e2b45] text-amber-400 font-bold border border-amber-500/40 shadow-sm' 
+                : 'text-slate-400 hover:text-slate-200 hover:bg-[#182133]'
             }`}
           >
             <span>Apparatus</span>
           </button>
           <button
             onClick={() => { sounds.playTick(); setScreen('lab'); }}
-            className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
-              currentScreen === 'lab' ? 'bg-cyan-500 text-slate-950 font-semibold shadow-glow-cyan' : 'text-cyan-300 hover:text-cyan-200 hover:bg-white/5'
+            className={`px-3.5 py-1.5 rounded transition-all flex items-center gap-1.5 ${
+              currentScreen === 'lab' 
+                ? 'bg-amber-500 text-slate-950 font-bold shadow-led-amber' 
+                : 'text-amber-300/80 hover:text-amber-300 hover:bg-[#182133]'
             }`}
           >
             <FlaskConical className="w-3.5 h-3.5" />
-            <span className="font-semibold">Lab</span>
+            <span className="font-bold tracking-wide">Workbench</span>
           </button>
           <button
             onClick={() => { sounds.playTick(); setScreen('quiz'); }}
-            className={`px-2.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
-              currentScreen === 'quiz' ? 'bg-cyan-500 text-slate-950 font-semibold shadow-sm' : 'text-slate-300 hover:text-white hover:bg-white/5'
+            className={`px-3 py-1.5 rounded transition-all flex items-center gap-1.5 ${
+              currentScreen === 'quiz' 
+                ? 'bg-[#1e2b45] text-amber-400 font-bold border border-amber-500/40 shadow-sm' 
+                : 'text-slate-400 hover:text-slate-200 hover:bg-[#182133]'
             }`}
           >
             <GraduationCap className="w-3.5 h-3.5" />
@@ -125,8 +144,10 @@ export const Header = ({
           </button>
           <button
             onClick={() => { sounds.playTick(); setScreen('dashboard'); }}
-            className={`px-2.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
-              currentScreen === 'dashboard' ? 'bg-cyan-500 text-slate-950 font-semibold shadow-sm' : 'text-slate-300 hover:text-white hover:bg-white/5'
+            className={`px-3 py-1.5 rounded transition-all flex items-center gap-1.5 ${
+              currentScreen === 'dashboard' 
+                ? 'bg-[#1e2b45] text-amber-400 font-bold border border-amber-500/40 shadow-sm' 
+                : 'text-slate-400 hover:text-slate-200 hover:bg-[#182133]'
             }`}
           >
             <Award className="w-3.5 h-3.5" />
@@ -135,59 +156,60 @@ export const Header = ({
         </nav>
 
         {/* Telemetry & Controls */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
           {/* Mode Selector (When on Lab Screen) */}
           {currentScreen === 'lab' && (
-            <div className="hidden lg:flex items-center gap-1 bg-slate-900/80 p-0.5 rounded-lg border border-white/10 text-xs">
+            <div className="hidden lg:flex items-center gap-1 bg-[#131926] p-0.5 rounded border border-[#26334d] text-xs font-mono">
               <button
                 onClick={() => { sounds.playTick(); setMode('guided'); }}
-                className={`px-2 py-1 rounded transition-all flex items-center gap-1 ${
-                  mode === 'guided' ? 'bg-emerald-500/20 text-emerald-300 font-semibold border border-emerald-500/40' : 'text-slate-400 hover:text-white'
+                className={`px-2 py-0.5 rounded transition-all flex items-center gap-1 text-[11px] ${
+                  mode === 'guided' ? 'bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/40' : 'text-slate-400 hover:text-slate-200'
                 }`}
                 title="Guided Step-by-Step Assistance"
               >
                 <Compass className="w-3 h-3" />
-                Guided
+                GUIDED
               </button>
               <button
                 onClick={() => { sounds.playTick(); setMode('challenge'); }}
-                className={`px-2 py-1 rounded transition-all flex items-center gap-1 ${
-                  mode === 'challenge' ? 'bg-amber-500/20 text-amber-300 font-semibold border border-amber-500/40' : 'text-slate-400 hover:text-white'
+                className={`px-2 py-0.5 rounded transition-all flex items-center gap-1 text-[11px] ${
+                  mode === 'challenge' ? 'bg-amber-500/20 text-amber-400 font-bold border border-amber-500/40' : 'text-slate-400 hover:text-slate-200'
                 }`}
                 title="Diagnostic Fault Troubleshooting Challenges"
               >
                 <Target className="w-3 h-3" />
-                Challenge
+                CHALLENGE
               </button>
               <button
                 onClick={() => { sounds.playTick(); setMode('sandbox'); }}
-                className={`px-2 py-1 rounded transition-all flex items-center gap-1 ${
-                  mode === 'sandbox' ? 'bg-purple-500/20 text-purple-300 font-semibold border border-purple-500/40' : 'text-slate-400 hover:text-white'
+                className={`px-2 py-0.5 rounded transition-all flex items-center gap-1 text-[11px] ${
+                  mode === 'sandbox' ? 'bg-sky-500/20 text-sky-400 font-bold border border-sky-500/40' : 'text-slate-400 hover:text-slate-200'
                 }`}
                 title="Free Circuit Sandbox"
               >
-                Sandbox
+                SANDBOX
               </button>
             </div>
           )}
 
-          {/* Timer */}
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-900/80 border border-white/10 text-xs font-mono text-cyan-300">
-            <Clock className="w-3.5 h-3.5 text-cyan-400" />
-            <span>{formatTime(elapsedSeconds)}</span>
+          {/* Precision Stopwatch */}
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#090d14] border border-[#242f44] text-xs font-mono text-emerald-400 shadow-inner">
+            <Clock className="w-3.5 h-3.5 text-emerald-500" />
+            <span className="font-digital tracking-wider text-sm">{formatTime(elapsedSeconds)}</span>
           </div>
 
-          {/* Score Badge */}
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-900/80 border border-amber-500/20 text-xs font-mono text-amber-300">
-            <Award className="w-3.5 h-3.5 text-amber-400" />
-            <span>{totalScore}/100</span>
+          {/* Mastery Score Badge */}
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#090d14] border border-[#242f44] text-xs font-mono text-amber-400 shadow-inner">
+            <Award className="w-3.5 h-3.5 text-amber-500" />
+            <span className="font-digital tracking-wider text-sm">{totalScore}</span>
+            <span className="text-[10px] text-slate-500">/100</span>
           </div>
 
           {/* Action Buttons */}
           <div className="flex items-center gap-1">
             <button
               onClick={toggleSound}
-              className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors border border-white/10"
+              className="p-1.5 rounded bg-[#161e2e] hover:bg-[#1e2a40] text-slate-300 hover:text-white transition-colors border border-[#2b3850]"
               title={isMuted ? 'Unmute Audio' : 'Mute Audio'}
             >
               {isMuted ? <VolumeX className="w-4 h-4 text-rose-400" /> : <Volume2 className="w-4 h-4 text-emerald-400" />}
@@ -195,25 +217,25 @@ export const Header = ({
 
             <button
               onClick={() => { sounds.playTick(); onOpenHelp(); }}
-              className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors border border-white/10"
+              className="p-1.5 rounded bg-[#161e2e] hover:bg-[#1e2a40] text-slate-300 hover:text-white transition-colors border border-[#2b3850]"
               title="Help & Wiring Instructions"
             >
-              <HelpCircle className="w-4 h-4 text-cyan-400" />
+              <HelpCircle className="w-4 h-4 text-amber-400" />
             </button>
 
             <button
               onClick={() => { sounds.playTick(); onOpenSettings(); }}
-              className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors border border-white/10"
-              title="Teacher Mode Configuration"
+              className="p-1.5 rounded bg-[#161e2e] hover:bg-[#1e2a40] text-slate-300 hover:text-white transition-colors border border-[#2b3850]"
+              title="Calibration & Setup Options"
             >
-              <Settings className="w-4 h-4 text-slate-300" />
+              <Settings className="w-4 h-4 text-slate-400" />
             </button>
 
             {currentScreen === 'lab' && (
               <button
                 onClick={() => { sounds.playSnap(); onResetLab(); }}
-                className="p-1.5 rounded-lg bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 hover:text-rose-100 transition-colors border border-rose-500/30"
-                title="Reset Workspace & Clear Wires"
+                className="p-1.5 rounded bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 hover:text-rose-100 transition-colors border border-rose-600/40"
+                title="Emergency Reset / Disconnect Leads"
               >
                 <RotateCcw className="w-4 h-4" />
               </button>
