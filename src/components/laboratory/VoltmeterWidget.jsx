@@ -47,21 +47,21 @@ export const VoltmeterWidget = ({
       <div className="absolute bottom-2 right-2 screw-head" />
 
       {/* Instrument Nameplate */}
-      <div className="flex items-center justify-between border-b border-chassis-border/80 pb-2 mb-3 px-1">
+      <div className="flex items-center justify-between border-b border-slate-200 pb-2 mb-3 px-1">
         <div>
-          <div className="flex items-center gap-1.5 text-xs font-bold text-slate-200 tracking-wider font-mono">
-            <span className="w-2 h-2 rounded-full bg-cyan-400 inline-block animate-pulse" />
+          <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800 tracking-wider font-mono">
+            <span className="w-2 h-2 rounded-full bg-cyan-600 inline-block animate-pulse" />
             <span>PRECISION DC VOLTMETER</span>
           </div>
-          <div className="text-[10px] font-mono text-slate-400">MODEL V-120 • 20,000 Ω/V</div>
+          <div className="text-[10px] font-mono text-slate-500">MODEL V-120 • 20,000 Ω/V</div>
         </div>
-        <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-chassis-raised border border-chassis-border text-cyan-300">
+        <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-cyan-50 border border-cyan-200 text-cyan-800 font-semibold">
           PARALLEL
         </span>
       </div>
 
       {/* Analog Galvanometer Bezel & Faceplate */}
-      <div className="relative w-full h-36 rounded-xl bg-gradient-to-b from-slate-200 via-slate-100 to-slate-200 border-2 border-slate-700 shadow-meter-dial overflow-hidden flex items-end justify-center">
+      <div className="relative w-full h-36 rounded-xl bg-gradient-to-b from-slate-100 via-slate-50 to-slate-100 border-2 border-slate-300 shadow-meter-dial overflow-hidden flex items-end justify-center">
         {/* Anti-Parallax Mirrored Arc Strip */}
         <div className="absolute top-[28px] w-48 h-20 rounded-t-full border-t-8 border-slate-300/80 pointer-events-none opacity-80" />
 
@@ -80,7 +80,7 @@ export const VoltmeterWidget = ({
           <path
             d="M 28 118 A 82 82 0 0 1 192 118"
             fill="none"
-            stroke="#1e293b"
+            stroke="#334155"
             strokeWidth="1.8"
           />
 
@@ -92,7 +92,7 @@ export const VoltmeterWidget = ({
                 y1={t.y1}
                 x2={t.x2}
                 y2={t.y2}
-                stroke={t.isMajor ? '#0f172a' : '#475569'}
+                stroke={t.isMajor ? '#0f172a' : '#64748b'}
                 strokeWidth={t.isMajor ? '2' : '1'}
               />
               {t.isMajor && (
@@ -139,7 +139,7 @@ export const VoltmeterWidget = ({
 
         {/* Dynamic Cast Shadow Beneath Needle */}
         <div
-          className="absolute bottom-1 w-0.5 h-24 bg-black/40 origin-bottom transition-transform duration-300 ease-out blur-[1.5px] pointer-events-none"
+          className="absolute bottom-1 w-0.5 h-24 bg-black/30 origin-bottom transition-transform duration-300 ease-out blur-[1.5px] pointer-events-none"
           style={{
             transform: `rotate(${needleAngle + 2}deg) translate(2px, 0)`,
           }}
@@ -155,52 +155,52 @@ export const VoltmeterWidget = ({
           {/* Vermilion pointer arm */}
           <div className="w-0.5 h-20 bg-rose-600 mx-auto rounded-t-sm shadow-sm" />
           {/* Counter-weight teardrop tail */}
-          <div className="w-2 h-4 bg-slate-800 rounded-full mx-auto -mt-1 border border-slate-600" />
+          <div className="w-2 h-4 bg-slate-700 rounded-full mx-auto -mt-1 border border-slate-500" />
         </div>
 
         {/* Mechanical Pivot Hub / Brass Cap */}
-        <div className="absolute bottom-[-10px] w-8 h-8 rounded-full bg-gradient-to-b from-amber-200 via-amber-400 to-amber-600 border-2 border-slate-900 shadow-md z-30 flex items-center justify-center">
-          <div className="w-2.5 h-2.5 rounded-full bg-slate-900 border border-amber-200" />
+        <div className="absolute bottom-[-10px] w-8 h-8 rounded-full bg-gradient-to-b from-amber-200 via-amber-300 to-amber-500 border-2 border-slate-600 shadow-md z-30 flex items-center justify-center">
+          <div className="w-2.5 h-2.5 rounded-full bg-slate-700 border border-amber-200" />
         </div>
 
         {/* Convex Glass Reflection Glare */}
-        <div className="absolute inset-0 meter-glass-glare z-40 rounded-xl" />
+        <div className="absolute inset-0 meter-glass-glare z-40 rounded-xl pointer-events-none" />
       </div>
 
       {/* Zero Mechanical Adjustment Screw */}
       <div className="flex items-center justify-center gap-1.5 mt-2">
-        <div className="w-3.5 h-3.5 rounded-full bg-slate-700 border border-slate-500 shadow-inner relative">
-          <div className="w-2 h-0.5 bg-slate-950 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+        <div className="w-3.5 h-3.5 rounded-full bg-slate-200 border border-slate-300 shadow-inner relative">
+          <div className="w-2 h-0.5 bg-slate-600 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
         </div>
-        <span className="text-[9px] font-mono text-slate-400 uppercase tracking-wider">Zero Adjust</span>
+        <span className="text-[9px] font-mono text-slate-500 uppercase tracking-wider">Zero Adjust</span>
       </div>
 
       {/* Recessed Digital Instrument Readout */}
-      <div className="mt-2.5 p-2 rounded-lg lab-inset flex items-center justify-between border border-slate-800">
+      <div className="mt-2.5 p-2 rounded-lg lab-inset flex items-center justify-between border border-slate-200">
         <div className="flex items-center gap-1.5">
-          <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
-          <span className="text-[10px] font-mono text-slate-400 tracking-wider uppercase">TELEMETRY</span>
+          <span className="w-1.5 h-1.5 rounded-full bg-cyan-600" />
+          <span className="text-[10px] font-mono text-slate-500 tracking-wider uppercase">TELEMETRY</span>
         </div>
         <div className="flex items-baseline gap-1 font-digital">
           <span className={`text-xl font-bold tracking-widest ${
             isActive && voltage > 0 
-              ? 'glow-emerald-text' 
-              : 'text-slate-600'
+              ? 'text-emerald-800' 
+              : 'text-slate-400'
           }`}>
             {isActive ? voltage.toFixed(2) : '0.00'}
           </span>
-          <span className="text-xs font-bold text-emerald-500">V</span>
+          <span className="text-xs font-bold text-emerald-700">V</span>
         </div>
       </div>
 
       {/* Color-Coded Banana Binding Terminals */}
-      <div className="flex justify-between items-center px-2 mt-2 pt-2 border-t border-chassis-border/60 text-[10px] font-mono">
-        <div className="flex items-center gap-1.5 text-rose-400 font-semibold">
-          <span className="w-2 h-2 rounded-full bg-rose-600 ring-2 ring-rose-950 inline-block" />
+      <div className="flex justify-between items-center px-2 mt-2 pt-2 border-t border-slate-200 text-[10px] font-mono">
+        <div className="flex items-center gap-1.5 text-rose-700 font-semibold">
+          <span className="w-2 h-2 rounded-full bg-rose-600 ring-2 ring-rose-200 inline-block" />
           <span>(+) SENSE RED</span>
         </div>
-        <div className="flex items-center gap-1.5 text-slate-300 font-semibold">
-          <span className="w-2 h-2 rounded-full bg-slate-800 ring-2 ring-slate-950 inline-block" />
+        <div className="flex items-center gap-1.5 text-slate-700 font-semibold">
+          <span className="w-2 h-2 rounded-full bg-slate-700 ring-2 ring-slate-200 inline-block" />
           <span>(-) RETURN BLK</span>
         </div>
       </div>

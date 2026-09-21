@@ -235,7 +235,7 @@ export const App = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#070b14] text-slate-100 flex flex-col">
+    <div className="min-h-screen bg-[#f1f5f9] text-slate-800 flex flex-col">
       {/* Universal Laboratory Header */}
       <Header
         currentScreen={currentScreen}

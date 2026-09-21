@@ -58,54 +58,54 @@ export const Header = ({
   );
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-[#2a364f] bg-[#0c1018] shadow-chassis-raised select-none">
-      {/* Top Rack Rail Screw & Status Bar */}
-      <div className="h-1 bg-gradient-to-r from-[#1c2436] via-[#334155] to-[#1c2436] border-b border-black/40" />
+    <header className="sticky top-0 z-40 w-full border-b border-slate-200 bg-white/95 backdrop-blur-md shadow-sm select-none">
+      {/* Top Academic Lab Status Rail */}
+      <div className="h-1 bg-gradient-to-r from-slate-200 via-amber-400/40 to-slate-200 border-b border-slate-200" />
 
-      <div className="max-w-7xl mx-auto px-4 py-2 flex flex-col md:flex-row items-center justify-between gap-3">
+      <div className="max-w-7xl mx-auto px-4 py-2.5 flex flex-col md:flex-row items-center justify-between gap-3">
         {/* Brand & Instrument Nomenclature */}
         <div className="flex items-center gap-3.5">
-          <div className="relative w-10 h-10 rounded-lg bg-gradient-to-b from-[#1e273a] to-[#0f1420] border border-[#3b4863] flex items-center justify-center shadow-inner group">
-            <Zap className="h-5 w-5 text-amber-400 filter drop-shadow-[0_0_6px_rgba(245,158,11,0.6)]" />
-            <div className="absolute -top-1 -left-1 w-1.5 h-1.5 rounded-full bg-[#3a4760] border border-black" />
-            <div className="absolute -bottom-1 -right-1 w-1.5 h-1.5 rounded-full bg-[#3a4760] border border-black" />
+          <div className="relative w-9 h-9 rounded-lg bg-amber-50 border border-amber-200 flex items-center justify-center shadow-sm group">
+            <Zap className="h-5 w-5 text-amber-600" />
+            <div className="absolute -top-1 -left-1 w-1.5 h-1.5 rounded-full bg-slate-300 border border-slate-400" />
+            <div className="absolute -bottom-1 -right-1 w-1.5 h-1.5 rounded-full bg-slate-300 border border-slate-400" />
           </div>
 
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-sm md:text-base font-bold tracking-wider text-slate-100 uppercase font-mono flex items-center gap-2">
+              <h1 className="text-sm md:text-base font-bold tracking-tight text-slate-800 uppercase font-mono flex items-center gap-2">
                 Ohm's Law Precision Lab
-                <span className="text-[10px] px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 font-mono font-bold border border-amber-500/30">
+                <span className="text-[10px] px-2 py-0.5 rounded bg-amber-100 text-amber-800 font-mono font-bold border border-amber-200">
                   V = I·R
                 </span>
               </h1>
             </div>
-            <div className="flex items-center gap-2 text-[11px] font-mono text-slate-400">
-              <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 shadow-led-emerald animate-pulse" />
+            <div className="flex items-center gap-2 text-[11px] font-mono text-slate-500">
+              <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
               <span>STATION: AP-04 // DC CALIBRATION WORKBENCH</span>
             </div>
           </div>
         </div>
 
         {/* Screen Navigation Selector (Tactile Instrument Bar) */}
-        <nav className="flex items-center gap-1 bg-[#131926] p-1 rounded-lg border border-[#26334d] text-xs font-mono">
+        <nav className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg border border-slate-200 text-xs font-mono">
           <button
             onClick={() => { sounds.playTick(); setScreen('intro'); }}
             className={`px-3 py-1.5 rounded transition-all flex items-center gap-1.5 ${
               currentScreen === 'intro' 
-                ? 'bg-[#1e2b45] text-amber-400 font-bold border border-amber-500/40 shadow-sm' 
-                : 'text-slate-400 hover:text-slate-200 hover:bg-[#182133]'
+                ? 'bg-white text-slate-900 font-bold border border-slate-300 shadow-sm' 
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
             }`}
           >
-            <BookOpen className="w-3.5 h-3.5" />
+            <BookOpen className="w-3.5 h-3.5 text-slate-600" />
             <span className="hidden sm:inline">Intro</span>
           </button>
           <button
             onClick={() => { sounds.playTick(); setScreen('theory'); }}
             className={`px-3 py-1.5 rounded transition-all flex items-center gap-1.5 ${
               currentScreen === 'theory' 
-                ? 'bg-[#1e2b45] text-amber-400 font-bold border border-amber-500/40 shadow-sm' 
-                : 'text-slate-400 hover:text-slate-200 hover:bg-[#182133]'
+                ? 'bg-white text-slate-900 font-bold border border-slate-300 shadow-sm' 
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
             }`}
           >
             <span>Theory</span>
@@ -114,8 +114,8 @@ export const Header = ({
             onClick={() => { sounds.playTick(); setScreen('apparatus'); }}
             className={`px-3 py-1.5 rounded transition-all flex items-center gap-1.5 ${
               currentScreen === 'apparatus' 
-                ? 'bg-[#1e2b45] text-amber-400 font-bold border border-amber-500/40 shadow-sm' 
-                : 'text-slate-400 hover:text-slate-200 hover:bg-[#182133]'
+                ? 'bg-white text-slate-900 font-bold border border-slate-300 shadow-sm' 
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
             }`}
           >
             <span>Apparatus</span>
@@ -124,8 +124,8 @@ export const Header = ({
             onClick={() => { sounds.playTick(); setScreen('lab'); }}
             className={`px-3.5 py-1.5 rounded transition-all flex items-center gap-1.5 ${
               currentScreen === 'lab' 
-                ? 'bg-amber-500 text-slate-950 font-bold shadow-led-amber' 
-                : 'text-amber-300/80 hover:text-amber-300 hover:bg-[#182133]'
+                ? 'bg-amber-600 text-white font-bold shadow-sm' 
+                : 'text-amber-800 hover:bg-amber-100/60'
             }`}
           >
             <FlaskConical className="w-3.5 h-3.5" />
@@ -135,22 +135,22 @@ export const Header = ({
             onClick={() => { sounds.playTick(); setScreen('quiz'); }}
             className={`px-3 py-1.5 rounded transition-all flex items-center gap-1.5 ${
               currentScreen === 'quiz' 
-                ? 'bg-[#1e2b45] text-amber-400 font-bold border border-amber-500/40 shadow-sm' 
-                : 'text-slate-400 hover:text-slate-200 hover:bg-[#182133]'
+                ? 'bg-white text-slate-900 font-bold border border-slate-300 shadow-sm' 
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
             }`}
           >
-            <GraduationCap className="w-3.5 h-3.5" />
+            <GraduationCap className="w-3.5 h-3.5 text-slate-600" />
             <span className="hidden sm:inline">Quiz</span>
           </button>
           <button
             onClick={() => { sounds.playTick(); setScreen('dashboard'); }}
             className={`px-3 py-1.5 rounded transition-all flex items-center gap-1.5 ${
               currentScreen === 'dashboard' 
-                ? 'bg-[#1e2b45] text-amber-400 font-bold border border-amber-500/40 shadow-sm' 
-                : 'text-slate-400 hover:text-slate-200 hover:bg-[#182133]'
+                ? 'bg-white text-slate-900 font-bold border border-slate-300 shadow-sm' 
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
             }`}
           >
-            <Award className="w-3.5 h-3.5" />
+            <Award className="w-3.5 h-3.5 text-slate-600" />
             <span className="hidden sm:inline">Report</span>
           </button>
         </nav>
@@ -159,11 +159,11 @@ export const Header = ({
         <div className="flex items-center gap-2.5">
           {/* Mode Selector (When on Lab Screen) */}
           {currentScreen === 'lab' && (
-            <div className="hidden lg:flex items-center gap-1 bg-[#131926] p-0.5 rounded border border-[#26334d] text-xs font-mono">
+            <div className="hidden lg:flex items-center gap-1 bg-slate-100 p-0.5 rounded border border-slate-200 text-xs font-mono">
               <button
                 onClick={() => { sounds.playTick(); setMode('guided'); }}
                 className={`px-2 py-0.5 rounded transition-all flex items-center gap-1 text-[11px] ${
-                  mode === 'guided' ? 'bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/40' : 'text-slate-400 hover:text-slate-200'
+                  mode === 'guided' ? 'bg-emerald-100 text-emerald-800 font-bold border border-emerald-200' : 'text-slate-600 hover:text-slate-900'
                 }`}
                 title="Guided Step-by-Step Assistance"
               >
@@ -173,7 +173,7 @@ export const Header = ({
               <button
                 onClick={() => { sounds.playTick(); setMode('challenge'); }}
                 className={`px-2 py-0.5 rounded transition-all flex items-center gap-1 text-[11px] ${
-                  mode === 'challenge' ? 'bg-amber-500/20 text-amber-400 font-bold border border-amber-500/40' : 'text-slate-400 hover:text-slate-200'
+                  mode === 'challenge' ? 'bg-amber-100 text-amber-800 font-bold border border-amber-200' : 'text-slate-600 hover:text-slate-900'
                 }`}
                 title="Diagnostic Fault Troubleshooting Challenges"
               >
@@ -183,7 +183,7 @@ export const Header = ({
               <button
                 onClick={() => { sounds.playTick(); setMode('sandbox'); }}
                 className={`px-2 py-0.5 rounded transition-all flex items-center gap-1 text-[11px] ${
-                  mode === 'sandbox' ? 'bg-sky-500/20 text-sky-400 font-bold border border-sky-500/40' : 'text-slate-400 hover:text-slate-200'
+                  mode === 'sandbox' ? 'bg-sky-100 text-sky-800 font-bold border border-sky-200' : 'text-slate-600 hover:text-slate-900'
                 }`}
                 title="Free Circuit Sandbox"
               >
@@ -193,15 +193,15 @@ export const Header = ({
           )}
 
           {/* Precision Stopwatch */}
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#090d14] border border-[#242f44] text-xs font-mono text-emerald-400 shadow-inner">
-            <Clock className="w-3.5 h-3.5 text-emerald-500" />
-            <span className="font-digital tracking-wider text-sm">{formatTime(elapsedSeconds)}</span>
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-slate-100 border border-slate-200 text-xs font-mono text-emerald-700 shadow-inner">
+            <Clock className="w-3.5 h-3.5 text-emerald-600" />
+            <span className="font-digital tracking-wider text-sm font-bold">{formatTime(elapsedSeconds)}</span>
           </div>
 
           {/* Mastery Score Badge */}
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#090d14] border border-[#242f44] text-xs font-mono text-amber-400 shadow-inner">
-            <Award className="w-3.5 h-3.5 text-amber-500" />
-            <span className="font-digital tracking-wider text-sm">{totalScore}</span>
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-slate-100 border border-slate-200 text-xs font-mono text-amber-700 shadow-inner">
+            <Award className="w-3.5 h-3.5 text-amber-600" />
+            <span className="font-digital tracking-wider text-sm font-bold">{totalScore}</span>
             <span className="text-[10px] text-slate-500">/100</span>
           </div>
 
@@ -209,32 +209,32 @@ export const Header = ({
           <div className="flex items-center gap-1">
             <button
               onClick={toggleSound}
-              className="p-1.5 rounded bg-[#161e2e] hover:bg-[#1e2a40] text-slate-300 hover:text-white transition-colors border border-[#2b3850]"
+              className="p-1.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 transition-colors border border-slate-200 shadow-sm"
               title={isMuted ? 'Unmute Audio' : 'Mute Audio'}
             >
-              {isMuted ? <VolumeX className="w-4 h-4 text-rose-400" /> : <Volume2 className="w-4 h-4 text-emerald-400" />}
+              {isMuted ? <VolumeX className="w-4 h-4 text-rose-500" /> : <Volume2 className="w-4 h-4 text-emerald-600" />}
             </button>
 
             <button
               onClick={() => { sounds.playTick(); onOpenHelp(); }}
-              className="p-1.5 rounded bg-[#161e2e] hover:bg-[#1e2a40] text-slate-300 hover:text-white transition-colors border border-[#2b3850]"
+              className="p-1.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 transition-colors border border-slate-200 shadow-sm"
               title="Help & Wiring Instructions"
             >
-              <HelpCircle className="w-4 h-4 text-amber-400" />
+              <HelpCircle className="w-4 h-4 text-amber-600" />
             </button>
 
             <button
               onClick={() => { sounds.playTick(); onOpenSettings(); }}
-              className="p-1.5 rounded bg-[#161e2e] hover:bg-[#1e2a40] text-slate-300 hover:text-white transition-colors border border-[#2b3850]"
+              className="p-1.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 transition-colors border border-slate-200 shadow-sm"
               title="Calibration & Setup Options"
             >
-              <Settings className="w-4 h-4 text-slate-400" />
+              <Settings className="w-4 h-4 text-slate-600" />
             </button>
 
             {currentScreen === 'lab' && (
               <button
                 onClick={() => { sounds.playSnap(); onResetLab(); }}
-                className="p-1.5 rounded bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 hover:text-rose-100 transition-colors border border-rose-600/40"
+                className="p-1.5 rounded bg-rose-50 hover:bg-rose-100 text-rose-700 hover:text-rose-900 transition-colors border border-rose-200 shadow-sm"
                 title="Emergency Reset / Disconnect Leads"
               >
                 <RotateCcw className="w-4 h-4" />

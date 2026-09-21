@@ -66,18 +66,18 @@ export const GuidedModeAssistant = ({
   ];
 
   return (
-    <div className="w-full rounded-3xl glass-panel border border-emerald-500/20 p-5 space-y-4 shadow-xl">
+    <div className="w-full rounded-3xl bg-white border border-slate-200 p-5 space-y-4 shadow-sm text-slate-800">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-white/10 pb-3">
+      <div className="flex items-center justify-between border-b border-slate-200 pb-3">
         <div className="flex items-center gap-2">
-          <div className="p-1.5 rounded-xl bg-emerald-500/20 text-emerald-400">
+          <div className="p-1.5 rounded-xl bg-blue-50 text-blue-700">
             <Compass className="w-4 h-4" />
           </div>
           <div>
-            <h3 className="text-sm font-bold text-white uppercase font-mono">
+            <h3 className="text-sm font-bold text-slate-900 uppercase font-mono">
               Guided Laboratory Assistant
             </h3>
-            <p className="text-[11px] text-slate-400">
+            <p className="text-[11px] text-slate-500">
               Interactive experimental procedure & 3-level progressive hint drawer.
             </p>
           </div>
@@ -86,9 +86,9 @@ export const GuidedModeAssistant = ({
         <button
           onClick={requestNextHint}
           disabled={hintLevel >= 3}
-          className="px-2.5 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 disabled:opacity-40 disabled:cursor-not-allowed border border-amber-500/30 text-amber-300 text-xs font-mono flex items-center gap-1.5 transition-all"
+          className="px-2.5 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 disabled:opacity-40 disabled:cursor-not-allowed border border-amber-200 text-amber-800 text-xs font-mono flex items-center gap-1.5 transition-all"
         >
-          <Lightbulb className="w-3.5 h-3.5" />
+          <Lightbulb className="w-3.5 h-3.5 text-amber-600" />
           <span>{hintLevel === 0 ? 'Need a Hint? (-1 pt)' : `Level ${hintLevel}/3 Hint`}</span>
         </button>
       </div>
@@ -100,20 +100,20 @@ export const GuidedModeAssistant = ({
             key={step.id}
             className={`p-2.5 rounded-xl border flex items-start gap-2.5 transition-all text-xs ${
               step.isCompleted
-                ? 'bg-emerald-950/20 border-emerald-500/30 text-slate-300'
-                : 'bg-slate-900/60 border-white/5 text-slate-400'
+                ? 'bg-emerald-50/70 border-emerald-300 text-slate-700'
+                : 'bg-slate-50 border-slate-200 text-slate-600'
             }`}
           >
             {step.isCompleted ? (
-              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
             ) : (
-              <Circle className="w-4 h-4 text-slate-600 shrink-0 mt-0.5" />
+              <Circle className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
             )}
             <div className="flex-1">
-              <div className={`font-semibold ${step.isCompleted ? 'text-emerald-300 line-through' : 'text-slate-200'}`}>
+              <div className={`font-semibold ${step.isCompleted ? 'text-emerald-800 line-through' : 'text-slate-800'}`}>
                 {step.id}. {step.title}
               </div>
-              <div className="text-[11px] text-slate-400 mt-0.5">{step.desc}</div>
+              <div className="text-[11px] text-slate-500 mt-0.5">{step.desc}</div>
             </div>
           </div>
         ))}
@@ -121,14 +121,14 @@ export const GuidedModeAssistant = ({
 
       {/* Progressive Hint Box */}
       {hintLevel > 0 && (
-        <div className="p-3 rounded-2xl bg-amber-950/40 border border-amber-500/40 space-y-1.5 animate-fadeIn text-xs">
-          <div className="font-bold text-amber-300 flex items-center gap-1.5">
-            <Sparkles className="w-3.5 h-3.5" />
+        <div className="p-3.5 rounded-2xl bg-amber-50/80 border border-amber-200 space-y-1.5 animate-fadeIn text-xs">
+          <div className="font-bold text-amber-900 flex items-center gap-1.5">
+            <Sparkles className="w-3.5 h-3.5 text-amber-600" />
             {hintLevel === 1 && 'Level 1 Clue (Conceptual)'}
             {hintLevel === 2 && 'Level 2 Clue (Instrument Placement)'}
             {hintLevel === 3 && 'Level 3 Solution (Exact Connections)'}
           </div>
-          <p className="text-slate-200 leading-relaxed font-mono text-[11px]">
+          <p className="text-slate-700 leading-relaxed font-mono text-[11px]">
             {hintLevel === 1 && 'Remember: Current needs an unbroken path from the Battery (+) through the Resistor and back to (-). The switch controls this flow.'}
             {hintLevel === 2 && 'The ammeter must measure all current flowing through the resistor (connect in SERIES). The voltmeter measures potential difference ACROSS the resistor (connect in PARALLEL).'}
             {hintLevel === 3 && 'Exact Wiring: 1) Battery (+) -> Switch In. 2) Switch Out -> Ammeter (+). 3) Ammeter (-) -> Resistor A. 4) Resistor B -> Battery (-). 5) Voltmeter (+) -> Resistor A. 6) Voltmeter (-) -> Resistor B.'}

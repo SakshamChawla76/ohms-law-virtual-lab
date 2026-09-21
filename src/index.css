@@ -4,29 +4,29 @@
 
 @layer base {
   :root {
-    --bench-bg: #0b0e14;
-    --mat-bg: #131722;
-    --chassis-metal: #191f2e;
-    --chassis-border: #2b354d;
+    --bench-bg: #f1f5f9;
+    --mat-bg: #e2e8f0;
+    --chassis-metal: #ffffff;
+    --chassis-border: #cbd5e1;
   }
 
   body {
-    background-color: #0b0e14;
-    color: #e2e8f0;
+    background-color: #f1f5f9;
+    color: #334155;
     font-family: 'Space Grotesk', 'Inter', sans-serif;
     letter-spacing: -0.01em;
   }
 }
 
-/* Electrostatic Discharge (ESD) Laboratory Workbench Mat Texture */
+/* Electrostatic Discharge (ESD) Laboratory Workbench Mat Texture (Light Industrial Academic) */
 .bg-esd-bench {
-  background-color: #121622;
+  background-color: #e2e8f0;
   background-image: 
-    radial-gradient(circle at 50% 50%, rgba(30, 41, 69, 0.4) 0%, transparent 80%),
-    linear-gradient(to right, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
-    linear-gradient(to right, rgba(245, 158, 11, 0.04) 5px, transparent 5px),
-    linear-gradient(to bottom, rgba(245, 158, 11, 0.04) 5px, transparent 5px);
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.6) 0%, transparent 80%),
+    linear-gradient(to right, rgba(100, 116, 139, 0.12) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(100, 116, 139, 0.12) 1px, transparent 1px),
+    linear-gradient(to right, rgba(217, 119, 6, 0.15) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(217, 119, 6, 0.15) 1px, transparent 1px);
   background-size: 100% 100%, 20px 20px, 20px 20px, 100px 100px, 100px 100px;
 }
 
@@ -34,8 +34,8 @@
 .ruler-border-h {
   background-image: repeating-linear-gradient(
     90deg,
-    rgba(148, 163, 184, 0.25) 0px,
-    rgba(148, 163, 184, 0.25) 1px,
+    rgba(100, 116, 139, 0.35) 0px,
+    rgba(100, 116, 139, 0.35) 1px,
     transparent 1px,
     transparent 10px
   );
@@ -44,39 +44,38 @@
 .ruler-border-v {
   background-image: repeating-linear-gradient(
     180deg,
-    rgba(148, 163, 184, 0.25) 0px,
-    rgba(148, 163, 184, 0.25) 1px,
+    rgba(100, 116, 139, 0.35) 0px,
+    rgba(100, 116, 139, 0.35) 1px,
     transparent 1px,
     transparent 10px
   );
 }
 
-/* Heavy Anodized Instrument Chassis Panel */
+/* Clean Laboratory Instrument Chassis Panel (Elevated Card) */
 .lab-chassis {
-  background: linear-gradient(180deg, #1d2333 0%, #151926 100%);
-  border: 1px solid #2b354d;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
   box-shadow: 
-    0 12px 28px -6px rgba(0, 0, 0, 0.7),
-    0 4px 10px -2px rgba(0, 0, 0, 0.5),
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.08),
-    inset 0 -1px 0 0 rgba(0, 0, 0, 0.4);
+    0 4px 16px -2px rgba(0, 0, 0, 0.05),
+    0 2px 6px -1px rgba(0, 0, 0, 0.03),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.9);
 }
 
 /* Recessed Hardware Well */
 .lab-inset {
-  background: #0d1017;
-  border: 1px solid rgba(0, 0, 0, 0.8);
-  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.8), 0 1px 0 rgba(255, 255, 255, 0.05);
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.06);
 }
 
 /* Convex Optical Glass Glare Overlay */
 .meter-glass-glare {
   background: linear-gradient(
     135deg,
-    rgba(255, 255, 255, 0.18) 0%,
-    rgba(255, 255, 255, 0.04) 40%,
+    rgba(255, 255, 255, 0.4) 0%,
+    rgba(255, 255, 255, 0.1) 40%,
     transparent 60%,
-    rgba(255, 255, 255, 0.06) 100%
+    rgba(255, 255, 255, 0.2) 100%
   );
   pointer-events: none;
 }
@@ -86,8 +85,8 @@
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #64748b 0%, #334155 100%);
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.4), 0 1px 2px rgba(0, 0, 0, 0.8);
+  background: linear-gradient(135deg, #cbd5e1 0%, #94a3b8 100%);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.8), 0 1px 1px rgba(0, 0, 0, 0.15);
   position: relative;
 }
 
@@ -98,7 +97,7 @@
   left: 50%;
   width: 4px;
   height: 1px;
-  background: #0f172a;
+  background: #64748b;
   transform: translate(-50%, -50%) rotate(35deg);
 }
 
@@ -106,42 +105,39 @@
 .knurled-grip {
   background: repeating-conic-gradient(
     from 0deg,
-    #334155 0deg 5deg,
-    #1e293b 5deg 10deg
+    #cbd5e1 0deg 5deg,
+    #94a3b8 5deg 10deg
   );
   box-shadow: 
-    0 4px 10px rgba(0, 0, 0, 0.6),
-    inset 0 1px 2px rgba(255, 255, 255, 0.2),
-    inset 0 -2px 4px rgba(0, 0, 0, 0.8);
+    0 2px 6px rgba(0, 0, 0, 0.15),
+    inset 0 1px 2px rgba(255, 255, 255, 0.8),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.2);
 }
 
-/* Vintage 7-Segment / LED Readout Glow */
+/* Vintage 7-Segment / LCD Readout Style */
 .font-digital {
   font-family: 'Chakra Petch', 'JetBrains Mono', monospace;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.05em;
 }
 
 .glow-amber-text {
-  color: #fbbf24;
-  text-shadow: 0 0 10px rgba(245, 158, 11, 0.6), 0 0 20px rgba(245, 158, 11, 0.25);
+  color: #b45309;
 }
 
 .glow-emerald-text {
-  color: #34d399;
-  text-shadow: 0 0 10px rgba(16, 185, 129, 0.6), 0 0 20px rgba(16, 185, 129, 0.25);
+  color: #047857;
 }
 
 .glow-red-text {
-  color: #f87171;
-  text-shadow: 0 0 10px rgba(239, 68, 68, 0.6), 0 0 20px rgba(239, 68, 68, 0.25);
+  color: #b91c1c;
 }
 
-/* Precision Industrial Slider */
+/* Precision Industrial Slider (Light Mode) */
 input[type="range"] {
   -webkit-appearance: none;
-  background: #0b0e14;
-  border: 1px solid #1f2638;
-  box-shadow: inset 0 2px 4px rgba(0,0,0,0.6);
+  background: #e2e8f0;
+  border: 1px solid #cbd5e1;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
   border-radius: 9999px;
   outline: none;
 }
@@ -152,34 +148,34 @@ input[type="range"]::-webkit-slider-thumb {
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  background: linear-gradient(180deg, #f8fafc 0%, #cbd5e1 100%);
+  background: linear-gradient(180deg, #ffffff 0%, #e2e8f0 100%);
   cursor: grab;
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.6), inset 0 1px 1px #ffffff;
-  border: 2px solid #334155;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15), inset 0 1px 1px #ffffff;
+  border: 2px solid #94a3b8;
   transition: transform 0.12s ease;
 }
 
 input[type="range"]::-webkit-slider-thumb:active {
   cursor: grabbing;
   transform: scale(1.15);
-  box-shadow: 0 0 12px rgba(245, 158, 11, 0.6);
+  border-color: #d97706;
 }
 
-/* Dark Engineering Scrollbar */
+/* Clean Light Scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #0b0e14;
+  background: #f1f5f9;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #2b354d;
+  background: #cbd5e1;
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #475569;
+  background: #94a3b8;
 }
