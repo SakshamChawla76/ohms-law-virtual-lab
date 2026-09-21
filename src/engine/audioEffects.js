@@ -42,6 +42,34 @@ class SoundEngine {
     }
   }
 
+  playClick() {
+    this.playTick();
+  }
+
+  playZap() {
+    const ctx = this.getContext();
+    if (!ctx) return;
+    try {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(900, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(150, ctx.currentTime + 0.1);
+      gain.gain.setValueAtTime(0.3, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.1);
+    } catch {
+      // Audio fallback
+    }
+  }
+
+  playSpark() {
+    this.playShortCircuit();
+  }
+
   playSwitch(isClosed) {
     const ctx = this.getContext();
     if (!ctx) return;

@@ -12,7 +12,8 @@ import {
   RotateCcw,
   BookOpen,
   FlaskConical,
-  GraduationCap
+  GraduationCap,
+  ArrowLeft
 } from 'lucide-react';
 import { sounds } from '../engine/audioEffects';
 
@@ -25,6 +26,7 @@ export const Header = ({
   onOpenSettings,
   onOpenHelp,
   onResetLab,
+  onBackToHub,
 }) => {
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [isMuted, setIsMuted] = useState(!sounds.enabled);
@@ -65,6 +67,20 @@ export const Header = ({
       <div className="max-w-7xl mx-auto px-4 py-2.5 flex flex-col md:flex-row items-center justify-between gap-3">
         {/* Brand & Instrument Nomenclature */}
         <div className="flex items-center gap-3.5">
+          {onBackToHub && (
+            <button
+              onClick={() => {
+                sounds.playClick();
+                onBackToHub();
+              }}
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 text-xs font-mono font-bold transition-all shadow-sm"
+              title="Return to Simulations Hub"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>Hub</span>
+            </button>
+          )}
+
           <div className="relative w-9 h-9 rounded-lg bg-amber-50 border border-amber-200 flex items-center justify-center shadow-sm group">
             <Zap className="h-5 w-5 text-amber-600" />
             <div className="absolute -top-1 -left-1 w-1.5 h-1.5 rounded-full bg-slate-300 border border-slate-400" />
