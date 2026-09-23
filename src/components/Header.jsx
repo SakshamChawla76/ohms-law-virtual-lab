@@ -69,6 +69,7 @@ export const Header = ({
         <div className="flex items-center gap-3.5">
           {onBackToHub && (
             <button
+              id="header-hub-btn"
               onClick={() => {
                 sounds.playClick();
                 onBackToHub();

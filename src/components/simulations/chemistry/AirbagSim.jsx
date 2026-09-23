@@ -258,13 +258,13 @@ export const AirbagSim = ({ activeTab, onUpdateScore }) => {
 
             <div className="text-xs text-slate-600 space-y-3 font-sans leading-relaxed">
               <p>
-                Inside the steering wheel sits an electronic deceleration sensor and a pellet canister containing solid <strong>Sodium Azide ($\text{NaN}_3$)</strong>. Upon impact, an electric igniter sparks, triggering a violent thermal decomposition:
+                Inside the steering wheel sits an electronic deceleration sensor and a pellet canister containing solid <strong>Sodium Azide (NaN₃)</strong>. Upon impact, an electric igniter sparks, triggering a violent thermal decomposition:
               </p>
               <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-center font-mono text-xs font-bold text-slate-800">
                 2 NaN₃(s) —[Electric Spark]→ 2 Na(s) + 3 N₂(g) + Heat
               </div>
               <p>
-                Solid sodium azide occupies almost no volume. But when decomposed, it liberates enormous quantities of pure nitrogen gas ($N_2$). Using the <strong>Ideal Gas Law ($PV = nRT$)</strong>, automotive chemical engineers must calculate the exact gram mass of $\text{NaN}_3$ to generate roughly 65 Liters of nitrogen at ~1.2 atmospheres of cushioning pressure.
+                Solid sodium azide occupies almost no volume. But when decomposed, it liberates enormous quantities of pure nitrogen gas (N₂). Using the <strong>Ideal Gas Law (PV = nRT)</strong>, automotive chemical engineers must calculate the exact gram mass of NaN₃ to generate roughly 65 Liters of nitrogen at ~1.2 atmospheres of cushioning pressure.
               </p>
             </div>
           </div>
@@ -524,14 +524,14 @@ export const AirbagSim = ({ activeTab, onUpdateScore }) => {
               The Secondary Reactions: Why Pure Sodium Must Be Neutralized
             </h2>
             <p className="text-xs text-slate-600 leading-relaxed font-sans">
-              Notice in the primary reaction that pure metallic sodium ($\text{Na}$) is produced alongside nitrogen gas. Sodium metal is dangerously reactive: it ignites spontaneously with moisture on human skin or in air!
+              Notice in the primary reaction that pure metallic sodium (Na) is produced alongside nitrogen gas. Sodium metal is dangerously reactive: it ignites spontaneously with moisture on human skin or in air!
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
               <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
                 <div className="text-xs font-bold font-mono text-slate-800">Neutralizing Potassium Nitrate</div>
                 <p className="text-xs text-slate-600 font-sans">
-                  Engineers mix $\text{KNO}_3$ and $\text{SiO}_2$ into the pellet. Sodium reacts with $\text{KNO}_3$ to produce harmless alkaline silicate glass: $10\text{Na} + 2\text{KNO}_3 \to \text{K}_2\text{O} + 5\text{Na}_2\text{O} + \text{N}_2$.
+                  Engineers mix KNO₃ and SiO₂ into the pellet. Sodium reacts with KNO₃ to produce harmless alkaline silicate glass: 10 Na + 2 KNO₃ → K₂O + 5 Na₂O + N₂.
                 </p>
               </div>
 

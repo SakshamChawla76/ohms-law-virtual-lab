@@ -14,7 +14,8 @@ import {
   Flame,
   LayoutGrid,
   FileCode2,
-  Sliders
+  Sliders,
+  Layers
 } from 'lucide-react';
 import { getTerminalPositions } from '../../engine/circuitSimulator';
 import { sounds } from '../../engine/audioEffects';

@@ -56,6 +56,7 @@ export const SimulationShell = ({
           {/* Back Button & Title */}
           <div className="flex items-center gap-3 w-full md:w-auto">
             <button
+              id="hub-back-btn"
               onClick={() => {
                 sounds.playClick();
                 onBackToHub();

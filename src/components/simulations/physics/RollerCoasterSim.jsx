@@ -97,7 +97,7 @@ export const RollerCoasterSim = ({ activeTab, onUpdateScore }) => {
         // Compute speed from conservation of mechanical energy
         // Total mechanical energy E0 = m * g * initialHeight
         // At any point, E = m * g * y + 0.5 * m * v^2 + frictionLoss
-        const frictionLoss = hasFriction ? currentProgress * 0.15 * (m * g * initialHeight) : 0;
+        const frictionLoss = hasFriction ? currentProgress * 0.15 * (mass * g * initialHeight) : 0;
         
         let simHeight = initialHeight;
         if (currentProgress < 0.35) {
@@ -788,7 +788,7 @@ export const RollerCoasterSim = ({ activeTab, onUpdateScore }) => {
               <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
                 <div className="text-xs font-bold font-mono text-slate-800">1. Clothoid Teardrop Curvature</div>
                 <p className="text-xs text-slate-600 font-sans">
-                  The radius of curvature varies continuously ($r \propto 1/L$). At the bottom where speed is highest, the radius is large ($r \approx 25\text{m}$), capping G-force at a comfortable 3.5 Gs. At the apex where speed is low, the radius tightens ($r \approx 8\text{m}$), satisfying $v^2/r \ge g$.
+                  The radius of curvature varies continuously (r ∝ 1/L). At the bottom where speed is highest, the radius is large (r ≈ 25 m), capping G-force at a comfortable 3.5 Gs. At the apex where speed is low, the radius tightens (r ≈ 8 m), satisfying v²/r ≥ g.
                 </p>
               </div>
 

@@ -99,6 +99,7 @@ export const SimulationCard = ({ sim, onSelect }) => {
             </div>
 
             <button
+              id={`btn-launch-${sim.id}`}
               onClick={handleLaunch}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 active:scale-95 text-white text-xs font-mono font-bold transition-all shadow-sm group-hover:bg-amber-600"
             >
