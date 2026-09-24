@@ -982,58 +982,114 @@ export const GenericGuidedLab = ({ simulation, activeTab, onUpdateScore }) => {
       // ============================================================
       else if (simId === 'gold-foil') {
         const foilX = 380;
+        const foilWidth = foilThickness * 6 + 10;
 
-        ctx.fillStyle = 'rgba(234, 179, 8, 0.2)';
-        ctx.fillRect(foilX - 10, 40, 20, height - 80);
+        // Gold Foil Sheet (Au)
+        ctx.fillStyle = 'rgba(234, 179, 8, 0.25)';
+        ctx.fillRect(foilX - foilWidth / 2, 40, foilWidth, height - 80);
         ctx.strokeStyle = '#ca8a04';
         ctx.lineWidth = 2;
-        ctx.strokeRect(foilX - 10, 40, 20, height - 80);
+        ctx.strokeRect(foilX - foilWidth / 2, 40, foilWidth, height - 80);
         ctx.fillStyle = '#ca8a04';
         ctx.font = 'bold 11px Inter, sans-serif';
-        ctx.fillText('Gold Foil Sheet (Au)', foilX - 45, 30);
+        ctx.fillText(`Gold Foil Sheet (Au) · Thickness: ${foilThickness} μm`, foilX - 70, 30);
 
-        const nuclei = [{ y: 80 }, { y: 150 }, { y: 220 }, { y: 290 }];
+        // Gold Nuclei (+79 positive charge)
+        const nucleiCount = Math.min(8, 2 + foilThickness);
+        const nuclei = [];
+        for (let k = 0; k < nucleiCount; k++) {
+          const ny = 65 + (k * (height - 130)) / (nucleiCount - 1);
+          const nx = foilX + (k % 2 === 0 ? -4 : 4);
+          nuclei.push({ x: nx, y: ny });
+        }
+
         nuclei.forEach(n => {
           ctx.fillStyle = '#eab308';
           ctx.beginPath();
-          ctx.arc(foilX, n.y, 8, 0, Math.PI * 2);
+          ctx.arc(n.x, n.y, 8, 0, Math.PI * 2);
           ctx.fill();
+          ctx.strokeStyle = '#a16207';
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
           ctx.fillStyle = '#78350f';
           ctx.font = 'bold 9px monospace';
-          ctx.fillText('+79', foilX - 7, n.y + 3);
+          ctx.fillText('+79', n.x - 8, n.y + 3);
         });
 
+        // Alpha Particle Gun / Collimator
         ctx.fillStyle = '#1e293b';
-        ctx.fillRect(40, 160, 40, 40);
+        ctx.fillRect(40, 150, 45, 60);
+        ctx.fillStyle = '#64748b';
+        ctx.fillRect(85, 172, 15, 16);
         ctx.fillStyle = '#38bdf8';
         ctx.font = 'bold 10px monospace';
-        ctx.fillText('α Source', 35, 215);
+        ctx.fillText('α Source', 35, 230);
+        ctx.fillText('(²¹⁰Po)', 42, 244);
 
+        // Animated Alpha Particle Streams
+        const particleCount = Math.min(25, beamIntensity);
         ctx.lineWidth = 1.5;
-        for (let i = 0; i < 8; i++) {
-          const startY = 60 + i * 35;
-          ctx.strokeStyle = 'rgba(56, 189, 248, 0.6)';
 
-          const nearestNucleus = nuclei.find(n => Math.abs(n.y - startY) < 18);
+        for (let i = 0; i < particleCount; i++) {
+          const streamY = 55 + (i * (height - 110)) / particleCount;
+          const nearestNucleus = nuclei.find(n => Math.abs(n.y - streamY) < 16);
+
+          // Phase offset for animated particle bullet
+          const particlePhase = ((t * 80 + i * 45) % (width - 60)) + 80;
+
           ctx.beginPath();
-          ctx.moveTo(80, startY);
+          ctx.moveTo(100, streamY);
 
           if (nearestNucleus) {
-            const deflectUp = startY < nearestNucleus.y;
-            ctx.lineTo(foilX - 5, startY);
-            ctx.strokeStyle = '#ef4444';
-            ctx.lineTo(foilX + 80, deflectUp ? startY - 70 : startY + 70);
+            const deflectUp = streamY < nearestNucleus.y;
+            ctx.strokeStyle = 'rgba(239, 68, 68, 0.7)';
+            ctx.lineTo(foilX - 4, streamY);
+            ctx.lineTo(foilX + 90, deflectUp ? streamY - 80 : streamY + 80);
+            ctx.stroke();
+
+            // Animated dot
+            if (particlePhase < foilX) {
+              ctx.fillStyle = '#38bdf8';
+              ctx.beginPath();
+              ctx.arc(particlePhase, streamY, 3, 0, Math.PI * 2);
+              ctx.fill();
+            } else {
+              const deflProgress = (particlePhase - foilX) / 100;
+              const px = foilX + deflProgress * 90;
+              const py = streamY + (deflectUp ? -80 : 80) * deflProgress;
+              ctx.fillStyle = '#ef4444';
+              ctx.beginPath();
+              ctx.arc(px, py, 3.5, 0, Math.PI * 2);
+              ctx.fill();
+            }
           } else {
-            ctx.lineTo(width - 40, startY);
+            ctx.strokeStyle = 'rgba(56, 189, 248, 0.45)';
+            ctx.lineTo(width - 40, streamY);
+            ctx.stroke();
+
+            // Animated straight particle
+            ctx.fillStyle = '#38bdf8';
+            ctx.beginPath();
+            ctx.arc(particlePhase, streamY, 2.5, 0, Math.PI * 2);
+            ctx.fill();
           }
-          ctx.stroke();
         }
+
+        // Circular Zinc Sulfide (ZnS) Scintillation Detector Screen
+        ctx.strokeStyle = '#10b981';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.arc(foilX, height / 2, 230, -Math.PI * 0.42, Math.PI * 0.42);
+        ctx.stroke();
+        ctx.fillStyle = '#059669';
+        ctx.font = 'bold 9px monospace';
+        ctx.fillText('ZnS Scintillation Detector Screen', width - 210, 45);
 
         ctx.fillStyle = '#0f172a';
         ctx.font = 'bold 12px Inter, sans-serif';
-        ctx.fillText('99.9% of alpha particles pass straight through empty electron clouds', 40, 50);
+        ctx.fillText('✓ 99.9% of α-particles pass undeflected through empty electron orbitals', 40, 50);
         ctx.fillStyle = '#ef4444';
-        ctx.fillText('Rare violent deflections reveal ultra-dense positive nucleus (Z = 79)', 40, 70);
+        ctx.fillText('⚠ Rare violent large-angle deflections reveal tiny, ultra-dense positive nucleus (Z = 79)', 40, 70);
       }
 
       // ============================================================
@@ -1162,6 +1218,7 @@ export const GenericGuidedLab = ({ simulation, activeTab, onUpdateScore }) => {
     equationPreset, c1, c2, c3, c4,
     solutionTempC, sugarAddedGrams,
     isBottleSealed, sodaPressureAtm, sodaTempC,
+    beamIntensity, foilThickness,
     paramValA, paramValB, 
     isPlaying
   ]);
@@ -1724,6 +1781,42 @@ export const GenericGuidedLab = ({ simulation, activeTab, onUpdateScore }) => {
                   step={1.0}
                   value={filamentRes}
                   onChange={(e) => setFilamentRes(Number(e.target.value))}
+                  className="w-full accent-amber-600 cursor-pointer"
+                />
+              </div>
+            </div>
+          )}
+
+          {simId === 'gold-foil' && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-sm space-y-2">
+                <div className="flex justify-between items-center text-xs font-mono">
+                  <span className="font-bold text-slate-700">Alpha Particle Beam Rate:</span>
+                  <span className="font-bold text-sky-700">{beamIntensity} streams/s</span>
+                </div>
+                <input
+                  type="range"
+                  min={5}
+                  max={25}
+                  step={1}
+                  value={beamIntensity}
+                  onChange={(e) => setBeamIntensity(Number(e.target.value))}
+                  className="w-full accent-sky-600 cursor-pointer"
+                />
+              </div>
+
+              <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-sm space-y-2">
+                <div className="flex justify-between items-center text-xs font-mono">
+                  <span className="font-bold text-slate-700">Foil Sheet Thickness:</span>
+                  <span className="font-bold text-amber-700">{foilThickness} μm ({(foilThickness * 8.6).toFixed(0)}k atomic layers)</span>
+                </div>
+                <input
+                  type="range"
+                  min={1}
+                  max={6}
+                  step={1}
+                  value={foilThickness}
+                  onChange={(e) => setFoilThickness(Number(e.target.value))}
                   className="w-full accent-amber-600 cursor-pointer"
                 />
               </div>
