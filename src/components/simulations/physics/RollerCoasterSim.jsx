@@ -728,7 +728,7 @@ export const RollerCoasterSim = ({ activeTab, onUpdateScore }) => {
 
             {challengeFeedback['q1'] === 'correct' && (
               <div className="p-3 rounded-xl bg-emerald-50 text-emerald-800 text-xs font-sans">
-                ✓ <strong>Correct! (+20 pts)</strong> At the apex, $N=0 \implies mg = mv^2/r \implies v^2 = gr$. By conservation of energy, $mgh = mg(2r) + \frac{1}{2}mv^2 = 2mgr + \frac{1}{2}mgr = 2.5mgr$. Hence, $h_{min} = 2.5r$!
+                ✓ <strong>Correct! (+20 pts)</strong> At the apex, N = 0 gives mg = mv²/r, so v² = gr. By conservation of energy, mgh = mg(2r) + ½mv² = 2mgr + ½mgr = 2.5mgr. Hence, h_min = 2.5r!
               </div>
             )}
           </div>
@@ -766,7 +766,7 @@ export const RollerCoasterSim = ({ activeTab, onUpdateScore }) => {
 
             {challengeFeedback['q2'] === 'correct' && (
               <div className="p-3 rounded-xl bg-emerald-50 text-emerald-800 text-xs font-sans">
-                ✓ <strong>Correct! (+20 pts)</strong> At the bottom, $N - mg = mv^2/r \implies N = mg + mv^2/r$. Because velocity $v$ is highest at the bottom, the normal force peaks at upwards of 5 to 6 Gs!
+                ✓ <strong>Correct! (+20 pts)</strong> At the bottom, N - mg = mv²/r, giving N = mg + mv²/r. Because velocity v is highest at the bottom, the normal force peaks at upwards of 5 to 6 Gs!
               </div>
             )}
           </div>

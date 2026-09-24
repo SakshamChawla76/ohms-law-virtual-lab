@@ -39,7 +39,7 @@ export const SIMULATIONS_DATA = [
     description: "Conduct a rigorous, hands-on physics experiment to verify that potential difference across a conductor is directly proportional to electric current at constant temperature.",
     standards: ["HS-PS3-3", "MS-PS3-2"],
     concepts: ["Ohm's Law", "Voltage", "Current", "Resistance", "Linear Regression"],
-    thumbnailUrl: "https://images.unsplash.com/photo-1517055729441-db3aab1359b0?auto=format&fit=crop&w=600&q=80",
+    thumbnailUrl: "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80",
     difficulty: "Core Lab",
     isFeatured: true,
     hasEngine: true
@@ -140,7 +140,7 @@ export const SIMULATIONS_DATA = [
     thumbnailUrl: "https://images.unsplash.com/photo-1511200198032-1596e38600fa?auto=format&fit=crop&w=600&q=80",
     difficulty: "Foundational",
     isFeatured: false,
-    hasEngine: false
+    hasEngine: true
   },
   {
     id: 'prom-night',
@@ -154,7 +154,7 @@ export const SIMULATIONS_DATA = [
     thumbnailUrl: "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=600&q=80",
     difficulty: "Foundational",
     isFeatured: false,
-    hasEngine: false
+    hasEngine: true
   },
   {
     id: 'elevator',
@@ -168,7 +168,7 @@ export const SIMULATIONS_DATA = [
     thumbnailUrl: "https://images.unsplash.com/photo-1549880338-65ddcdfd017b?auto=format&fit=crop&w=600&q=80",
     difficulty: "Intermediate",
     isFeatured: false,
-    hasEngine: false
+    hasEngine: true
   },
   {
     id: 'walk-the-tightrope',
@@ -182,7 +182,7 @@ export const SIMULATIONS_DATA = [
     thumbnailUrl: "https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?auto=format&fit=crop&w=600&q=80",
     difficulty: "Advanced",
     isFeatured: false,
-    hasEngine: false
+    hasEngine: true
   },
   {
     id: 'heat-engine',
@@ -196,7 +196,7 @@ export const SIMULATIONS_DATA = [
     thumbnailUrl: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=600&q=80",
     difficulty: "Advanced",
     isFeatured: false,
-    hasEngine: false
+    hasEngine: true
   },
 
   // ==========================================
@@ -284,7 +284,7 @@ export const SIMULATIONS_DATA = [
     thumbnailUrl: "https://images.unsplash.com/photo-1619641782821-75178523cf44?auto=format&fit=crop&w=600&q=80",
     difficulty: "Advanced",
     isFeatured: false,
-    hasEngine: false
+    hasEngine: true
   },
   {
     id: 'balancing-equations',
@@ -298,7 +298,7 @@ export const SIMULATIONS_DATA = [
     thumbnailUrl: "https://images.unsplash.com/photo-1507668077129-56e32842fceb?auto=format&fit=crop&w=600&q=80",
     difficulty: "Foundational",
     isFeatured: false,
-    hasEngine: false
+    hasEngine: true
   },
   {
     id: 'rock-candy-solubility',
@@ -312,7 +312,7 @@ export const SIMULATIONS_DATA = [
     thumbnailUrl: "https://images.unsplash.com/photo-1582293041079-7814c2f12063?auto=format&fit=crop&w=600&q=80",
     difficulty: "Intermediate",
     isFeatured: false,
-    hasEngine: false
+    hasEngine: true
   },
   {
     id: 'flat-vs-fizzy-soda',
@@ -326,7 +326,7 @@ export const SIMULATIONS_DATA = [
     thumbnailUrl: "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?auto=format&fit=crop&w=600&q=80",
     difficulty: "Advanced",
     isFeatured: false,
-    hasEngine: false
+    hasEngine: true
   },
   {
     id: 'gold-foil',
@@ -340,6 +340,6 @@ export const SIMULATIONS_DATA = [
     thumbnailUrl: "https://images.unsplash.com/photo-1507413245164-6160d8298b31?auto=format&fit=crop&w=600&q=80",
     difficulty: "Intermediate",
     isFeatured: false,
-    hasEngine: false
+    hasEngine: true
   }
 ];

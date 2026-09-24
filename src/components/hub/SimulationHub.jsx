@@ -73,15 +73,15 @@ export const SimulationHub = ({ onSelectSimulation }) => {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-base md:text-lg font-bold font-mono tracking-tight text-slate-900">
-                  OMNILAB INTERACTIVE SIMULATIONS
+                <h1 className="text-base md:text-lg font-bold font-sans tracking-tight text-slate-900">
+                  CK-12 INTERACTIVE SIMULATIONS
                 </h1>
                 <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-100 text-amber-800 border border-amber-300/60">
-                  v2.0 NEXT-GEN
+                  PHYSICS & CHEMISTRY
                 </span>
               </div>
               <p className="text-xs text-slate-500 font-sans">
-                Next-Generation Real-World Physics & Chemistry Laboratories • 1:1+ CK-12 Interactive Suite
+                Real-World Inquiry-Based STEM Laboratories • 60 FPS Interactive Visual Engines
               </p>
             </div>
           </div>
@@ -176,10 +176,11 @@ export const SimulationHub = ({ onSelectSimulation }) => {
             </div>
 
             {/* Thumbnail Preview on Right */}
-            <div className="relative w-full md:w-80 h-48 rounded-xl overflow-hidden shadow-sm border border-slate-200 shrink-0">
+            <div className="relative w-full md:w-80 h-48 rounded-xl overflow-hidden shadow-sm border border-slate-200 shrink-0 bg-slate-800">
               <img 
                 src={featuredSim.thumbnailUrl} 
                 alt={featuredSim.name}
+                onError={(e) => { e.target.style.display = 'none'; }}
                 className="w-full h-full object-cover"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent flex items-end p-4">

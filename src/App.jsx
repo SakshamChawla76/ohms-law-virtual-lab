@@ -12,6 +12,11 @@ import { RollerCoasterSim } from './components/simulations/physics/RollerCoaster
 import { AirbagSim } from './components/simulations/chemistry/AirbagSim';
 import { DiamondCutSim } from './components/simulations/physics/DiamondCutSim';
 import { DensitySim } from './components/simulations/chemistry/DensitySim';
+import { CollisionSim } from './components/simulations/physics/CollisionSim';
+import { ProjectileSim } from './components/simulations/physics/ProjectileSim';
+import { DopplerWaveSim } from './components/simulations/physics/DopplerWaveSim';
+import { GasLawsSim } from './components/simulations/chemistry/GasLawsSim';
+import { AtomBuilderSim } from './components/simulations/chemistry/AtomBuilderSim';
 import { GenericGuidedLab } from './components/simulations/common/GenericGuidedLab';
 
 // Ohm's Law Precision Lab Components
@@ -461,10 +466,55 @@ export const App = () => {
         />
       )}
 
+      {activeSimulationId === 'bumper-cars' && (
+        <CollisionSim
+          simulation={currentSim}
+          activeTab={simTab}
+          onUpdateScore={handleUpdateSimScore}
+        />
+      )}
+
+      {activeSimulationId === 'bow-and-arrow' && (
+        <ProjectileSim
+          simulation={currentSim}
+          activeTab={simTab}
+          onUpdateScore={handleUpdateSimScore}
+        />
+      )}
+
+      {activeSimulationId === 'doppler-ducks' && (
+        <DopplerWaveSim
+          simulation={currentSim}
+          activeTab={simTab}
+          onUpdateScore={handleUpdateSimScore}
+        />
+      )}
+
+      {activeSimulationId === 'phases-of-matter' && (
+        <GasLawsSim
+          simulation={currentSim}
+          activeTab={simTab}
+          onUpdateScore={handleUpdateSimScore}
+        />
+      )}
+
+      {activeSimulationId === 'atom-builder' && (
+        <AtomBuilderSim
+          simulation={currentSim}
+          activeTab={simTab}
+          onUpdateScore={handleUpdateSimScore}
+        />
+      )}
+
       {activeSimulationId !== 'roller-coaster' && 
        activeSimulationId !== 'airbag' && 
        activeSimulationId !== 'diamond-cut' && 
-       activeSimulationId !== 'density' && (
+       activeSimulationId !== 'density' &&
+       activeSimulationId !== 'bumper-cars' &&
+       activeSimulationId !== 'bow-and-arrow' &&
+       activeSimulationId !== 'doppler-ducks' &&
+       activeSimulationId !== 'phases-of-matter' &&
+       activeSimulationId !== 'atom-builder' && (
         <GenericGuidedLab
           simulation={currentSim}
           activeTab={simTab}

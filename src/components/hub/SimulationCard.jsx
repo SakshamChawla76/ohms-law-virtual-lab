@@ -13,10 +13,11 @@ export const SimulationCard = ({ sim, onSelect }) => {
   return (
     <div className="group flex flex-col bg-white rounded-xl border border-slate-200/90 hover:border-amber-400/80 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden text-left">
       {/* Thumbnail Container with Real-World Scene */}
-      <div className="relative h-44 w-full overflow-hidden bg-slate-100">
+      <div className="relative h-44 w-full overflow-hidden bg-slate-800 flex items-center justify-center">
         <img 
           src={sim.thumbnailUrl} 
           alt={sim.name}
+          onError={(e) => { e.target.style.display = 'none'; }}
           className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
           loading="lazy"
         />
