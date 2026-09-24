@@ -1,7 +1,7 @@
 /**
  * Simulations Catalog Registry
  * Comprehensive metadata repository for Physics & Chemistry interactive laboratories,
- * structured 1:1 with CK-12 simulations taxonomy and enhanced with rich pedagogical data.
+ * structured with next-generation STEM simulations taxonomy and enhanced with rich pedagogical data.
  */
 
 export const SIMULATION_CATEGORIES = {

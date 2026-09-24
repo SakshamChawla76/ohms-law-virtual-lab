@@ -16,7 +16,7 @@ An interactive, high-fidelity virtual physics laboratory web application for the
 - **Single-Wire Disconnect**: Hover over any wire to reveal a quick-disconnect scissors button.
 - **Draggable Workbench Layout**: Move components around the bench; flexible rubber cables re-curve dynamically.
 
-### 2. CK-12 & PhET Inspired Advanced Physics Controls
+### 2. Inquiry-Based Advanced Physics Controls
 - **Dual Realistic vs. Schematic Mode**:
   - **Realistic Mode**: 3D-styled physical apparatus, ceramic resistors with standard 4-band color code rings, brass knife switch, dual-scale analog/digital meters.
   - **Schematic Mode**: Standard IEEE electrical engineering diagram symbols (DC cell, zig-zag resistor, circle meters, switch contacts).

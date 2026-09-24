@@ -74,7 +74,7 @@ export const SimulationHub = ({ onSelectSimulation }) => {
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-base md:text-lg font-bold font-sans tracking-tight text-slate-900">
-                  CK-12 INTERACTIVE SIMULATIONS
+                  PRECISION STEM VIRTUAL LABS
                 </h1>
                 <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-100 text-amber-800 border border-amber-300/60">
                   PHYSICS & CHEMISTRY
