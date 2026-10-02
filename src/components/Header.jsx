@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Zap, 
-  Clock, 
-  Award, 
-  Volume2, 
-  VolumeX, 
-  Settings, 
-  HelpCircle, 
-  Compass, 
-  Target, 
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  Zap,
+  Clock,
+  Award,
+  Volume2,
+  VolumeX,
+  Settings,
+  HelpCircle,
+  Compass,
+  Target,
   RotateCcw,
   BookOpen,
   FlaskConical,
@@ -60,7 +61,11 @@ export const Header = ({
   );
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-slate-200 bg-white/95 backdrop-blur-md shadow-sm select-none">
+    <motion.header
+      className="sticky top-0 z-40 w-full border-b border-slate-200 bg-white/95 backdrop-blur-md shadow-sm select-none"
+      layout="position"
+      transition={{ type: "spring", stiffness: 260, damping: 25 }}
+    >
       {/* Top Academic Lab Status Rail */}
       <div className="h-1 bg-gradient-to-r from-slate-200 via-amber-400/40 to-slate-200 border-b border-slate-200" />
 
@@ -260,6 +265,6 @@ export const Header = ({
           </div>
         </div>
       </div>
-    </header>
+    </motion.header>
   );
 };

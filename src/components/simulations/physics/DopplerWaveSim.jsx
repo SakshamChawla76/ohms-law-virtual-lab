@@ -671,7 +671,7 @@ export const DopplerWaveSim = ({ simulation, activeTab, onUpdateScore }) => {
       )}
 
       {/* TAB 4: CHALLENGE QUIZ */}
-      {activeTab === 'challenges' && (
+      {(activeTab === 'challenge' || activeTab === 'challenges') && (
         <div className="max-w-4xl mx-auto space-y-6 text-left">
           <div className="p-6 md:p-8 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-6">
             <div>

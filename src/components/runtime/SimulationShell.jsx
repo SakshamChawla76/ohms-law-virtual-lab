@@ -117,7 +117,7 @@ export const SimulationShell = ({
             <button
               onClick={() => { sounds.playTick(); setActiveTab('challenge'); }}
               className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
-                activeTab === 'challenge'
+                activeTab === 'challenge' || activeTab === 'challenges'
                   ? 'bg-white text-slate-900 font-bold border border-slate-300 shadow-sm'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
               }`}
