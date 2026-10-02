@@ -316,7 +316,7 @@ export const App = () => {
   // ----------------------------------------------------
   if (activeSimulationId === 'ohms-law') {
     return (
-      <div className="min-h-screen bg-[#f1f5f9] text-slate-800 flex flex-col font-sans">
+      <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] flex flex-col font-sans bg-cosmos">
         <Header
           currentScreen={currentScreen}
           setScreen={setCurrentScreen}

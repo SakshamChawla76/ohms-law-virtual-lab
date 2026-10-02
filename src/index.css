@@ -2,182 +2,420 @@
 @tailwind components;
 @tailwind utilities;
 
+/* =================================================================
+   STEM LABS — Brilliant.org / PhET Inspired Design System
+   Modern, Playful, Colorful, Discovery-First
+   ================================================================= */
+
 @layer base {
   :root {
-    /* Design system variables */
-    --background: hsl(220, 12%, 6%);
-    --surface: hsl(220, 12%, 8%);
-    --surface-elevated: hsl(220, 12%, 10%);
-    --surface-card: hsl(220, 12%, 12%);
-    --border: hsl(220, 12%, 14%);
-    --primary: hsl(236, 64%, 56%);
-    --primary-foreground: hsl(240, 9%, 98%);
-    --muted: hsl(220, 12%, 40%);
-    --muted-foreground: hsl(220, 12%, 60%);
-    --accent: hsl(220, 12%, 90%);
-    --accent-foreground: hsl(220, 12%, 10%);
-    --popover: hsl(220, 12%, 14%);
-    --popover-foreground: hsl(240, 9%, 98%);
-    --card: hsl(220, 12%, 12%);
-    --card-foreground: hsl(240, 9%, 98%);
-    --destructive: hsl(0, 72%, 51%);
-    --destructive-foreground: hsl(0, 0%, 98%);
-    --input: hsl(220, 12%, 12%);
-    --input-foreground: hsl(240, 9%, 98%);
-    --ring: hsl(236, 64%, 56%);
-    --radius: 0.5rem;
+    /* Core palette — vibrant, playful, educational */
+    --bg-primary: #0f0f23;
+    --bg-surface: #1a1a35;
+    --bg-card: #1e1e3a;
+    --bg-elevated: #252550;
+    --bg-input: #16162d;
+
+    /* Accent spectrum — each subject gets its own vibe */
+    --accent-physics: #4f8cff;
+    --accent-physics-glow: rgba(79, 140, 255, 0.25);
+    --accent-chemistry: #34d399;
+    --accent-chemistry-glow: rgba(52, 211, 153, 0.25);
+    --accent-energy: #fbbf24;
+    --accent-energy-glow: rgba(251, 191, 36, 0.2);
+    --accent-optics: #a78bfa;
+    --accent-optics-glow: rgba(167, 139, 250, 0.2);
+    --accent-mechanics: #f472b6;
+    --accent-mechanics-glow: rgba(244, 114, 182, 0.2);
+    --accent-atomic: #22d3ee;
+    --accent-atomic-glow: rgba(34, 211, 238, 0.2);
+
+    /* Text hierarchy */
+    --text-primary: #f0f0ff;
+    --text-secondary: #a0a0c0;
+    --text-muted: #6b6b8a;
+    --text-accent: #7c8aff;
+
+    /* Borders & dividers */
+    --border-subtle: rgba(255, 255, 255, 0.06);
+    --border-default: rgba(255, 255, 255, 0.1);
+    --border-bright: rgba(255, 255, 255, 0.18);
+
+    /* Radii */
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 20px;
+    --radius-2xl: 24px;
+    --radius-pill: 100px;
+  }
+
+  html {
+    scroll-behavior: smooth;
   }
 
   body {
-    color: var(--primary-foreground); background-color: var(--background); font-family: var(--font-sans);
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
     letter-spacing: -0.01em;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
-  /* Typography display utilities */
-  .text-display-2xl {
-    @apply text-3xl font-bold leading-[1.05] tracking-[-0.03em];
-  }
-  .text-display-xl {
-    @apply text-2xl font-bold leading-[1.05] tracking-[-0.025em];
-  }
-  .text-display-lg {
-    @apply text-xl font-bold leading-[1.1] tracking-[-0.02em];
-  }
-  .text-display-md {
-    @apply text-lg font-semibold leading-[1.15] tracking-[-0.015em];
-  }
-  .text-display-sm {
-    @apply text-base font-semibold leading-[1.15] tracking-[-0.01em];
-  }
-  .text-heading-xl {
-    @apply text-lg font-semibold tracking-[-0.02em];
-  }
-  .text-heading-lg {
-    @apply text-base font-semibold tracking-[-0.015em];
-  }
-  .text-heading-md {
-    @apply text-sm font-semibold tracking-[-0.01em];
-  }
-  .text-body-lg {
-    @apply text-base leading-relaxed;
-  }
-  .text-body-base {
-    @apply text-sm leading-relaxed;
-  }
-  .text-body-sm {
-    @apply text-xs leading-relaxed;
-  }
-  .text-meta {
-    @apply text-xs uppercase tracking-[0.18em] font-mono;
-  }
-
-  /* Glassmorphism */
-   .glass {
-    background-color: var(--surface);
-    opacity: 0.6;
-    backdrop-filter: blur(4px);
-    border: 1px solid rgba(255,255,255,0.1);
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
-  }
-    .glass-dark {
-    background-color: var(--surface);
-    opacity: 0.4;
-    backdrop-filter: blur(4px);
-    border: 1px solid rgba(255,255,255,0.05);
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
-  }
-
-  /* Focus ring utilities */
-  .focus-ring {
-    @apply focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary-500 focus-visible:outline-none;
-  }
-
-  /* Interactive states */
-  .hover-lift {
-    @apply hover:-translate-y-0.5 hover:shadow-md transition-transform duration-150;
-  }
-  .tap-feedback {
-    @apply active:scale-[0.98];
-  }
-  .disabled-state {
-    @apply opacity-40 cursor-not-allowed pointer-events-none;
-  }
-
-  /* Animation utilities */
-  .motion-safe {
-    @apply motion-safe;
-  }
-  .motion-reduce {
-    @apply motion-reduce;
+  /* Selection highlight */
+  ::selection {
+    background: rgba(79, 140, 255, 0.3);
+    color: #ffffff;
   }
 }
 
-/* Electrostatic Discharge (ESD) Laboratory Workbench Mat Texture (Light Industrial Academic) */
-.bg-esd-bench {
-  background-color: #f1f5f9;
+/* =================================================================
+   TYPOGRAPHY UTILITIES
+   ================================================================= */
+
+.font-display {
+  font-family: 'Nunito', 'Inter', sans-serif;
+}
+.font-body {
+  font-family: 'Inter', system-ui, sans-serif;
+}
+.font-data {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* =================================================================
+   ANIMATED COSMIC BACKGROUND
+   ================================================================= */
+
+.bg-cosmos {
+  background: 
+    radial-gradient(ellipse 80% 60% at 50% 0%, rgba(79, 140, 255, 0.12) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 80% 100%, rgba(167, 139, 250, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse 50% 50% at 20% 80%, rgba(52, 211, 153, 0.06) 0%, transparent 50%),
+    var(--bg-primary);
+}
+
+/* Floating particle dots */
+.bg-particles {
+  position: relative;
+  overflow: hidden;
+}
+
+.bg-particles::before {
+  content: '';
+  position: absolute;
+  inset: 0;
   background-image:
-    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.6) 0%, transparent 80%),
-    linear-gradient(to right, rgba(100, 116, 139, 0.12) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(100, 116, 139, 0.12) 1px, transparent 1px),
-    linear-gradient(to right, rgba(217, 119, 6, 0.15) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(217, 119, 6, 0.15) 1px, transparent 1px);
-  background-size: 100% 100%, 20px 20px, 20px 20px, 100px 100px, 100px 100px;
+    radial-gradient(1.5px 1.5px at 10% 20%, rgba(79, 140, 255, 0.4) 50%, transparent 50%),
+    radial-gradient(1px 1px at 30% 60%, rgba(167, 139, 250, 0.3) 50%, transparent 50%),
+    radial-gradient(1.5px 1.5px at 50% 10%, rgba(52, 211, 153, 0.35) 50%, transparent 50%),
+    radial-gradient(1px 1px at 70% 40%, rgba(251, 191, 36, 0.25) 50%, transparent 50%),
+    radial-gradient(1.5px 1.5px at 85% 75%, rgba(244, 114, 182, 0.3) 50%, transparent 50%),
+    radial-gradient(1px 1px at 15% 85%, rgba(34, 211, 238, 0.3) 50%, transparent 50%),
+    radial-gradient(1.5px 1.5px at 60% 90%, rgba(79, 140, 255, 0.25) 50%, transparent 50%),
+    radial-gradient(1px 1px at 95% 15%, rgba(167, 139, 250, 0.3) 50%, transparent 50%);
+  pointer-events: none;
+  animation: float-particles 25s ease-in-out infinite alternate;
+  z-index: 0;
 }
 
-/* Precision Millimeter Ruler Borders */
-.ruler-border-h {
-  background-image: repeating-linear-gradient(
-    90deg,
-    hsl(220, 12%, 35%, 0.35) 0px,
-    hsl(220, 12%, 35%, 0.35) 1px,
-    transparent 1px,
-    transparent 10px
-  );
+@keyframes float-particles {
+  0% { transform: translateY(0) translateX(0); }
+  100% { transform: translateY(-15px) translateX(8px); }
 }
 
-.ruler-border-v {
-  background-image: repeating-linear-gradient(
-    180deg,
-    hsl(220, 12%, 35%, 0.35) 0px,
-    hsl(220, 12%, 35%, 0.35) 1px,
-    transparent 1px,
-    transparent 10px
-  );
+/* =================================================================
+   GLASSMORPHISM CARDS
+   ================================================================= */
+
+.glass-card {
+  background: rgba(30, 30, 58, 0.6);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-xl);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Clean Laboratory Instrument Chassis Panel (Elevated Card) */
+.glass-card:hover {
+  border-color: var(--border-bright);
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.4);
+}
+
+.glass-card-static {
+  background: rgba(30, 30, 58, 0.5);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+}
+
+/* =================================================================
+   CATEGORY COLOR CODING (Brilliant.org-style topic colors)
+   ================================================================= */
+
+.topic-electricity { --topic-color: #4f8cff; --topic-glow: rgba(79, 140, 255, 0.15); }
+.topic-mechanics { --topic-color: #f472b6; --topic-glow: rgba(244, 114, 182, 0.15); }
+.topic-energy { --topic-color: #fbbf24; --topic-glow: rgba(251, 191, 36, 0.15); }
+.topic-gravity { --topic-color: #a78bfa; --topic-glow: rgba(167, 139, 250, 0.15); }
+.topic-rotational { --topic-color: #fb923c; --topic-glow: rgba(251, 146, 60, 0.15); }
+.topic-waves { --topic-color: #22d3ee; --topic-glow: rgba(34, 211, 238, 0.15); }
+.topic-optics { --topic-color: #a78bfa; --topic-glow: rgba(167, 139, 250, 0.15); }
+.topic-thermo { --topic-color: #ef4444; --topic-glow: rgba(239, 68, 68, 0.15); }
+.topic-matter { --topic-color: #34d399; --topic-glow: rgba(52, 211, 153, 0.15); }
+.topic-reactions { --topic-color: #fb923c; --topic-glow: rgba(251, 146, 60, 0.15); }
+.topic-solutions { --topic-color: #38bdf8; --topic-glow: rgba(56, 189, 248, 0.15); }
+.topic-atomic { --topic-color: #22d3ee; --topic-glow: rgba(34, 211, 238, 0.15); }
+.topic-default { --topic-color: #7c8aff; --topic-glow: rgba(124, 138, 255, 0.15); }
+
+/* =================================================================
+   BUTTONS
+   ================================================================= */
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.5rem;
+  font-family: 'Nunito', sans-serif;
+  font-weight: 700;
+  font-size: 0.875rem;
+  color: white;
+  background: linear-gradient(135deg, #4f8cff 0%, #7c5cfc 100%);
+  border: none;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 15px -3px rgba(79, 140, 255, 0.4);
+}
+.btn-primary:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 8px 25px -5px rgba(79, 140, 255, 0.5);
+}
+.btn-primary:active {
+  transform: scale(0.97);
+}
+
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-family: 'Nunito', sans-serif;
+  font-weight: 700;
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  background: transparent;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.btn-ghost:hover {
+  color: var(--text-primary);
+  border-color: var(--border-bright);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* =================================================================
+   PILL / CHIP BADGES
+   ================================================================= */
+
+.badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.75rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+  font-size: 0.6875rem;
+  border-radius: var(--radius-pill);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.badge-physics {
+  background: rgba(79, 140, 255, 0.15);
+  color: #7cb3ff;
+  border: 1px solid rgba(79, 140, 255, 0.2);
+}
+
+.badge-chemistry {
+  background: rgba(52, 211, 153, 0.15);
+  color: #6ee7b7;
+  border: 1px solid rgba(52, 211, 153, 0.2);
+}
+
+.badge-interactive {
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.2) 0%, rgba(251, 146, 60, 0.2) 100%);
+  color: #fcd34d;
+  border: 1px solid rgba(251, 191, 36, 0.25);
+}
+
+/* =================================================================
+   DIFFICULTY STARS / LEVELS
+   ================================================================= */
+
+.difficulty-foundational { color: #34d399; }
+.difficulty-core { color: #4f8cff; }
+.difficulty-intermediate { color: #fbbf24; }
+.difficulty-advanced { color: #f472b6; }
+
+/* =================================================================
+   SCROLLBAR — Minimal, Translucent
+   ================================================================= */
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* =================================================================
+   SLIDER (Range Input) — Playful neon style
+   ================================================================= */
+
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 100px;
+  outline: none;
+  border: none;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #4f8cff, #7c5cfc);
+  cursor: grab;
+  box-shadow: 0 0 12px rgba(79, 140, 255, 0.5);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+  box-shadow: 0 0 20px rgba(79, 140, 255, 0.7);
+}
+
+input[type="range"]::-webkit-slider-thumb:active {
+  cursor: grabbing;
+  transform: scale(1.05);
+}
+
+/* =================================================================
+   ANIMATIONS
+   ================================================================= */
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(79, 140, 255, 0.3); }
+  50% { box-shadow: 0 0 0 8px rgba(79, 140, 255, 0); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes orbit {
+  from { transform: rotate(0deg) translateX(40px) rotate(0deg); }
+  to { transform: rotate(360deg) translateX(40px) rotate(-360deg); }
+}
+
+@keyframes bounce-subtle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  opacity: 0;
+}
+.animate-delay-100 { animation-delay: 0.1s; }
+.animate-delay-200 { animation-delay: 0.2s; }
+.animate-delay-300 { animation-delay: 0.3s; }
+.animate-delay-400 { animation-delay: 0.4s; }
+
+.animate-pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
+.animate-bounce-subtle { animation: bounce-subtle 3s ease-in-out infinite; }
+
+.animate-shimmer {
+  background-size: 200% 100%;
+  animation: shimmer 2s linear infinite;
+}
+
+/* =================================================================
+   LABORATORY WORKBENCH (for the actual Ohm's Law lab)
+   Keep the existing workbench styles functional
+   ================================================================= */
+
+.bg-esd-bench {
+  background-color: #0f0f23;
+  background-image:
+    radial-gradient(circle at 50% 50%, rgba(79, 140, 255, 0.03) 0%, transparent 80%),
+    linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size: 100% 100%, 24px 24px, 24px 24px;
+}
+
 .lab-chassis {
-  background-color: #ffffff;
-  border: 1px solid hsl(220, 12%, 80%);
-  box-shadow: 0 4px 16px -2px rgba(0, 0, 0, 0.06), 0 2px 4px -1px rgba(0, 0, 0, 0.04), inset 0 1px 0 0 rgba(255, 255, 255, 0.9);
+  background-color: rgba(30, 30, 58, 0.8);
+  border: 1px solid var(--border-default);
+  box-shadow: 0 4px 20px -4px rgba(0, 0, 0, 0.4);
+  border-radius: var(--radius-lg);
 }
 
-/* Recessed Hardware Well */
 .lab-inset {
-  background-color: #f8fafc;
-  border: 1px solid hsl(220, 12%, 90%);
-  box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
+  background-color: rgba(15, 15, 35, 0.6);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
 }
 
-/* Convex Optical Glass Glare Overlay */
 .meter-glass-glare {
   background: linear-gradient(
     135deg,
-    rgba(255, 255, 255, 0.4) 0%,
-    rgba(255, 255, 255, 0.1) 40%,
+    rgba(255, 255, 255, 0.1) 0%,
+    rgba(255, 255, 255, 0.03) 40%,
     transparent 60%,
-    rgba(255, 255, 255, 0.2) 100%
+    rgba(255, 255, 255, 0.05) 100%
   );
   pointer-events: none;
 }
 
-/* Metal Screws Detail */
 .screw-head {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: linear-gradient(135deg, hsl(220, 12%, 80%) 0%, hsl(220, 12%, 60%) 100%);
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.8), 0 1px 1px rgba(0, 0, 0, 0.15);
+  background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.05) 100%);
+  box-shadow: inset 0 1px 1px rgba(255,255,255,0.15), 0 1px 1px rgba(0,0,0,0.3);
   position: relative;
 }
 
@@ -188,107 +426,78 @@
   left: 50%;
   width: 4px;
   height: 1px;
-  background: hsl(220, 12%, 50%);
+  background: rgba(255,255,255,0.15);
   transform: translate(-50%, -50%) rotate(35deg);
 }
 
-/* Knurled Metal Knob Texture */
 .knurled-grip {
   background: repeating-conic-gradient(
     from 0deg,
-    hsl(220, 12%, 80%) 0deg 5deg,
-    hsl(220, 12%, 60%) 5deg 10deg
+    rgba(255,255,255,0.12) 0deg 5deg,
+    rgba(255,255,255,0.04) 5deg 10deg
   );
   box-shadow:
-    0 2px 6px rgba(0, 0, 0, 0.15),
-    inset 0 1px 2px rgba(255, 255, 255, 0.8),
-    inset 0 -1px 2px rgba(0, 0, 0, 0.2);
+    0 2px 6px rgba(0,0,0,0.3),
+    inset 0 1px 2px rgba(255,255,255,0.1),
+    inset 0 -1px 2px rgba(0,0,0,0.3);
 }
 
-/* Vintage 7-Segment / LCD Readout Style */
 .font-digital {
-  @apply font-mono tracking-wider;
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 0.05em;
 }
 
-.glow-amber-text {
-  @apply text-amber-800;
+.glow-amber-text { color: #fbbf24; text-shadow: 0 0 8px rgba(251, 191, 36, 0.3); }
+.glow-emerald-text { color: #34d399; text-shadow: 0 0 8px rgba(52, 211, 153, 0.3); }
+.glow-red-text { color: #f87171; text-shadow: 0 0 8px rgba(248, 113, 113, 0.3); }
+
+.ruler-border-h {
+  background-image: repeating-linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.06) 0px,
+    rgba(255, 255, 255, 0.06) 1px,
+    transparent 1px,
+    transparent 10px
+  );
 }
 
-.glow-emerald-text {
-  @apply text-emerald-700;
+.ruler-border-v {
+  background-image: repeating-linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.06) 0px,
+    rgba(255, 255, 255, 0.06) 1px,
+    transparent 1px,
+    transparent 10px
+  );
 }
 
-.glow-red-text {
-  @apply text-rose-700;
+/* =================================================================
+   FOCUS & ACCESSIBILITY
+   ================================================================= */
+
+.focus-ring:focus-visible {
+  outline: 2px solid var(--accent-physics);
+  outline-offset: 2px;
 }
 
-/* Precision Industrial Slider (Light Mode) */
-input[type="range"] {
-  -webkit-appearance: none;
-  background: hsl(220, 12%, 90%);
-  border: 1px solid hsl(220, 12%, 80%);
-  box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
-  border-radius: 9999px;
-  outline: none;
+*:focus-visible {
+  outline: 2px solid rgba(79, 140, 255, 0.6);
+  outline-offset: 2px;
 }
 
-input[type="range"]::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: linear-gradient(180deg, #ffffff 0%, hsl(220, 12%, 90%) 100%);
-  cursor: grab;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15), inset 0 1px 1px #ffffff;
-  border: 2px solid hsl(220, 12%, 80%);
-  transition: transform 0.12s ease;
-}
+/* =================================================================
+   TYPOGRAPHY DISPLAY UTILITIES (backward compat)
+   ================================================================= */
 
-input[type="range"]::-webkit-slider-thumb:active {
-  cursor: grabbing;
-  transform: scale(1.15);
-  border-color: hsl(30, 80%, 50%);
-}
-
-/* Clean Light Scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: hsl(220, 12%, 95%);
-}
-
-::-webkit-scrollbar-thumb {
-  background: hsl(220, 12%, 80%);
-  border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: hsl(220, 12%, 70%);
-}
-
-/* Animation keyframes for custom effects */
-@keyframes ping {
-  75%, 100% {
-    transform: scale(2);
-    opacity: 0;
-  }
-}
-@keyframes pulse {
-  50% {
-    opacity: .5;
-  }
-}
-@keyframes bounce {
-  0%, 100% {
-    transform: translateY(-25%);
-    animation-timing-function: cubic-bezier(0.8,0,1,1);
-  }
-  50% {
-    transform: translateY(0);
-    animation-timing-function: cubic-bezier(0,0,0.2,1);
-  }
-}
+.text-display-2xl { font-family: 'Nunito', sans-serif; font-size: 2.25rem; font-weight: 800; line-height: 1.1; letter-spacing: -0.03em; }
+.text-display-xl  { font-family: 'Nunito', sans-serif; font-size: 1.875rem; font-weight: 800; line-height: 1.1; letter-spacing: -0.025em; }
+.text-display-lg  { font-family: 'Nunito', sans-serif; font-size: 1.5rem; font-weight: 700; line-height: 1.15; letter-spacing: -0.02em; }
+.text-display-md  { font-family: 'Nunito', sans-serif; font-size: 1.25rem; font-weight: 700; line-height: 1.2; letter-spacing: -0.015em; }
+.text-display-sm  { font-family: 'Nunito', sans-serif; font-size: 1.125rem; font-weight: 700; line-height: 1.2; letter-spacing: -0.01em; }
+.text-heading-xl  { font-family: 'Inter', sans-serif; font-size: 1.125rem; font-weight: 600; letter-spacing: -0.02em; }
+.text-heading-lg  { font-family: 'Inter', sans-serif; font-size: 1rem; font-weight: 600; letter-spacing: -0.015em; }
+.text-heading-md  { font-family: 'Inter', sans-serif; font-size: 0.875rem; font-weight: 600; letter-spacing: -0.01em; }
+.text-body-lg     { font-family: 'Inter', sans-serif; font-size: 1rem; line-height: 1.6; }
+.text-body-base   { font-family: 'Inter', sans-serif; font-size: 0.875rem; line-height: 1.6; }
+.text-body-sm     { font-family: 'Inter', sans-serif; font-size: 0.75rem; line-height: 1.5; }
+.text-meta        { font-family: 'JetBrains Mono', monospace; font-size: 0.6875rem; text-transform: uppercase; letter-spacing: 0.12em; font-weight: 600; }

@@ -82,11 +82,11 @@ export default {
         surfaceActive: '#222226',
       },
       fontFamily: {
-        // Modern sans typography scale per UI/UX Pro Max
-        display: ['Geist', 'Outfit', 'Cabinet Grotesk', 'sans-serif'],
-        sans: ['Outfit', 'Geist', 'Inter', 'system-ui', 'sans-serif'],
+        display: ['Nunito', 'Inter', 'system-ui', 'sans-serif'],
+        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
         mono: ['JetBrains Mono', 'Monaco', 'monospace'],
-        meter: ['Chakra Petch', 'JetBrains Mono', 'monospace'],
+        meter: ['JetBrains Mono', 'monospace'],
+        data: ['JetBrains Mono', 'monospace'],
       },
       fontSize: {
         // Display scales with tracking
