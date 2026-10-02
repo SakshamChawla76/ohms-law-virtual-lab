@@ -70,21 +70,21 @@ export const ViGraph = ({
   };
 
   return (
-    <div className="w-full rounded-xl bg-white border border-slate-200 p-4 space-y-3.5 shadow-sm select-none">
+    <div className="w-full rounded-2xl glass-card p-4 space-y-3.5 select-none border border-white/10 shadow-xl bg-slate-900/60 backdrop-blur-xl">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-3">
         <div className="flex items-center gap-2.5">
-          <div className="p-2 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700">
+          <div className="p-2 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400">
             <LineChart className="w-4 h-4" />
           </div>
           <div>
-            <h3 className="text-sm font-bold text-slate-800 uppercase font-mono tracking-wider flex items-center gap-2">
+            <h3 className="text-sm font-bold text-slate-100 uppercase font-mono tracking-wider flex items-center gap-2">
               V-I Precision Curve Tracer
-              <span className="text-[10px] text-slate-500 font-mono font-normal">
+              <span className="text-[10px] text-cyan-400 font-mono font-normal">
                 [PLOT: V vs I]
               </span>
             </h3>
-            <p className="text-[11px] text-slate-500 font-sans">
+            <p className="text-[11px] text-slate-400 font-sans">
               Cartesian linear coordinate plane with least-squares regression and uncertainty error bounds.
             </p>
           </div>
@@ -95,10 +95,10 @@ export const ViGraph = ({
           <button
             onClick={toggleBestFit}
             disabled={!isUnlocked}
-            className={`px-3 py-1.5 rounded text-xs font-mono font-bold transition-all flex items-center gap-1.5 border ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition-all flex items-center gap-1.5 border ${
               showBestFit
-                ? 'bg-amber-500 text-white border-amber-500 shadow-sm'
-                : 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200 disabled:opacity-40 disabled:cursor-not-allowed'
+                ? 'bg-amber-500/20 text-amber-300 border-amber-500/50 shadow-[0_0_12px_rgba(245,158,11,0.25)]'
+                : 'bg-white/5 text-slate-300 border-white/10 hover:bg-white/10 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed'
             }`}
           >
             <Sparkles className="w-3.5 h-3.5" />
@@ -108,7 +108,7 @@ export const ViGraph = ({
           {isUnlocked && showBestFit && (
             <button
               onClick={() => onOpenVerificationModal(slope, percentError)}
-              className="px-3.5 py-1.5 rounded bg-emerald-600 hover:bg-emerald-700 text-white font-mono font-bold text-xs flex items-center gap-1.5 shadow-sm transition-all transform active:scale-95"
+              className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white font-mono font-bold text-xs flex items-center gap-1.5 shadow-[0_0_15px_rgba(16,185,129,0.3)] transition-all transform active:scale-95 border-none"
             >
               <CheckCircle2 className="w-4 h-4" />
               VERIFY LAW
@@ -118,9 +118,9 @@ export const ViGraph = ({
       </div>
 
       {/* Main Oscilloscope / Plotter Canvas */}
-      <div className="relative w-full rounded-lg bg-[#ffffff] border border-slate-200 p-2 flex flex-col items-center justify-center overflow-hidden shadow-inner">
+      <div className="relative w-full rounded-xl bg-[#060814] border border-cyan-500/30 p-2 flex flex-col items-center justify-center overflow-hidden shadow-[inset_0_0_25px_rgba(6,182,212,0.12)]">
         {/* Reticle / Screen Corner Labels */}
-        <div className="absolute top-2 left-3 text-[10px] font-mono text-emerald-700 select-none">
+        <div className="absolute top-2 left-3 text-[10px] font-mono text-cyan-400 select-none">
           CH-1: VOLTS/DIV [2.0V] • CH-2: CURR/DIV [50mA]
         </div>
         <div className="absolute top-2 right-3 text-[10px] font-mono text-slate-500 select-none">
@@ -134,7 +134,7 @@ export const ViGraph = ({
           <defs>
             {/* Fine Graph Pattern */}
             <pattern id="fineGrid" width="20" height="20" patternUnits="userSpaceOnUse">
-              <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(148, 163, 184, 0.25)" strokeWidth="0.5" />
+              <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(56, 189, 248, 0.08)" strokeWidth="0.5" />
             </pattern>
           </defs>
 
@@ -155,13 +155,13 @@ export const ViGraph = ({
                 y1={getY(v)}
                 x2={width - padding.right}
                 y2={getY(v)}
-                stroke="rgba(203, 213, 225, 0.7)"
+                stroke="rgba(148, 163, 184, 0.15)"
                 strokeDasharray="2 2"
               />
               <text
                 x={padding.left - 8}
                 y={getY(v) + 3.5}
-                fill="#64748b"
+                fill="#94a3b8"
                 fontSize="9"
                 textAnchor="end"
                 fontFamily="monospace"
@@ -179,13 +179,13 @@ export const ViGraph = ({
                 y1={padding.top}
                 x2={getX(i)}
                 y2={height - padding.bottom}
-                stroke="rgba(203, 213, 225, 0.7)"
+                stroke="rgba(148, 163, 184, 0.15)"
                 strokeDasharray="2 2"
               />
               <text
                 x={getX(i)}
                 y={height - padding.bottom + 16}
-                fill="#64748b"
+                fill="#94a3b8"
                 fontSize="9"
                 textAnchor="middle"
                 fontFamily="monospace"
@@ -201,23 +201,25 @@ export const ViGraph = ({
             y1={height - padding.bottom}
             x2={width - padding.right}
             y2={height - padding.bottom}
-            stroke="#475569"
+            stroke="#38bdf8"
             strokeWidth="1.5"
+            strokeOpacity="0.8"
           />
           <line
             x1={padding.left}
             y1={padding.top}
             x2={padding.left}
             y2={height - padding.bottom}
-            stroke="#475569"
+            stroke="#38bdf8"
             strokeWidth="1.5"
+            strokeOpacity="0.8"
           />
 
           {/* Axis Titles */}
           <text
             x={width / 2}
             y={height - 10}
-            fill="#b45309"
+            fill="#fbbf24"
             fontSize="10"
             fontWeight="bold"
             letterSpacing="0.05em"
@@ -230,7 +232,7 @@ export const ViGraph = ({
             x={-height / 2}
             y={18}
             transform="rotate(-90)"
-            fill="#047857"
+            fill="#34d399"
             fontSize="10"
             fontWeight="bold"
             letterSpacing="0.05em"
@@ -247,9 +249,10 @@ export const ViGraph = ({
                 y1={getY(0)}
                 x2={getX(maxI)}
                 y2={getY(slope * maxI)}
-                stroke="#d97706"
+                stroke="#f59e0b"
                 strokeWidth="2.5"
                 strokeDasharray="4 2"
+                style={{ filter: 'drop-shadow(0 0 6px rgba(245, 158, 11, 0.6))' }}
               />
             </g>
           )}
@@ -262,23 +265,24 @@ export const ViGraph = ({
                 cy={getY(liveVoltage)}
                 r="10"
                 fill="none"
-                stroke="#059669"
+                stroke="#34d399"
                 strokeWidth="1"
-                opacity="0.4"
+                opacity="0.6"
                 className="animate-ping"
               />
               <circle
                 cx={getX(liveCurrent)}
                 cy={getY(liveVoltage)}
                 r="4"
-                fill="#059669"
+                fill="#34d399"
                 stroke="#ffffff"
                 strokeWidth="1.5"
+                style={{ filter: 'drop-shadow(0 0 6px rgba(52, 211, 153, 0.8))' }}
               />
               <text
                 x={getX(liveCurrent) + 8}
                 y={getY(liveVoltage) - 6}
-                fill="#059669"
+                fill="#34d399"
                 fontSize="9"
                 fontFamily="monospace"
                 fontWeight="bold"
@@ -307,18 +311,18 @@ export const ViGraph = ({
                   y1={cy}
                   x2={getX(t.current + 0.005)}
                   y2={cy}
-                  stroke="#0284c7"
+                  stroke="#38bdf8"
                   strokeWidth="1"
-                  opacity="0.7"
+                  opacity="0.8"
                 />
                 <line
                   x1={cx}
                   y1={getY(Math.max(0, t.voltage - 0.15))}
                   x2={cx}
                   y2={getY(t.voltage + 0.15)}
-                  stroke="#0284c7"
+                  stroke="#38bdf8"
                   strokeWidth="1"
-                  opacity="0.7"
+                  opacity="0.8"
                 />
 
                 {/* Outer Reticle Halo */}
@@ -327,8 +331,9 @@ export const ViGraph = ({
                   cy={cy}
                   r={isHovered ? 8 : 6}
                   fill="none"
-                  stroke={isHovered ? '#d97706' : '#0284c7'}
+                  stroke={isHovered ? '#fbbf24' : '#38bdf8'}
                   strokeWidth="1.5"
+                  style={{ filter: isHovered ? 'drop-shadow(0 0 8px rgba(251, 191, 36, 0.8))' : 'drop-shadow(0 0 4px rgba(56, 189, 248, 0.5))' }}
                 />
 
                 {/* Center Core Dot */}
@@ -336,14 +341,14 @@ export const ViGraph = ({
                   cx={cx}
                   cy={cy}
                   r={2.5}
-                  fill={isHovered ? '#d97706' : '#0284c7'}
+                  fill={isHovered ? '#fbbf24' : '#38bdf8'}
                 />
 
                 {/* Trial Coordinate Tag */}
                 <text
                   x={cx + 7}
                   y={cy - 5}
-                  fill="#475569"
+                  fill="#94a3b8"
                   fontSize="8"
                   fontFamily="monospace"
                   fontWeight="bold"
@@ -357,36 +362,36 @@ export const ViGraph = ({
 
         {/* Floating Telemetry Crosshair Card */}
         {hoveredPoint && (
-          <div className="absolute top-8 right-4 p-2.5 rounded bg-white/95 border border-amber-400 shadow-md text-xs font-mono select-none text-slate-800">
-            <div className="text-amber-800 font-bold mb-1 text-[11px] flex items-center gap-1">
-              <Crosshair className="w-3 h-3 text-amber-600" />
+          <div className="absolute top-8 right-4 p-3 rounded-xl bg-slate-900/90 border border-amber-400/60 shadow-xl text-xs font-mono select-none text-slate-100 backdrop-blur-md">
+            <div className="text-amber-400 font-bold mb-1 text-[11px] flex items-center gap-1">
+              <Crosshair className="w-3.5 h-3.5 text-amber-400" />
               TRIAL TELEMETRY
             </div>
-            <div>V = <span className="text-emerald-700 font-bold">{hoveredPoint.voltage.toFixed(2)} V</span></div>
-            <div>I = <span className="text-amber-700 font-bold">{hoveredPoint.current.toFixed(3)} A</span></div>
-            <div>R = <span className="text-sky-700 font-bold">{hoveredPoint.calculatedResistance.toFixed(2)} Ω</span></div>
+            <div>V = <span className="text-emerald-400 font-bold">{hoveredPoint.voltage.toFixed(2)} V</span></div>
+            <div>I = <span className="text-amber-400 font-bold">{hoveredPoint.current.toFixed(3)} A</span></div>
+            <div>R = <span className="text-cyan-400 font-bold">{hoveredPoint.calculatedResistance.toFixed(2)} Ω</span></div>
           </div>
         )}
       </div>
 
       {/* Regression Slope & Statistics Banner */}
       {showBestFit && trials.length >= 2 && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 p-3 rounded-lg bg-slate-50 border border-slate-200 text-xs font-mono">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 p-3 rounded-xl bg-black/40 border border-white/10 text-xs font-mono">
           <div>
-            <span className="text-slate-500 block text-[10px] uppercase">Slope (ΔV / ΔI)</span>
-            <span className="text-base font-bold text-amber-800 font-digital">{slope.toFixed(2)} Ω</span>
+            <span className="text-slate-400 block text-[10px] uppercase">Slope (ΔV / ΔI)</span>
+            <span className="text-base font-bold text-amber-400 font-mono">{slope.toFixed(2)} Ω</span>
           </div>
           <div>
-            <span className="text-slate-500 block text-[10px] uppercase">Linearity R²</span>
-            <span className="text-base font-bold text-emerald-700 font-digital">{rSquared.toFixed(4)}</span>
+            <span className="text-slate-400 block text-[10px] uppercase">Linearity R²</span>
+            <span className="text-base font-bold text-emerald-400 font-mono">{rSquared.toFixed(4)}</span>
           </div>
           <div>
-            <span className="text-slate-500 block text-[10px] uppercase">Nominal Standard</span>
-            <span className="text-base font-bold text-slate-800 font-digital">{nominalResistance.toFixed(0)} Ω</span>
+            <span className="text-slate-400 block text-[10px] uppercase">Nominal Standard</span>
+            <span className="text-base font-bold text-slate-200 font-mono">{nominalResistance.toFixed(0)} Ω</span>
           </div>
           <div>
-            <span className="text-slate-500 block text-[10px] uppercase">Deviation Error</span>
-            <span className={`text-base font-bold font-digital ${percentError < 3.0 ? 'text-emerald-700' : 'text-rose-700'}`}>
+            <span className="text-slate-400 block text-[10px] uppercase">Deviation Error</span>
+            <span className={`text-base font-bold font-mono ${percentError < 3.0 ? 'text-emerald-400' : 'text-rose-400'}`}>
               {percentError.toFixed(2)}%
             </span>
           </div>
@@ -394,8 +399,8 @@ export const ViGraph = ({
       )}
 
       {/* Engineering Footnote */}
-      <div className="flex items-center gap-1.5 text-[11px] text-slate-500 font-mono">
-        <HelpCircle className="w-3 h-3 text-slate-400 shrink-0" />
+      <div className="flex items-center gap-1.5 text-[11px] text-slate-400 font-mono">
+        <HelpCircle className="w-3 h-3 text-slate-500 shrink-0" />
         <span>
           Mathematical formulation: V = I·R. The linear regression gradient m directly establishes conductor resistance R = ΔV / ΔI.
         </span>

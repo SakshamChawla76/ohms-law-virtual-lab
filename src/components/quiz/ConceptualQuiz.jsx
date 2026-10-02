@@ -79,54 +79,54 @@ export const ConceptualQuiz = ({
   const totalScore = QUIZ_QUESTIONS.filter(q => selectedAnswers[q.id] === q.correctIndex).length;
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8 space-y-8 animate-fadeIn text-slate-800">
+    <div className="max-w-4xl mx-auto px-4 py-8 space-y-6 animate-fadeIn text-slate-100">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/10 pb-6">
         <div>
-          <div className="flex items-center gap-2 text-blue-700 text-xs font-semibold uppercase tracking-wider mb-1">
+          <div className="flex items-center gap-2 text-cyan-400 text-xs font-semibold uppercase tracking-wider mb-1">
             <GraduationCap className="w-3.5 h-3.5" />
             Knowledge Assessment & Diagnostic Quiz
           </div>
-          <h1 className="text-3xl font-extrabold text-slate-900">Conceptual Physics Quiz</h1>
-          <p className="text-slate-600 text-sm mt-1">
+          <h1 className="text-3xl font-extrabold text-white tracking-tight">Conceptual Physics Quiz</h1>
+          <p className="text-slate-400 text-sm mt-1">
             Test your understanding of circuit principles, meter connections, and Ohm's Law dynamics.
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
-          <div className="px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200 text-xs font-mono text-blue-700 font-bold">
+        <div className="flex items-center gap-3">
+          <div className="px-3.5 py-1.5 rounded-xl bg-cyan-500/15 border border-cyan-500/30 text-xs font-mono text-cyan-300 font-bold shadow-[0_0_10px_rgba(6,182,212,0.2)]">
             Score: {totalScore} / {QUIZ_QUESTIONS.length}
           </div>
           <button
             onClick={() => onNavigate('dashboard')}
-            className="px-4 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs border border-slate-200 flex items-center gap-1.5 transition-all shadow-sm"
+            className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-slate-200 font-semibold text-xs border border-white/10 flex items-center gap-1.5 transition-all shadow-sm"
           >
-            <Award className="w-4 h-4 text-amber-600" />
+            <Award className="w-4 h-4 text-amber-400" />
             View Student Report
           </button>
         </div>
       </div>
 
       {!isFinished ? (
-        <div className="p-6 md:p-8 rounded-3xl bg-white border border-slate-200 space-y-6 shadow-sm">
+        <div className="p-6 md:p-8 rounded-3xl glass-card border border-white/10 space-y-6 shadow-2xl bg-slate-900/60 backdrop-blur-xl">
           {/* Progress Tracker */}
-          <div className="flex items-center justify-between text-xs font-mono text-slate-500">
+          <div className="flex items-center justify-between text-xs font-mono text-slate-400">
             <span>Question {currentIdx + 1} of {QUIZ_QUESTIONS.length}</span>
-            <span className="px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 font-semibold">
+            <span className="px-3 py-1 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/40 font-semibold">
               {currentQ.category}
             </span>
           </div>
 
           {/* Progress Bar */}
-          <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden border border-slate-200">
+          <div className="w-full h-2 rounded-full bg-black/40 overflow-hidden border border-white/5">
             <div
-              className="h-full bg-blue-600 transition-all duration-300"
+              className="h-full bg-gradient-to-r from-cyan-500 via-blue-500 to-indigo-500 transition-all duration-300 shadow-[0_0_12px_rgba(6,182,212,0.5)]"
               style={{ width: `${((currentIdx + 1) / QUIZ_QUESTIONS.length) * 100}%` }}
             />
           </div>
 
           {/* Question Title */}
-          <h2 className="text-lg md:text-xl font-bold text-slate-900 leading-relaxed">
+          <h2 className="text-lg md:text-xl font-bold text-slate-100 leading-relaxed">
             {currentQ.question}
           </h2>
 
@@ -137,14 +137,14 @@ export const ConceptualQuiz = ({
               const isCorrect = idx === currentQ.correctIndex;
               const hasAnswered = userChoice !== undefined;
 
-              let style = 'bg-slate-50 border-slate-200 hover:bg-slate-100 hover:border-slate-300 text-slate-800';
+              let style = 'bg-black/30 border-white/10 hover:bg-white/5 hover:border-white/20 text-slate-200';
               if (hasAnswered) {
                 if (isCorrect) {
-                  style = 'bg-emerald-50 border-emerald-400 text-emerald-900 shadow-sm font-semibold';
+                  style = 'bg-emerald-950/50 border-emerald-500/50 text-emerald-200 shadow-[0_0_15px_rgba(16,185,129,0.2)] font-semibold';
                 } else if (isSelected) {
-                  style = 'bg-rose-50 border-rose-400 text-rose-900 font-semibold';
+                  style = 'bg-rose-950/50 border-rose-500/50 text-rose-200 shadow-[0_0_15px_rgba(244,63,94,0.2)] font-semibold';
                 } else {
-                  style = 'bg-slate-50/40 border-slate-100 opacity-50 text-slate-400';
+                  style = 'bg-black/20 border-white/5 opacity-40 text-slate-500';
                 }
               }
 
@@ -156,13 +156,13 @@ export const ConceptualQuiz = ({
                   className={`w-full p-4 rounded-2xl border text-left transition-all flex items-center justify-between text-xs md:text-sm shadow-sm ${style}`}
                 >
                   <div className="flex items-center gap-3">
-                    <span className="w-6 h-6 rounded-lg bg-white border border-slate-200 flex items-center justify-center font-mono font-bold text-xs shrink-0 text-slate-700 shadow-sm">
+                    <span className="w-6 h-6 rounded-lg bg-white/10 border border-white/15 flex items-center justify-center font-mono font-bold text-xs shrink-0 text-slate-300">
                       {String.fromCharCode(65 + idx)}
                     </span>
                     <span>{option}</span>
                   </div>
-                  {hasAnswered && isCorrect && <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />}
-                  {hasAnswered && isSelected && !isCorrect && <XCircle className="w-5 h-5 text-rose-600 shrink-0" />}
+                  {hasAnswered && isCorrect && <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />}
+                  {hasAnswered && isSelected && !isCorrect && <XCircle className="w-5 h-5 text-rose-400 shrink-0" />}
                 </button>
               );
             })}
@@ -170,23 +170,23 @@ export const ConceptualQuiz = ({
 
           {/* Educational Explanation Box */}
           {showExplanation && (
-            <div className="p-4 rounded-2xl bg-blue-50/60 border border-blue-200 text-xs font-mono space-y-1 text-slate-800 animate-fadeIn">
-              <div className="font-bold text-blue-800 flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-blue-600" />
+            <div className="p-4 rounded-2xl bg-blue-950/40 border border-blue-500/30 text-xs font-mono space-y-1 text-blue-200 animate-fadeIn shadow-md">
+              <div className="font-bold text-blue-300 flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-blue-400" />
                 Physical Explanation:
               </div>
-              <p className="leading-relaxed text-slate-700 font-sans">
+              <p className="leading-relaxed text-slate-300 font-sans">
                 {currentQ.explanation}
               </p>
             </div>
           )}
 
           {/* Navigation Controls */}
-          <div className="flex items-center justify-between pt-4 border-t border-slate-200">
+          <div className="flex items-center justify-between pt-4 border-t border-white/10">
             <button
               onClick={handlePrev}
               disabled={currentIdx === 0}
-              className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 disabled:opacity-40 disabled:cursor-not-allowed text-slate-700 text-xs font-semibold border border-slate-200"
+              className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed text-slate-300 text-xs font-semibold border border-white/10 transition-colors"
             >
               Previous
             </button>
@@ -194,7 +194,7 @@ export const ConceptualQuiz = ({
             {userChoice !== undefined && (
               <button
                 onClick={handleNext}
-                className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center gap-2 shadow-sm"
+                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-400 hover:to-indigo-500 text-white font-bold text-xs flex items-center gap-2 shadow-[0_0_15px_rgba(79,140,255,0.3)] transition-all border-none"
               >
                 {currentIdx < QUIZ_QUESTIONS.length - 1 ? 'Next Question' : 'Finish Quiz'}
                 <ArrowRight className="w-4 h-4" />
@@ -204,22 +204,22 @@ export const ConceptualQuiz = ({
         </div>
       ) : (
         /* Quiz Finished Result Screen */
-        <div className="p-8 rounded-3xl bg-white border border-slate-200 text-center space-y-6 shadow-sm animate-fadeIn">
-          <div className="h-20 w-20 mx-auto rounded-3xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600 shadow-sm">
+        <div className="p-8 rounded-3xl glass-card border border-white/10 text-center space-y-6 shadow-2xl bg-slate-900/60 backdrop-blur-xl animate-fadeIn">
+          <div className="h-20 w-20 mx-auto rounded-3xl bg-blue-500/20 border border-blue-500/40 flex items-center justify-center text-blue-400 shadow-[0_0_20px_rgba(79,140,255,0.3)]">
             <Award className="w-10 h-10 animate-bounce" />
           </div>
 
           <div className="space-y-2">
-            <h2 className="text-2xl font-black text-slate-900">Quiz Completed!</h2>
-            <p className="text-slate-600 text-sm">
-              You scored <strong className="text-blue-700 text-lg">{totalScore}</strong> out of <strong className="text-slate-900 text-lg">{QUIZ_QUESTIONS.length}</strong> ({((totalScore / QUIZ_QUESTIONS.length) * 100).toFixed(0)}%).
+            <h2 className="text-2xl font-black text-white">Quiz Completed!</h2>
+            <p className="text-slate-300 text-sm">
+              You scored <strong className="text-cyan-400 text-lg">{totalScore}</strong> out of <strong className="text-white text-lg">{QUIZ_QUESTIONS.length}</strong> ({((totalScore / QUIZ_QUESTIONS.length) * 100).toFixed(0)}%).
             </p>
           </div>
 
           <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
             <button
               onClick={handleRestart}
-              className="px-5 py-3 rounded-xl bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs border border-slate-200 flex items-center gap-2 shadow-sm"
+              className="px-5 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-slate-200 font-semibold text-xs border border-white/10 flex items-center gap-2 shadow-sm transition-all"
             >
               <RotateCcw className="w-4 h-4" />
               Retake Quiz
@@ -227,7 +227,7 @@ export const ConceptualQuiz = ({
 
             <button
               onClick={() => onNavigate('dashboard')}
-              className="px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center gap-2 shadow-sm"
+              className="px-6 py-3 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-400 hover:to-indigo-500 text-white font-bold text-xs flex items-center gap-2 shadow-[0_0_15px_rgba(79,140,255,0.3)] transition-all border-none"
             >
               <Award className="w-4 h-4" />
               View Student Dashboard & Certificate

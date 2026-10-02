@@ -501,3 +501,108 @@ input[type="range"]::-webkit-slider-thumb:active {
 .text-body-base   { font-family: 'Inter', sans-serif; font-size: 0.875rem; line-height: 1.6; }
 .text-body-sm     { font-family: 'Inter', sans-serif; font-size: 0.75rem; line-height: 1.5; }
 .text-meta        { font-family: 'JetBrains Mono', monospace; font-size: 0.6875rem; text-transform: uppercase; letter-spacing: 0.12em; font-weight: 600; }
+
+/* =================================================================
+   SIMULATION RUNTIME DARK THEME TRANSFORMATION
+   Ensures all interactive simulation engines and generic guided labs
+   seamlessly integrate into the cosmic dark glassmorphic design system.
+   ================================================================= */
+
+@media screen {
+  .simulation-container .bg-white {
+    background-color: rgba(22, 22, 45, 0.78) !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    color: #f1f5f9 !important;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+  }
+
+  .simulation-container .bg-slate-50,
+  .simulation-container .bg-slate-100 {
+    background-color: rgba(15, 15, 35, 0.65) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+    color: #e2e8f0 !important;
+  }
+
+  .simulation-container .border-slate-200,
+  .simulation-container .border-slate-300 {
+    border-color: rgba(255, 255, 255, 0.1) !important;
+  }
+
+  .simulation-container .text-slate-900,
+  .simulation-container .text-slate-800 {
+    color: #f8fafc !important;
+  }
+
+  .simulation-container .text-slate-700 {
+    color: #e2e8f0 !important;
+  }
+
+  .simulation-container .text-slate-600,
+  .simulation-container .text-slate-500 {
+    color: #94a3b8 !important;
+  }
+
+  .simulation-container .text-slate-400 {
+    color: #64748b !important;
+  }
+
+  .simulation-container .bg-blue-50 {
+    background-color: rgba(59, 130, 246, 0.15) !important;
+    border-color: rgba(59, 130, 246, 0.35) !important;
+  }
+
+  .simulation-container .text-blue-700,
+  .simulation-container .text-blue-800,
+  .simulation-container .text-blue-900 {
+    color: #60a5fa !important;
+  }
+
+  .simulation-container .bg-emerald-50 {
+    background-color: rgba(16, 185, 129, 0.15) !important;
+    border-color: rgba(16, 185, 129, 0.35) !important;
+  }
+
+  .simulation-container .text-emerald-700,
+  .simulation-container .text-emerald-800 {
+    color: #34d399 !important;
+  }
+
+  .simulation-container .bg-amber-50 {
+    background-color: rgba(245, 158, 11, 0.15) !important;
+    border-color: rgba(245, 158, 11, 0.35) !important;
+  }
+
+  .simulation-container .text-amber-700,
+  .simulation-container .text-amber-800 {
+    color: #fbbf24 !important;
+  }
+
+  .simulation-container .bg-rose-50 {
+    background-color: rgba(244, 63, 94, 0.15) !important;
+    border-color: rgba(244, 63, 94, 0.35) !important;
+  }
+
+  .simulation-container .text-rose-700,
+  .simulation-container .text-rose-800 {
+    color: #fb7185 !important;
+  }
+
+  .simulation-container canvas {
+    background-color: #0b0e1e !important;
+    border-radius: 0.75rem;
+  }
+
+  .simulation-container input[type="range"] {
+    background: #1e293b !important;
+  }
+
+  .simulation-container input[type="text"],
+  .simulation-container input[type="number"],
+  .simulation-container select {
+    background-color: rgba(15, 15, 35, 0.8) !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    color: #f8fafc !important;
+  }
+}
+

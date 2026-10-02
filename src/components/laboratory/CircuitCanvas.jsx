@@ -196,23 +196,23 @@ export const CircuitCanvas = ({
   };
 
   return (
-    <div className="w-full rounded-xl bg-white border border-slate-200 p-3.5 space-y-3 shadow-sm select-none">
+    <div className="w-full rounded-2xl glass-card p-4 space-y-3.5 shadow-xl select-none border border-white/10 bg-slate-900/60 backdrop-blur-xl">
       {/* Workbench Toolbar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b border-slate-200 pb-2.5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b border-white/10 pb-3">
         <div className="flex items-center gap-2">
-          <div className="p-1.5 rounded-lg bg-amber-50 border border-amber-200 text-amber-700">
+          <div className="p-1.5 rounded-lg bg-cyan-500/15 border border-cyan-500/30 text-cyan-400">
             <Layers className="w-4 h-4" />
           </div>
           <div>
-            <h2 className="text-xs font-bold text-slate-800 font-mono tracking-wide uppercase flex items-center gap-2">
+            <h2 className="text-xs font-bold text-slate-100 font-mono tracking-wide uppercase flex items-center gap-2">
               <span>ESD Workbench Station</span>
               {wires.length > 0 && (
-                <span className="text-[10px] px-1.5 py-0.2 rounded bg-slate-100 text-slate-700 font-normal border border-slate-200">
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 font-mono font-bold border border-cyan-500/40 shadow-[0_0_8px_rgba(6,182,212,0.2)]">
                   {wires.length} Leads Connected
                 </span>
               )}
             </h2>
-            <p className="text-[10px] font-mono text-slate-500">
+            <p className="text-[10px] font-mono text-slate-400">
               Click or drag banana leads between posts. Click wire midpoint to disconnect.
             </p>
           </div>
@@ -221,11 +221,11 @@ export const CircuitCanvas = ({
         {/* View Mode & Simulation Bar */}
         <div className="flex flex-wrap items-center gap-2">
           {/* Real vs Schematic */}
-          <div className="flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200 text-xs font-mono">
+          <div className="flex items-center bg-black/40 p-0.5 rounded-xl border border-white/10 text-xs font-mono">
             <button
               onClick={() => { sounds.playTick(); setViewMode('realistic'); }}
-              className={`px-2.5 py-1 rounded flex items-center gap-1.5 transition-all ${
-                viewMode === 'realistic' ? 'bg-white text-slate-900 font-bold border border-slate-300 shadow-sm' : 'text-slate-600 hover:text-slate-900'
+              className={`px-2.5 py-1 rounded-lg flex items-center gap-1.5 transition-all ${
+                viewMode === 'realistic' ? 'bg-cyan-500/20 text-cyan-300 font-bold border border-cyan-500/50 shadow-[0_0_10px_rgba(6,182,212,0.25)]' : 'text-slate-400 hover:text-slate-200'
               }`}
             >
               <LayoutGrid className="w-3 h-3" />
@@ -233,8 +233,8 @@ export const CircuitCanvas = ({
             </button>
             <button
               onClick={() => { sounds.playTick(); setViewMode('schematic'); }}
-              className={`px-2.5 py-1 rounded flex items-center gap-1.5 transition-all ${
-                viewMode === 'schematic' ? 'bg-white text-slate-900 font-bold border border-slate-300 shadow-sm' : 'text-slate-600 hover:text-slate-900'
+              className={`px-2.5 py-1 rounded-lg flex items-center gap-1.5 transition-all ${
+                viewMode === 'schematic' ? 'bg-cyan-500/20 text-cyan-300 font-bold border border-cyan-500/50 shadow-[0_0_10px_rgba(6,182,212,0.25)]' : 'text-slate-400 hover:text-slate-200'
               }`}
             >
               <FileCode2 className="w-3 h-3" />
@@ -245,10 +245,10 @@ export const CircuitCanvas = ({
           {/* Charge Carriers Toggle */}
           <button
             onClick={() => setShowCurrentFlow(!showCurrentFlow)}
-            className={`px-2.5 py-1 rounded-lg text-xs font-mono border transition-all flex items-center gap-1.5 ${
+            className={`px-2.5 py-1 rounded-xl text-xs font-mono border transition-all flex items-center gap-1.5 ${
               showCurrentFlow 
-                ? 'bg-sky-50 text-sky-800 border-sky-300 font-bold' 
-                : 'bg-slate-100 text-slate-600 border-slate-200'
+                ? 'bg-sky-500/20 text-sky-300 border-sky-500/50 font-bold shadow-[0_0_8px_rgba(56,189,248,0.25)]' 
+                : 'bg-white/5 text-slate-400 border-white/10 hover:bg-white/10 hover:text-white'
             }`}
             title="Toggle charge particle visualization"
           >
@@ -257,13 +257,13 @@ export const CircuitCanvas = ({
           </button>
 
           {/* Speed */}
-          <div className="hidden sm:flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200 text-xs font-mono">
+          <div className="hidden sm:flex items-center bg-black/40 p-0.5 rounded-xl border border-white/10 text-xs font-mono">
             {[0.25, 1.0, 2.0].map((s) => (
               <button
                 key={s}
                 onClick={() => { sounds.playTick(); setSimSpeed(s); }}
-                className={`px-2 py-0.5 rounded transition-all ${
-                  simSpeed === s ? 'bg-white text-amber-800 font-bold shadow-sm' : 'text-slate-600 hover:text-slate-900'
+                className={`px-2 py-0.5 rounded-lg transition-all ${
+                  simSpeed === s ? 'bg-amber-500/20 text-amber-300 font-bold border border-amber-500/40 shadow-[0_0_8px_rgba(245,158,11,0.2)]' : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
                 {s === 0.25 ? '0.25x' : `${s}x`}
@@ -274,7 +274,7 @@ export const CircuitCanvas = ({
           {/* Auto-Wire Button */}
           <button
             onClick={() => { sounds.playSuccess(); onAutoWire(); }}
-            className="px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 text-xs font-mono font-bold flex items-center gap-1.5 transition-all shadow-sm active:translate-y-0.5"
+            className="px-3 py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 text-xs font-mono font-bold flex items-center gap-1.5 transition-all shadow-[0_0_12px_rgba(16,185,129,0.2)] active:translate-y-0.5"
             title="Automatically assemble standard Ohm's Law circuit"
           >
             <Wand2 className="w-3.5 h-3.5" />
@@ -284,7 +284,7 @@ export const CircuitCanvas = ({
           {/* Clear Wires Button */}
           <button
             onClick={() => { sounds.playSnap(); onClearWires(); }}
-            className="px-2.5 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-800 border border-rose-200 text-xs font-mono flex items-center gap-1.5 transition-all active:translate-y-0.5"
+            className="px-2.5 py-1.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-500/30 text-xs font-mono flex items-center gap-1.5 transition-all active:translate-y-0.5"
             title="Remove all wires from the canvas"
           >
             <RotateCcw className="w-3.5 h-3.5" />
@@ -298,18 +298,18 @@ export const CircuitCanvas = ({
         ref={containerRef}
         onPointerMove={handlePointerMove}
         onPointerUp={handleCanvasPointerUp}
-        className="relative w-full h-[430px] rounded-xl bg-esd-bench border-2 border-slate-300 shadow-inner overflow-hidden cursor-default"
+        className="relative w-full h-[430px] rounded-xl bg-[#0b0b1a] border border-cyan-500/20 shadow-2xl overflow-hidden cursor-default"
       >
         {/* Top & Left Millimeter Rulers */}
-        <div className="absolute top-0 left-0 right-0 h-3 ruler-border-h opacity-40 pointer-events-none" />
-        <div className="absolute top-0 left-0 bottom-0 w-3 ruler-border-v opacity-40 pointer-events-none" />
+        <div className="absolute top-0 left-0 right-0 h-3 ruler-border-h opacity-30 pointer-events-none" />
+        <div className="absolute top-0 left-0 bottom-0 w-3 ruler-border-v opacity-30 pointer-events-none" />
 
         {/* Workbench Technical Badges */}
-        <div className="absolute top-4 left-5 text-[9px] font-mono text-slate-600 pointer-events-none select-none flex items-center gap-4">
+        <div className="absolute top-4 left-5 text-[9px] font-mono text-slate-400 pointer-events-none select-none flex items-center gap-4">
           <span>ZONE 1: ISOLATED DC APPARATUS DECK</span>
           {analysis.powerWatts > 0 && (
-            <span className="text-amber-800 font-bold flex items-center gap-1">
-              <Flame className="w-3 h-3" />
+            <span className="text-amber-400 font-bold flex items-center gap-1">
+              <Flame className="w-3 h-3 text-amber-500" />
               HEAT DISSIPATION: {analysis.powerWatts.toFixed(3)} W (P = V·I)
             </span>
           )}
@@ -329,7 +329,7 @@ export const CircuitCanvas = ({
             {/* Component Repositioning Handle */}
             <div 
               onPointerDown={(e) => handleStartDragComponent(comp.id, comp.x, comp.y, e)}
-              className="absolute -top-5 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded bg-white border border-slate-300 text-[8px] font-mono text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 cursor-grab active:cursor-grabbing whitespace-nowrap shadow-sm z-30"
+              className="absolute -top-5 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded bg-slate-800 border border-slate-600 text-[8px] font-mono text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 cursor-grab active:cursor-grabbing whitespace-nowrap shadow-md z-30"
             >
               <Move className="w-2.5 h-2.5" />
               <span>Drag Chassis</span>
@@ -340,20 +340,20 @@ export const CircuitCanvas = ({
               <>
                 {/* 1. Battery / DC Supply Module */}
                 {comp.type === 'battery' && (
-                  <div className="w-36 h-28 rounded-xl bg-white border border-slate-300 p-2.5 flex flex-col justify-between items-center text-center relative shadow-md">
+                  <div className="w-36 h-28 rounded-xl bg-slate-900/90 border border-amber-500/40 p-2.5 flex flex-col justify-between items-center text-center relative shadow-[0_8px_25px_rgba(0,0,0,0.6)] backdrop-blur-md">
                     <div className="flex items-center justify-between w-full px-1">
-                      <div className="flex items-center gap-1 text-[10px] font-bold text-amber-800 font-mono">
-                        <BatteryCharging className="w-3 h-3 text-amber-600" />
+                      <div className="flex items-center gap-1 text-[10px] font-bold text-amber-400 font-mono">
+                        <BatteryCharging className="w-3 h-3 text-amber-500" />
                         <span>DC SOURCE</span>
                       </div>
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_6px_rgba(52,211,153,0.8)]" />
                     </div>
-                    <div className="font-digital text-2xl font-bold text-amber-800 tracking-widest bg-amber-50 w-full py-1 rounded border border-amber-200 shadow-inner">
-                      {voltage.toFixed(1)} <span className="text-xs text-amber-600 font-sans">V</span>
+                    <div className="font-mono text-2xl font-bold text-amber-400 tracking-widest bg-black/60 w-full py-1 rounded-lg border border-amber-500/30 shadow-[inset_0_0_10px_rgba(245,158,11,0.15)]">
+                      {voltage.toFixed(1)} <span className="text-xs text-amber-400/80 font-sans">V</span>
                     </div>
-                    <div className="w-full flex justify-between px-1 text-[9px] font-mono border-t border-slate-200 pt-1">
-                      <span className="text-rose-600 font-bold">+ POS</span>
-                      <span className="text-slate-600 font-bold">- NEG</span>
+                    <div className="w-full flex justify-between px-1 text-[9px] font-mono border-t border-white/10 pt-1">
+                      <span className="text-rose-400 font-bold">+ POS</span>
+                      <span className="text-slate-400 font-bold">- NEG</span>
                     </div>
                   </div>
                 )}
@@ -362,28 +362,28 @@ export const CircuitCanvas = ({
                 {comp.type === 'switch' && (
                   <div 
                     onClick={(e) => { e.stopPropagation(); onToggleSwitch(); }}
-                    className={`w-36 h-24 rounded-xl bg-white border border-slate-300 p-2 flex flex-col justify-between items-center text-center cursor-pointer transition-all shadow-md ${
-                      isSwitchClosed ? 'border-emerald-500' : 'hover:border-slate-400'
+                    className={`w-36 h-24 rounded-xl bg-slate-900/90 border p-2 flex flex-col justify-between items-center text-center cursor-pointer transition-all shadow-[0_8px_25px_rgba(0,0,0,0.6)] backdrop-blur-md ${
+                      isSwitchClosed ? 'border-emerald-500/60 shadow-[0_0_15px_rgba(16,185,129,0.2)]' : 'border-white/15 hover:border-white/30'
                     }`}
                   >
                     <div className="flex items-center justify-between w-full px-1">
-                      <div className="flex items-center gap-1 text-[10px] font-bold text-slate-700 font-mono">
-                        <ToggleRight className="w-3 h-3" />
+                      <div className="flex items-center gap-1 text-[10px] font-bold text-slate-200 font-mono">
+                        <ToggleRight className="w-3 h-3 text-emerald-400" />
                         <span>KNIFE SWITCH</span>
                       </div>
-                      <span className={`w-1.5 h-1.5 rounded-full ${isSwitchClosed ? 'bg-emerald-500' : 'bg-slate-400'}`} />
+                      <span className={`w-1.5 h-1.5 rounded-full ${isSwitchClosed ? 'bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]' : 'bg-slate-600'}`} />
                     </div>
-                    <div className="relative w-24 h-7 flex items-center justify-between px-2 bg-slate-100 rounded border border-slate-300">
-                      <div className="w-3 h-4 bg-amber-600 rounded-sm border border-amber-500" />
+                    <div className="relative w-24 h-7 flex items-center justify-between px-2 bg-black/50 rounded-lg border border-white/10">
+                      <div className="w-3 h-4 bg-amber-500 rounded-sm border border-amber-400" />
                       <div 
-                        className="absolute left-4 w-18 h-1.5 bg-gradient-to-r from-amber-500 to-amber-400 origin-left transition-transform duration-200 rounded shadow-sm z-10"
+                        className="absolute left-4 w-18 h-1.5 bg-gradient-to-r from-amber-500 to-amber-400 origin-left transition-transform duration-200 rounded shadow-md z-10"
                         style={{ transform: isSwitchClosed ? 'rotate(0deg)' : 'rotate(-28deg)' }}
                       >
-                        <div className="absolute right-0 -top-1 w-3.5 h-3.5 rounded-full bg-rose-600 border border-rose-300" />
+                        <div className="absolute right-0 -top-1 w-3.5 h-3.5 rounded-full bg-rose-600 border border-rose-400" />
                       </div>
-                      <div className="w-3 h-4 bg-amber-600 rounded-sm border border-amber-500" />
+                      <div className="w-3 h-4 bg-amber-500 rounded-sm border border-amber-400" />
                     </div>
-                    <div className={`text-[9px] font-mono font-bold ${isSwitchClosed ? 'text-emerald-700' : 'text-slate-500'}`}>
+                    <div className={`text-[9px] font-mono font-bold ${isSwitchClosed ? 'text-emerald-400' : 'text-slate-400'}`}>
                       {isSwitchClosed ? 'CLOSED (ACTIVE)' : 'OPEN (OFF)'}
                     </div>
                   </div>
@@ -391,45 +391,45 @@ export const CircuitCanvas = ({
 
                 {/* 3. Ammeter Module */}
                 {comp.type === 'ammeter' && (
-                  <div className="w-36 h-26 rounded-xl bg-white border border-slate-300 p-2.5 flex flex-col justify-between items-center text-center shadow-md">
+                  <div className="w-36 h-26 rounded-xl bg-slate-900/90 border border-amber-500/40 p-2.5 flex flex-col justify-between items-center text-center shadow-[0_8px_25px_rgba(0,0,0,0.6)] backdrop-blur-md">
                     <div className="flex items-center justify-between w-full px-1">
-                      <div className="flex items-center gap-1 text-[10px] font-bold text-amber-800 font-mono">
-                        <Gauge className="w-3 h-3 text-amber-600" />
+                      <div className="flex items-center gap-1 text-[10px] font-bold text-amber-400 font-mono">
+                        <Gauge className="w-3 h-3 text-amber-500" />
                         <span>AMMETER (A)</span>
                       </div>
-                      <span className="text-[8px] font-mono px-1 rounded bg-amber-100 text-amber-800">SERIES</span>
+                      <span className="text-[8px] font-mono px-1 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">SERIES</span>
                     </div>
-                    <div className="font-digital text-xl font-bold text-slate-800 tracking-wider bg-slate-50 w-full py-1 rounded border border-slate-200 shadow-inner">
-                      {analysis.measuredCurrent.toFixed(3)} <span className="text-xs text-amber-700 font-sans">A</span>
+                    <div className="font-mono text-xl font-bold text-amber-400 tracking-wider bg-black/60 w-full py-1 rounded-lg border border-amber-500/30 shadow-[inset_0_0_10px_rgba(245,158,11,0.15)]">
+                      {analysis.measuredCurrent.toFixed(3)} <span className="text-xs text-amber-400/80 font-sans">A</span>
                     </div>
-                    <div className="w-full flex justify-between px-2 text-[9px] font-mono border-t border-slate-200 pt-1">
-                      <span className="text-rose-600 font-bold">+ (RED)</span>
-                      <span className="text-slate-600 font-bold">- (BLK)</span>
+                    <div className="w-full flex justify-between px-2 text-[9px] font-mono border-t border-white/10 pt-1">
+                      <span className="text-rose-400 font-bold">+ (RED)</span>
+                      <span className="text-slate-400 font-bold">- (BLK)</span>
                     </div>
                   </div>
                 )}
 
                 {/* 4. Resistor Module */}
                 {comp.type === 'resistor' && (
-                  <div className={`w-40 h-24 rounded-xl bg-white border border-slate-300 p-2 flex flex-col justify-between items-center text-center transition-all shadow-md ${
-                    analysis.powerWatts > 0.4 ? 'border-amber-400' : ''
+                  <div className={`w-40 h-24 rounded-xl bg-slate-900/90 border p-2 flex flex-col justify-between items-center text-center transition-all shadow-[0_8px_25px_rgba(0,0,0,0.6)] backdrop-blur-md ${
+                    analysis.powerWatts > 0.4 ? 'border-amber-500/80 shadow-[0_0_15px_rgba(245,158,11,0.3)]' : 'border-cyan-500/40'
                   }`}>
                     <div className="flex items-center justify-between w-full px-1">
-                      <div className="flex items-center gap-1 text-[10px] font-bold text-sky-800 font-mono">
-                        <Cpu className="w-3 h-3 text-sky-600" />
+                      <div className="flex items-center gap-1 text-[10px] font-bold text-cyan-400 font-mono">
+                        <Cpu className="w-3 h-3 text-cyan-400" />
                         <span>RESISTOR (R)</span>
                       </div>
                       {analysis.powerWatts > 0 && (
-                        <span className="text-[8px] font-mono text-amber-800 flex items-center font-bold">
-                          <Flame className="w-2.5 h-2.5 mr-0.5 text-amber-600" />
+                        <span className="text-[8px] font-mono text-amber-400 flex items-center font-bold">
+                          <Flame className="w-2.5 h-2.5 mr-0.5 text-amber-500" />
                           {analysis.powerWatts.toFixed(2)}W
                         </span>
                       )}
                     </div>
-                    <div className="w-30 h-6 bg-slate-100 rounded border border-slate-300 flex items-center justify-around px-2 shadow-inner relative overflow-hidden">
+                    <div className="w-30 h-6 bg-slate-800 rounded border border-slate-700 flex items-center justify-around px-2 shadow-inner relative overflow-hidden">
                       {analysis.powerWatts > 0.2 && (
                         <div 
-                          className="absolute inset-0 bg-red-400/20 animate-pulse pointer-events-none"
+                          className="absolute inset-0 bg-red-500/30 animate-pulse pointer-events-none"
                           style={{ opacity: Math.min(1, analysis.powerWatts / 1.5) }}
                         />
                       )}
@@ -438,7 +438,7 @@ export const CircuitCanvas = ({
                       <div className="w-2 h-full bg-amber-700" />
                       <div className="w-2 h-full bg-yellow-500" />
                     </div>
-                    <div className="font-mono text-[11px] font-bold text-sky-800">
+                    <div className="font-mono text-[11px] font-bold text-cyan-300">
                       R = {resistance} Ω (±5%)
                     </div>
                   </div>
@@ -446,20 +446,20 @@ export const CircuitCanvas = ({
 
                 {/* 5. Voltmeter Module */}
                 {comp.type === 'voltmeter' && (
-                  <div className="w-36 h-26 rounded-xl bg-white border border-slate-300 p-2.5 flex flex-col justify-between items-center text-center shadow-md">
+                  <div className="w-36 h-26 rounded-xl bg-slate-900/90 border border-cyan-500/40 p-2.5 flex flex-col justify-between items-center text-center shadow-[0_8px_25px_rgba(0,0,0,0.6)] backdrop-blur-md">
                     <div className="flex items-center justify-between w-full px-1">
-                      <div className="flex items-center gap-1 text-[10px] font-bold text-emerald-800 font-mono">
-                        <Activity className="w-3 h-3 text-emerald-600" />
+                      <div className="flex items-center gap-1 text-[10px] font-bold text-cyan-400 font-mono">
+                        <Activity className="w-3 h-3 text-cyan-400" />
                         <span>VOLTMETER (V)</span>
                       </div>
-                      <span className="text-[8px] font-mono px-1 rounded bg-emerald-100 text-emerald-800">PARALLEL</span>
+                      <span className="text-[8px] font-mono px-1 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">PARALLEL</span>
                     </div>
-                    <div className="font-digital text-xl font-bold text-emerald-800 tracking-wider bg-emerald-50/60 w-full py-1 rounded border border-emerald-200 shadow-inner">
-                      {analysis.measuredVoltage.toFixed(2)} <span className="text-xs text-emerald-700 font-sans">V</span>
+                    <div className="font-mono text-xl font-bold text-cyan-400 tracking-wider bg-black/60 w-full py-1 rounded-lg border border-cyan-500/30 shadow-[inset_0_0_10px_rgba(6,182,212,0.15)]">
+                      {analysis.measuredVoltage.toFixed(2)} <span className="text-xs text-cyan-400/80 font-sans">V</span>
                     </div>
-                    <div className="w-full flex justify-between px-2 text-[9px] font-mono border-t border-slate-200 pt-1">
-                      <span className="text-rose-600 font-bold">+ (RED)</span>
-                      <span className="text-slate-600 font-bold">- (BLK)</span>
+                    <div className="w-full flex justify-between px-2 text-[9px] font-mono border-t border-white/10 pt-1">
+                      <span className="text-rose-400 font-bold">+ (RED)</span>
+                      <span className="text-slate-400 font-bold">- (BLK)</span>
                     </div>
                   </div>
                 )}

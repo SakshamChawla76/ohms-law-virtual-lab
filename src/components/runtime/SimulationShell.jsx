@@ -155,9 +155,10 @@ export const SimulationShell = ({
       </header>
 
       {/* Main Simulation Content Area */}
-      <main className="flex-1 w-full max-w-7xl mx-auto px-4 py-4">
+      <main className="flex-1 w-full max-w-7xl mx-auto px-4 py-4 simulation-container">
         {children}
       </main>
     </div>
   );
 };
+

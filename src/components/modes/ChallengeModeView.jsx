@@ -60,24 +60,24 @@ export const ChallengeModeView = ({
   };
 
   return (
-    <div className="w-full rounded-3xl bg-white border border-slate-200 p-5 space-y-4 shadow-sm text-slate-800">
+    <div className="w-full rounded-2xl glass-card p-5 space-y-4 select-none border border-white/10 shadow-xl bg-slate-900/60 backdrop-blur-xl text-slate-100">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+      <div className="flex items-center justify-between border-b border-white/10 pb-3">
         <div className="flex items-center gap-2">
-          <div className="p-1.5 rounded-xl bg-amber-50 text-amber-700">
+          <div className="p-1.5 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-400">
             <Target className="w-4 h-4" />
           </div>
           <div>
-            <h3 className="text-sm font-bold text-slate-900 uppercase font-mono">
+            <h3 className="text-sm font-bold text-slate-100 uppercase font-mono">
               Diagnostic & Circuit Challenges
             </h3>
-            <p className="text-[11px] text-slate-500">
+            <p className="text-[11px] text-slate-400">
               Apply scientific reasoning and troubleshoot real circuit anomalies.
             </p>
           </div>
         </div>
 
-        <span className="text-xs font-mono px-2.5 py-1 rounded-full bg-slate-100 text-amber-800 border border-amber-300 font-semibold">
+        <span className="text-xs font-mono px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 font-bold shadow-[0_0_8px_rgba(245,158,11,0.2)]">
           {completedChallenges.length} / {CHALLENGE_SCENARIOS.length} Completed
         </span>
       </div>
@@ -96,28 +96,28 @@ export const ChallengeModeView = ({
                 setFeedback(null);
                 onSelectChallenge(scenario);
               }}
-              className={`p-3.5 rounded-2xl border text-left transition-all flex flex-col justify-between gap-2 shadow-sm ${
+              className={`p-4 rounded-2xl border text-left transition-all flex flex-col justify-between gap-2 shadow-sm ${
                 isSelected
-                  ? 'bg-amber-50/80 border-amber-400 text-slate-900'
-                  : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
+                  ? 'bg-amber-500/15 border-amber-500/60 text-slate-100 shadow-[0_0_15px_rgba(245,158,11,0.2)]'
+                  : 'bg-black/30 border-white/5 text-slate-300 hover:bg-white/5 hover:border-white/15'
               }`}
             >
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-amber-900 font-mono">
+                <span className="text-xs font-bold text-amber-300 font-mono">
                   {scenario.title}
                 </span>
                 {isDone ? (
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
                 ) : (
-                  <Target className="w-4 h-4 text-slate-400" />
+                  <Target className="w-4 h-4 text-slate-500" />
                 )}
               </div>
-              <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed">
+              <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">
                 {scenario.scenario}
               </p>
-              <div className="text-[10px] font-mono text-slate-500 flex items-center gap-1">
+              <div className="text-[10px] font-mono text-slate-400 flex items-center gap-1">
                 <span>Criteria:</span>
-                <span className="text-blue-700 font-medium truncate">{scenario.completionCriteria}</span>
+                <span className="text-cyan-400 font-medium truncate">{scenario.completionCriteria}</span>
               </div>
             </button>
           );
@@ -126,27 +126,27 @@ export const ChallengeModeView = ({
 
       {/* Active Challenge Assessment Panel */}
       {activeChallenge && (
-        <div className="p-4 rounded-2xl bg-amber-50/50 border border-amber-300 space-y-3 animate-fadeIn">
+        <div className="p-4 rounded-2xl bg-amber-950/40 border border-amber-500/30 space-y-3 animate-fadeIn">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-amber-600" />
-              <span className="font-bold text-sm text-slate-900">{activeChallenge.title}</span>
+              <Sparkles className="w-4 h-4 text-amber-400" />
+              <span className="font-bold text-sm text-slate-100">{activeChallenge.title}</span>
             </div>
             <button
               onClick={checkSolution}
-              className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition-all"
+              className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white font-bold text-xs flex items-center gap-1.5 shadow-[0_0_12px_rgba(245,158,11,0.3)] transition-all border-none"
             >
               <Play className="w-3.5 h-3.5 fill-current" />
               Verify My Solution
             </button>
           </div>
 
-          <p className="text-xs text-slate-700 bg-white p-3 rounded-xl border border-slate-200 leading-relaxed font-mono">
+          <p className="text-xs text-slate-200 bg-black/40 p-3.5 rounded-xl border border-white/5 leading-relaxed font-mono">
             {activeChallenge.scenario}
           </p>
 
           {feedback && (
-            <div className="p-3 rounded-xl bg-white border border-slate-200 text-xs font-mono animate-fadeIn text-slate-800 shadow-sm">
+            <div className="p-3.5 rounded-xl bg-black/60 border border-amber-500/40 text-xs font-mono animate-fadeIn text-amber-200 shadow-md">
               {feedback}
             </div>
           )}
