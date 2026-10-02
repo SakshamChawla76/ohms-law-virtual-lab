@@ -20,6 +20,7 @@ import { sounds } from '../../engine/audioEffects';
 export const SimulationHub = ({ onSelectSimulation }) => {
   const [activeBranch, setActiveBranch] = useState('physics'); // 'physics' | 'chemistry'
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedDifficulty, setSelectedDifficulty] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
 
   // Handle branch switch
@@ -27,6 +28,7 @@ export const SimulationHub = ({ onSelectSimulation }) => {
     sounds.playSnap();
     setActiveBranch(branch);
     setSelectedCategory('all');
+    setSelectedDifficulty('all');
   };
 
   // Categories for current branch
@@ -41,6 +43,9 @@ export const SimulationHub = ({ onSelectSimulation }) => {
       // Category filter
       if (selectedCategory !== 'all' && sim.category !== selectedCategory) return false;
 
+      // Difficulty filter
+      if (selectedDifficulty !== 'all' && sim.difficulty !== selectedDifficulty) return false;
+
       // Search query filter
       if (searchQuery.trim()) {
         const query = searchQuery.toLowerCase().trim();
@@ -54,7 +59,7 @@ export const SimulationHub = ({ onSelectSimulation }) => {
 
       return true;
     });
-  }, [activeBranch, selectedCategory, searchQuery]);
+  }, [activeBranch, selectedCategory, selectedDifficulty, searchQuery]);
 
   // Featured Simulation for the current branch
   const featuredSim = useMemo(() => {
@@ -192,6 +197,49 @@ export const SimulationHub = ({ onSelectSimulation }) => {
           </div>
         )}
 
+        {/* Platform Overview KPI Badges */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="p-3 rounded-xl bg-white border border-slate-200 shadow-sm flex items-center gap-3 text-left">
+            <div className="w-9 h-9 rounded-lg bg-blue-50 text-blue-700 flex items-center justify-center font-bold font-mono text-sm border border-blue-200">
+              22
+            </div>
+            <div>
+              <div className="text-xs font-bold font-sans text-slate-800">Interactive Labs</div>
+              <div className="text-[10px] text-slate-500 font-mono">Physics & Chemistry</div>
+            </div>
+          </div>
+
+          <div className="p-3 rounded-xl bg-white border border-slate-200 shadow-sm flex items-center gap-3 text-left">
+            <div className="w-9 h-9 rounded-lg bg-amber-50 text-amber-700 flex items-center justify-center font-bold font-mono text-sm border border-amber-200">
+              60
+            </div>
+            <div>
+              <div className="text-xs font-bold font-sans text-slate-800">FPS Physics Canvas</div>
+              <div className="text-[10px] text-slate-500 font-mono">Hardware Accelerated</div>
+            </div>
+          </div>
+
+          <div className="p-3 rounded-xl bg-white border border-slate-200 shadow-sm flex items-center gap-3 text-left">
+            <div className="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold font-mono text-sm border border-emerald-200">
+              FX
+            </div>
+            <div>
+              <div className="text-xs font-bold font-sans text-slate-800">Web Audio Synth</div>
+              <div className="text-[10px] text-slate-500 font-mono">Dynamic Soundtracks</div>
+            </div>
+          </div>
+
+          <div className="p-3 rounded-xl bg-white border border-slate-200 shadow-sm flex items-center gap-3 text-left">
+            <div className="w-9 h-9 rounded-lg bg-purple-50 text-purple-700 flex items-center justify-center font-bold font-mono text-sm border border-purple-200">
+              AP
+            </div>
+            <div>
+              <div className="text-xs font-bold font-sans text-slate-800">NGSS Standards</div>
+              <div className="text-[10px] text-slate-500 font-mono">Inquiry & Applications</div>
+            </div>
+          </div>
+        </div>
+
         {/* Search & Topic Filters Toolbar */}
         <div className="space-y-3 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
           {/* Top Search Input */}
@@ -221,8 +269,9 @@ export const SimulationHub = ({ onSelectSimulation }) => {
             </div>
           </div>
 
-          {/* Category Filter Chips */}
+          {/* Category & Topic Filter Chips */}
           <div className="flex flex-wrap items-center gap-1.5 pt-1 border-t border-slate-100">
+            <span className="text-[11px] font-mono font-bold text-slate-500 uppercase mr-1">Topic:</span>
             {categories.map((cat) => (
               <button
                 key={cat.id}
@@ -237,6 +286,27 @@ export const SimulationHub = ({ onSelectSimulation }) => {
                 }`}
               >
                 {cat.name}
+              </button>
+            ))}
+          </div>
+
+          {/* Difficulty Filter Chips */}
+          <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-slate-100">
+            <span className="text-[11px] font-mono font-bold text-slate-500 uppercase mr-1">Level:</span>
+            {['all', 'Foundational', 'Core Lab', 'Intermediate', 'Advanced'].map((diff) => (
+              <button
+                key={diff}
+                onClick={() => {
+                  sounds.playTick();
+                  setSelectedDifficulty(diff);
+                }}
+                className={`px-2.5 py-0.5 rounded-md text-[11px] font-mono transition-all ${
+                  selectedDifficulty === diff
+                    ? 'bg-amber-500 text-white font-bold shadow-sm'
+                    : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200'
+                }`}
+              >
+                {diff === 'all' ? 'All Difficulties' : diff}
               </button>
             ))}
           </div>

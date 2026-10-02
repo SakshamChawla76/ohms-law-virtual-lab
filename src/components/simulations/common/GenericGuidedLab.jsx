@@ -20,7 +20,9 @@ import {
   Scale,
   BatteryCharging
 } from 'lucide-react';
+import confetti from 'canvas-confetti';
 import { sounds } from '../../../engine/audioEffects';
+import { SIMULATION_DETAILS } from '../../../data/simulationDetails';
 
 /**
  * Universal High-Fidelity Interactive STEM Engine
@@ -31,6 +33,9 @@ export const GenericGuidedLab = ({ simulation, activeTab, onUpdateScore }) => {
   const simId = simulation?.id || 'default';
   const branch = simulation?.branch || 'physics';
   const category = simulation?.category || 'mechanics';
+  const simDetails = SIMULATION_DETAILS[simId];
+
+  const [isFlashlightOn, setIsFlashlightOn] = useState(true);
 
   // --- Specific Simulation States ---
   // 1. Newton's Cannon
@@ -127,6 +132,43 @@ export const GenericGuidedLab = ({ simulation, activeTab, onUpdateScore }) => {
     stateRef.current.bubbles = [];
     stateRef.current.crystals = [];
     setIsPlaying(true);
+  };
+
+  const applyPreset = (preset) => {
+    sounds.playClick();
+    if (preset.vel !== undefined) setCannonVel(preset.vel);
+    if (preset.alt !== undefined) setCannonAlt(preset.alt);
+    if (preset.h !== undefined) setPersonHeightCm(preset.h);
+    if (preset.mh !== undefined) setMirrorHeightCm(preset.mh);
+    if (preset.off !== undefined) setMirrorOffsetY(preset.off);
+    if (preset.dist !== undefined) setPersonDistM(preset.dist);
+    if (preset.L !== undefined) setPoleLengthM(preset.L);
+    if (preset.M !== undefined) setPoleEndMassKg(preset.M);
+    if (preset.Th !== undefined) setTempHot(preset.Th);
+    if (preset.Tc !== undefined) setTempCold(preset.Tc);
+    if (preset.rpm !== undefined) setEngineRpm(preset.rpm);
+    if (preset.salt !== undefined) setSaltType(preset.salt);
+    if (preset.grams !== undefined) setDissolvedSaltGrams(preset.grams);
+    if (preset.conc !== undefined) setElectrolyteConc(preset.conc);
+    if (preset.load !== undefined) setBatteryLoad(preset.load);
+    if (preset.eq !== undefined) setEquationPreset(preset.eq);
+    if (preset.c1 !== undefined) setC1(preset.c1);
+    if (preset.c2 !== undefined) setC2(preset.c2);
+    if (preset.c3 !== undefined) setC3(preset.c3);
+    if (preset.c4 !== undefined) setC4(preset.c4);
+    if (preset.sugar !== undefined) setSugarAddedGrams(preset.sugar);
+    if (preset.sealed !== undefined) setIsBottleSealed(preset.sealed);
+    if (preset.press !== undefined) setSodaPressureAtm(preset.press);
+    if (preset.volts !== undefined) setBulbVolts(preset.volts);
+    if (preset.res !== undefined) setFilamentRes(preset.res);
+    if (preset.rate !== undefined) setBeamIntensity(preset.rate);
+    if (preset.thick !== undefined) setFoilThickness(preset.thick);
+    if (preset.acc !== undefined) setElevAcc(preset.acc);
+    if (preset.mass !== undefined) setPersonMass(preset.mass);
+    if (preset.temp !== undefined) {
+      if (simId === 'rock-candy-solubility') setSolutionTempC(preset.temp);
+      else if (simId === 'flat-vs-fizzy-soda') setSodaTempC(preset.temp);
+    }
   };
 
   // 60 FPS Multi-Model Canvas Engine
@@ -915,9 +957,10 @@ export const GenericGuidedLab = ({ simulation, activeTab, onUpdateScore }) => {
       // 10. FLASHLIGHT & CIRCUIT JOULE HEATING
       // ============================================================
       else if (simId === 'flashlight') {
-        const pwr = Math.pow(bulbVolts, 2) / filamentRes;
-        const cur = bulbVolts / filamentRes;
+        const pwr = isFlashlightOn ? (Math.pow(bulbVolts, 2) / filamentRes) : 0;
+        const cur = isFlashlightOn ? (bulbVolts / filamentRes) : 0;
 
+        // Battery Cell
         ctx.fillStyle = '#334155';
         ctx.fillRect(80, 140, 60, 80);
         ctx.fillStyle = '#ef4444';
@@ -926,26 +969,30 @@ export const GenericGuidedLab = ({ simulation, activeTab, onUpdateScore }) => {
         ctx.font = 'bold 11px monospace';
         ctx.fillText(`${bulbVolts}V`, 95, 185);
 
-        const bulbX = 460;
+        const bulbX = 480;
         const bulbY = 180;
-        const glowRad = Math.min(120, 20 + pwr * 8);
+        const glowRad = isFlashlightOn ? Math.min(130, 25 + pwr * 8) : 0;
 
-        const radGrad = ctx.createRadialGradient(bulbX, bulbY, 5, bulbX, bulbY, glowRad);
-        radGrad.addColorStop(0, 'rgba(253, 224, 71, 0.8)');
-        radGrad.addColorStop(0.5, 'rgba(250, 204, 21, 0.4)');
-        radGrad.addColorStop(1, 'rgba(250, 204, 21, 0)');
-        ctx.fillStyle = radGrad;
-        ctx.beginPath();
-        ctx.arc(bulbX, bulbY, glowRad, 0, Math.PI * 2);
-        ctx.fill();
+        if (isFlashlightOn && glowRad > 0) {
+          const radGrad = ctx.createRadialGradient(bulbX, bulbY, 5, bulbX, bulbY, glowRad);
+          radGrad.addColorStop(0, 'rgba(253, 224, 71, 0.85)');
+          radGrad.addColorStop(0.4, 'rgba(250, 204, 21, 0.45)');
+          radGrad.addColorStop(1, 'rgba(250, 204, 21, 0)');
+          ctx.fillStyle = radGrad;
+          ctx.beginPath();
+          ctx.arc(bulbX, bulbY, glowRad, 0, Math.PI * 2);
+          ctx.fill();
+        }
 
-        ctx.strokeStyle = '#94a3b8';
-        ctx.lineWidth = 2;
+        // Glass Bulb Shell
+        ctx.strokeStyle = isFlashlightOn ? '#ca8a04' : '#94a3b8';
+        ctx.lineWidth = 2.5;
         ctx.beginPath();
         ctx.arc(bulbX, bulbY, 36, 0, Math.PI * 2);
         ctx.stroke();
 
-        ctx.strokeStyle = pwr > 5 ? '#f59e0b' : '#64748b';
+        // Filament
+        ctx.strokeStyle = isFlashlightOn ? (pwr > 6 ? '#f59e0b' : '#eab308') : '#64748b';
         ctx.lineWidth = 3;
         ctx.beginPath();
         ctx.moveTo(bulbX - 12, bulbY + 20);
@@ -955,13 +1002,47 @@ export const GenericGuidedLab = ({ simulation, activeTab, onUpdateScore }) => {
         ctx.lineTo(bulbX + 12, bulbY + 20);
         ctx.stroke();
 
+        // Circuit Wires
+        ctx.strokeStyle = '#2563eb';
+        ctx.lineWidth = 3;
+        // From battery to switch
+        ctx.beginPath();
+        ctx.moveTo(148, 180);
+        ctx.lineTo(240, 100);
+        ctx.stroke();
+
+        // Interactive Knife Switch on Top Wire
+        ctx.fillStyle = '#64748b';
+        ctx.beginPath();
+        ctx.arc(240, 100, 5, 0, Math.PI * 2);
+        ctx.arc(320, 100, 5, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.strokeStyle = isFlashlightOn ? '#10b981' : '#ef4444';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(240, 100);
+        if (isFlashlightOn) {
+          ctx.lineTo(320, 100);
+        } else {
+          ctx.lineTo(300, 70); // Tilted open knife blade
+        }
+        ctx.stroke();
+
+        ctx.font = 'bold 10px monospace';
+        ctx.fillStyle = isFlashlightOn ? '#059669' : '#dc2626';
+        ctx.fillText(isFlashlightOn ? 'SWITCH CLOSED (ON)' : 'SWITCH OPEN (OFF)', 230, 60);
+
+        // From switch to bulb
         ctx.strokeStyle = '#2563eb';
         ctx.lineWidth = 3;
         ctx.beginPath();
-        ctx.moveTo(148, 180);
+        ctx.moveTo(320, 100);
         ctx.lineTo(bulbX, 100);
         ctx.lineTo(bulbX, bulbY - 36);
         ctx.stroke();
+
+        // Return path
         ctx.beginPath();
         ctx.moveTo(bulbX, bulbY + 36);
         ctx.lineTo(bulbX, 260);
@@ -969,12 +1050,20 @@ export const GenericGuidedLab = ({ simulation, activeTab, onUpdateScore }) => {
         ctx.lineTo(80, 180);
         ctx.stroke();
 
+        // Electrical Data Readouts
         ctx.fillStyle = '#0f172a';
         ctx.font = 'bold 12px Inter, sans-serif';
-        ctx.fillText(`Joule Heating Power Dissipation (P = V²/R): ${pwr.toFixed(2)} W`, 40, 50);
+        ctx.fillText(`Joule Heating Power (P = V²/R): ${pwr.toFixed(2)} W`, 40, 45);
         ctx.font = '11px monospace';
-        ctx.fillStyle = '#2563eb';
-        ctx.fillText(`Electric Current (I = V/R): ${cur.toFixed(2)} A`, 40, 70);
+        ctx.fillStyle = isFlashlightOn ? '#2563eb' : '#64748b';
+        ctx.fillText(`Circuit Current (I = V/R): ${cur.toFixed(2)} A`, 40, 65);
+        ctx.fillStyle = isFlashlightOn ? (pwr > 10 ? '#dc2626' : '#16a34a') : '#dc2626';
+        ctx.fillText(
+          isFlashlightOn 
+            ? (pwr > 10 ? '⚠ INTENSE FILAMENT HEATING: High wattage produces brilliant incandescent radiation' : '✓ NORMAL OPERATION: Steady incandescent lumen emission')
+            : '⭕ CIRCUIT DISCONNECTED: Zero current flows through open switch gap',
+          40, 85
+        );
       }
 
       // ============================================================
@@ -1096,28 +1185,48 @@ export const GenericGuidedLab = ({ simulation, activeTab, onUpdateScore }) => {
       // 12. ELEVATOR APPARENT WEIGHT & NORMAL FORCE
       // ============================================================
       else if (simId === 'elevator') {
+        const cabOffsetY = elevAcc === 0 ? 0 : Math.sin(t * (Math.abs(elevAcc) + 1.2)) * (Math.abs(elevAcc) > 7 ? 22 : 12);
         const cabX = 260;
-        const cabY = 70;
+        const cabY = 70 + cabOffsetY;
         const cabW = 240;
         const cabH = 240;
 
+        // Elevator Shaft
         ctx.strokeStyle = '#cbd5e1';
         ctx.lineWidth = 4;
         ctx.strokeRect(cabX - 20, 20, cabW + 40, height - 40);
 
-        ctx.strokeStyle = '#64748b';
-        ctx.lineWidth = 6;
-        ctx.beginPath();
-        ctx.moveTo(cabX + cabW / 2, 20);
-        ctx.lineTo(cabX + cabW / 2, cabY);
-        ctx.stroke();
+        // Suspension Cable
+        if (elevAcc > -9.0) {
+          ctx.strokeStyle = '#64748b';
+          ctx.lineWidth = 6;
+          ctx.beginPath();
+          ctx.moveTo(cabX + cabW / 2, 20);
+          ctx.lineTo(cabX + cabW / 2, cabY);
+          ctx.stroke();
+        } else {
+          // Snapped cable representation
+          ctx.strokeStyle = '#ef4444';
+          ctx.lineWidth = 4;
+          ctx.beginPath();
+          ctx.moveTo(cabX + cabW / 2, 20);
+          ctx.lineTo(cabX + cabW / 2, 35);
+          ctx.moveTo(cabX + cabW / 2, cabY - 15);
+          ctx.lineTo(cabX + cabW / 2, cabY);
+          ctx.stroke();
+          ctx.fillStyle = '#dc2626';
+          ctx.font = 'bold 11px monospace';
+          ctx.fillText('⚡ CABLE SNAPPED!', cabX + cabW / 2 + 10, 35);
+        }
 
+        // Cab
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(cabX, cabY, cabW, cabH);
         ctx.strokeStyle = '#334155';
         ctx.lineWidth = 3;
         ctx.strokeRect(cabX, cabY, cabW, cabH);
 
+        // Scale
         const scaleX = cabX + 80;
         const scaleY = cabY + cabH - 18;
         ctx.fillStyle = '#38bdf8';
@@ -1126,8 +1235,12 @@ export const GenericGuidedLab = ({ simulation, activeTab, onUpdateScore }) => {
         ctx.lineWidth = 2;
         ctx.strokeRect(scaleX, scaleY, 80, 14);
 
+        // Person
+        const isFreeFall = elevAcc <= -9.0;
+        const personFloatOffset = isFreeFall ? 16 : 0;
         const personX = scaleX + 40;
-        const personY = scaleY - 60;
+        const personY = scaleY - 60 - personFloatOffset;
+
         ctx.fillStyle = '#1e293b';
         ctx.beginPath();
         ctx.arc(personX, personY - 20, 12, 0, Math.PI * 2);
@@ -1137,16 +1250,18 @@ export const GenericGuidedLab = ({ simulation, activeTab, onUpdateScore }) => {
         ctx.strokeStyle = '#1e293b';
         ctx.beginPath();
         ctx.moveTo(personX - 5, personY + 32);
-        ctx.lineTo(personX - 10, scaleY);
+        ctx.lineTo(personX - 10, scaleY - personFloatOffset);
         ctx.moveTo(personX + 5, personY + 32);
-        ctx.lineTo(personX + 10, scaleY);
+        ctx.lineTo(personX + 10, scaleY - personFloatOffset);
         ctx.stroke();
 
         const g = 9.81;
         const trueWeight = personMass * g;
-        const normalForce = personMass * (g + elevAcc);
+        const normalForce = isFreeFall ? 0 : Math.max(0, personMass * (g + elevAcc));
         const apparentWeightKg = normalForce / g;
 
+        // Force vectors
+        // Gravity W = mg (always downward)
         ctx.strokeStyle = '#ef4444';
         ctx.lineWidth = 3;
         ctx.beginPath();
@@ -1162,23 +1277,39 @@ export const GenericGuidedLab = ({ simulation, activeTab, onUpdateScore }) => {
         ctx.font = 'bold 10px monospace';
         ctx.fillText(`W = mg (${trueWeight.toFixed(0)} N)`, personX + 12, personY + 50);
 
-        const arrowLenN = Math.max(20, Math.min(100, (normalForce / trueWeight) * 55));
-        ctx.strokeStyle = '#10b981';
-        ctx.beginPath();
-        ctx.moveTo(personX, personY + 10);
-        ctx.lineTo(personX, personY + 10 - arrowLenN);
-        ctx.stroke();
-        ctx.fillStyle = '#10b981';
-        ctx.beginPath();
-        ctx.moveTo(personX, personY + 10 - arrowLenN - 5);
-        ctx.lineTo(personX - 4, personY + 10 - arrowLenN + 5);
-        ctx.lineTo(personX + 4, personY + 10 - arrowLenN + 5);
-        ctx.fill();
-        ctx.fillText(`F_N = m(g+a) (${normalForce.toFixed(0)} N)`, personX + 12, personY - 20);
+        // Normal Force F_N = m(g + a) (upward)
+        if (normalForce > 0) {
+          const arrowLenN = Math.max(15, Math.min(100, (normalForce / trueWeight) * 55));
+          ctx.strokeStyle = '#10b981';
+          ctx.beginPath();
+          ctx.moveTo(personX, personY + 10);
+          ctx.lineTo(personX, personY + 10 - arrowLenN);
+          ctx.stroke();
+          ctx.fillStyle = '#10b981';
+          ctx.beginPath();
+          ctx.moveTo(personX, personY + 10 - arrowLenN - 5);
+          ctx.lineTo(personX - 4, personY + 10 - arrowLenN + 5);
+          ctx.lineTo(personX + 4, personY + 10 - arrowLenN + 5);
+          ctx.fill();
+          ctx.fillText(`F_N = m(g+a) (${normalForce.toFixed(0)} N)`, personX + 12, personY - 20);
+        }
 
+        // Telemetry Readouts
         ctx.fillStyle = '#0f172a';
         ctx.font = 'bold 12px Inter, sans-serif';
-        ctx.fillText(`Scale Reading: ${apparentWeightKg.toFixed(1)} kg`, 40, 50);
+        ctx.fillText(`Digital Scale Reading: ${apparentWeightKg.toFixed(1)} kg (${normalForce.toFixed(0)} N)`, 40, 45);
+        ctx.font = '11px monospace';
+        ctx.fillStyle = isFreeFall ? '#ef4444' : (normalForce > trueWeight ? '#2563eb' : '#059669');
+        ctx.fillText(
+          isFreeFall
+            ? '⚡ COMPLETE FREE FALL (a = -g): Scale reads 0 kg — Total Apparent Weightlessness!'
+            : (elevAcc > 0 
+                ? `↑ ACCELERATING UPWARD: Apparent weight increases (+${(apparentWeightKg - personMass).toFixed(1)} kg) due to floor push` 
+                : (elevAcc < 0 
+                    ? `↓ DECELERATING/FALLING: Apparent weight decreases (-${(personMass - apparentWeightKg).toFixed(1)} kg)` 
+                    : '⚖ CONSTANT VELOCITY: Scale equals resting gravitational mass (F_N = mg)')),
+          40, 65
+        );
       }
 
       // ============================================================
@@ -1220,6 +1351,7 @@ export const GenericGuidedLab = ({ simulation, activeTab, onUpdateScore }) => {
     isBottleSealed, sodaPressureAtm, sodaTempC,
     beamIntensity, foilThickness,
     paramValA, paramValB, 
+    isFlashlightOn,
     isPlaying
   ]);
 
@@ -1294,6 +1426,32 @@ export const GenericGuidedLab = ({ simulation, activeTab, onUpdateScore }) => {
               </button>
             </div>
           </div>
+
+          {/* Quick Experiment Presets Toolbar */}
+          {simDetails?.presets && simDetails.presets.length > 0 && (
+            <div className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-sm space-y-2">
+              <div className="flex items-center gap-1.5 text-xs font-mono font-bold text-slate-700 uppercase">
+                <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+                <span>Quick Experiment Presets:</span>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {simDetails.presets.map((preset, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => applyPreset(preset)}
+                    className="p-2.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-amber-50 hover:border-amber-300 text-left transition-all group"
+                  >
+                    <div className="text-xs font-mono font-bold text-slate-800 group-hover:text-amber-900 line-clamp-1">
+                      {preset.name}
+                    </div>
+                    <div className="text-[10px] text-slate-500 group-hover:text-amber-800 line-clamp-2 mt-0.5 font-sans leading-tight">
+                      {preset.desc}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* HTML5 Canvas Viewport */}
           <div className="relative rounded-2xl border border-slate-300 bg-white shadow-sm overflow-hidden">
@@ -1680,109 +1838,185 @@ export const GenericGuidedLab = ({ simulation, activeTab, onUpdateScore }) => {
           )}
 
           {simId === 'newtons-cannon' && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-sm space-y-2">
-                <div className="flex justify-between items-center text-xs font-mono">
-                  <span className="font-bold text-slate-700">Launch Speed (v₀):</span>
-                  <span className="font-bold text-blue-700">{cannonVel} m/s ({(cannonVel / 1000).toFixed(1)} km/s)</span>
-                </div>
-                <input
-                  type="range"
-                  min={5000}
-                  max={11500}
-                  step={100}
-                  value={cannonVel}
-                  onChange={(e) => setCannonVel(Number(e.target.value))}
-                  className="w-full accent-blue-600 cursor-pointer"
-                />
+            <div className="space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-2 p-3 bg-white rounded-xl border border-slate-200 shadow-sm">
+                <span className="text-xs font-mono font-bold text-slate-700">Cannon Controls:</span>
+                <button
+                  onClick={() => {
+                    sounds.playExplosion();
+                    stateRef.current.step = 0;
+                  }}
+                  className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-mono font-bold shadow-sm flex items-center gap-1.5 transition-all active:scale-95"
+                >
+                  <Target className="w-3.5 h-3.5" />
+                  <span>🎯 Fire Orbital Cannon</span>
+                </button>
               </div>
 
-              <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-sm space-y-2">
-                <div className="flex justify-between items-center text-xs font-mono">
-                  <span className="font-bold text-slate-700">Mountaintop Altitude (h):</span>
-                  <span className="font-bold text-indigo-700">{cannonAlt} km</span>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-sm space-y-2">
+                  <div className="flex justify-between items-center text-xs font-mono">
+                    <span className="font-bold text-slate-700">Launch Speed (v₀):</span>
+                    <span className="font-bold text-blue-700">{cannonVel} m/s ({(cannonVel / 1000).toFixed(1)} km/s)</span>
+                  </div>
+                  <input
+                    type="range"
+                    min={5000}
+                    max={11500}
+                    step={100}
+                    value={cannonVel}
+                    onChange={(e) => setCannonVel(Number(e.target.value))}
+                    className="w-full accent-blue-600 cursor-pointer"
+                  />
                 </div>
-                <input
-                  type="range"
-                  min={100}
-                  max={800}
-                  step={20}
-                  value={cannonAlt}
-                  onChange={(e) => setCannonAlt(Number(e.target.value))}
-                  className="w-full accent-indigo-600 cursor-pointer"
-                />
+
+                <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-sm space-y-2">
+                  <div className="flex justify-between items-center text-xs font-mono">
+                    <span className="font-bold text-slate-700">Mountaintop Altitude (h):</span>
+                    <span className="font-bold text-indigo-700">{cannonAlt} km</span>
+                  </div>
+                  <input
+                    type="range"
+                    min={100}
+                    max={800}
+                    step={20}
+                    value={cannonAlt}
+                    onChange={(e) => setCannonAlt(Number(e.target.value))}
+                    className="w-full accent-indigo-600 cursor-pointer"
+                  />
+                </div>
               </div>
             </div>
           )}
 
           {simId === 'elevator' && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-sm space-y-2">
-                <div className="flex justify-between items-center text-xs font-mono">
-                  <span className="font-bold text-slate-700">Elevator Acceleration (a):</span>
-                  <span className="font-bold text-blue-700">{elevAcc} m/s²</span>
+            <div className="space-y-3">
+              <div className="p-3.5 bg-white rounded-xl border border-slate-200 shadow-sm space-y-2">
+                <span className="text-xs font-mono font-bold text-slate-700 uppercase">Elevator Motion Modes:</span>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  <button
+                    onClick={() => { sounds.playClick(); setElevAcc(3.0); }}
+                    className={`py-2 px-3 rounded-lg text-xs font-mono font-bold border transition-colors ${
+                      elevAcc === 3.0 ? 'bg-blue-600 text-white border-blue-700 shadow-sm' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                    }`}
+                  >
+                    🚀 Up (+3.0 m/s²)
+                  </button>
+                  <button
+                    onClick={() => { sounds.playClick(); setElevAcc(0.0); }}
+                    className={`py-2 px-3 rounded-lg text-xs font-mono font-bold border transition-colors ${
+                      elevAcc === 0.0 ? 'bg-emerald-600 text-white border-emerald-700 shadow-sm' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                    }`}
+                  >
+                    ⚖ Cruise (0 m/s²)
+                  </button>
+                  <button
+                    onClick={() => { sounds.playClick(); setElevAcc(-3.0); }}
+                    className={`py-2 px-3 rounded-lg text-xs font-mono font-bold border transition-colors ${
+                      elevAcc === -3.0 ? 'bg-amber-600 text-white border-amber-700 shadow-sm' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                    }`}
+                  >
+                    🛗 Down (-3.0 m/s²)
+                  </button>
+                  <button
+                    onClick={() => { sounds.playWhoosh(); setElevAcc(-9.8); }}
+                    className={`py-2 px-3 rounded-lg text-xs font-mono font-bold border transition-colors ${
+                      elevAcc === -9.8 ? 'bg-rose-600 text-white border-rose-700 shadow-sm' : 'bg-slate-50 text-rose-700 border-rose-200 hover:bg-rose-50'
+                    }`}
+                  >
+                    ⚡ Free Fall (-9.8)
+                  </button>
                 </div>
-                <input
-                  type="range"
-                  min={-4.0}
-                  max={4.0}
-                  step={0.5}
-                  value={elevAcc}
-                  onChange={(e) => setElevAcc(Number(e.target.value))}
-                  className="w-full accent-blue-600 cursor-pointer"
-                />
               </div>
 
-              <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-sm space-y-2">
-                <div className="flex justify-between items-center text-xs font-mono">
-                  <span className="font-bold text-slate-700">Passenger Mass (m):</span>
-                  <span className="font-bold text-slate-800">{personMass} kg</span>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-sm space-y-2">
+                  <div className="flex justify-between items-center text-xs font-mono">
+                    <span className="font-bold text-slate-700">Custom Acceleration (a):</span>
+                    <span className="font-bold text-blue-700">{elevAcc} m/s²</span>
+                  </div>
+                  <input
+                    type="range"
+                    min={-9.8}
+                    max={4.0}
+                    step={0.5}
+                    value={elevAcc}
+                    onChange={(e) => setElevAcc(Number(e.target.value))}
+                    className="w-full accent-blue-600 cursor-pointer"
+                  />
                 </div>
-                <input
-                  type="range"
-                  min={40}
-                  max={120}
-                  step={5}
-                  value={personMass}
-                  onChange={(e) => setPersonMass(Number(e.target.value))}
-                  className="w-full accent-slate-600 cursor-pointer"
-                />
+
+                <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-sm space-y-2">
+                  <div className="flex justify-between items-center text-xs font-mono">
+                    <span className="font-bold text-slate-700">Passenger Mass (m):</span>
+                    <span className="font-bold text-slate-800">{personMass} kg</span>
+                  </div>
+                  <input
+                    type="range"
+                    min={40}
+                    max={120}
+                    step={5}
+                    value={personMass}
+                    onChange={(e) => setPersonMass(Number(e.target.value))}
+                    className="w-full accent-slate-600 cursor-pointer"
+                  />
+                </div>
               </div>
             </div>
           )}
 
           {simId === 'flashlight' && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-sm space-y-2">
-                <div className="flex justify-between items-center text-xs font-mono">
-                  <span className="font-bold text-slate-700">DC Voltage (V):</span>
-                  <span className="font-bold text-blue-700">{bulbVolts.toFixed(1)} V</span>
-                </div>
-                <input
-                  type="range"
-                  min={1.5}
-                  max={12.0}
-                  step={0.5}
-                  value={bulbVolts}
-                  onChange={(e) => setBulbVolts(Number(e.target.value))}
-                  className="w-full accent-blue-600 cursor-pointer"
-                />
+            <div className="space-y-3">
+              <div className="p-3.5 bg-white rounded-xl border border-slate-200 shadow-sm flex items-center justify-between gap-3">
+                <span className="text-xs font-mono font-bold text-slate-700">Knife Switch Position:</span>
+                <button
+                  onClick={() => {
+                    sounds.playClick();
+                    setIsFlashlightOn(!isFlashlightOn);
+                  }}
+                  className={`flex-1 max-w-sm py-2 px-4 rounded-xl font-mono text-xs font-bold border transition-all flex items-center justify-center gap-2 shadow-sm ${
+                    isFlashlightOn
+                      ? 'bg-amber-400 text-amber-950 border-amber-500 shadow-amber-100 hover:bg-amber-300'
+                      : 'bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200'
+                  }`}
+                >
+                  <Zap className={`w-4 h-4 ${isFlashlightOn ? 'text-amber-950' : 'text-slate-400'}`} />
+                  <span>{isFlashlightOn ? '💡 Switch CLOSED (Circuit Active)' : '⭕ Switch OPEN (Circuit Broken)'}</span>
+                </button>
               </div>
 
-              <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-sm space-y-2">
-                <div className="flex justify-between items-center text-xs font-mono">
-                  <span className="font-bold text-slate-700">Filament Resistance (R):</span>
-                  <span className="font-bold text-amber-700">{filamentRes.toFixed(1)} Ω</span>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-sm space-y-2">
+                  <div className="flex justify-between items-center text-xs font-mono">
+                    <span className="font-bold text-slate-700">DC Voltage (V):</span>
+                    <span className="font-bold text-blue-700">{bulbVolts.toFixed(1)} V</span>
+                  </div>
+                  <input
+                    type="range"
+                    min={1.5}
+                    max={12.0}
+                    step={0.5}
+                    value={bulbVolts}
+                    onChange={(e) => setBulbVolts(Number(e.target.value))}
+                    className="w-full accent-blue-600 cursor-pointer"
+                  />
                 </div>
-                <input
-                  type="range"
-                  min={4.0}
-                  max={30.0}
-                  step={1.0}
-                  value={filamentRes}
-                  onChange={(e) => setFilamentRes(Number(e.target.value))}
-                  className="w-full accent-amber-600 cursor-pointer"
-                />
+
+                <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-sm space-y-2">
+                  <div className="flex justify-between items-center text-xs font-mono">
+                    <span className="font-bold text-slate-700">Filament Resistance (R):</span>
+                    <span className="font-bold text-amber-700">{filamentRes.toFixed(1)} Ω</span>
+                  </div>
+                  <input
+                    type="range"
+                    min={4.0}
+                    max={30.0}
+                    step={1.0}
+                    value={filamentRes}
+                    onChange={(e) => setFilamentRes(Number(e.target.value))}
+                    className="w-full accent-amber-600 cursor-pointer"
+                  />
+                </div>
               </div>
             </div>
           )}
@@ -1839,8 +2073,31 @@ export const GenericGuidedLab = ({ simulation, activeTab, onUpdateScore }) => {
             </h3>
 
             <p className="text-xs text-slate-600 leading-relaxed font-sans">
-              The fundamental laws explored in this laboratory underpin key modern engineering marvels: from aerospace flight dynamics and microchip lithography to clinical diagnostic imaging and industrial thermodynamics.
+              The fundamental laws explored in this laboratory directly power state-of-the-art technologies and industrial applications worldwide.
             </p>
+
+            {/* Grid of Applications */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+              {simDetails?.applications?.map((app, idx) => (
+                <div key={idx} className="p-4 rounded-xl bg-slate-50 border border-slate-200 flex flex-col justify-between space-y-2 hover:border-emerald-300 hover:bg-emerald-50/30 transition-all">
+                  <div className="space-y-1.5">
+                    <div className="w-8 h-8 rounded-lg bg-emerald-100 border border-emerald-200 flex items-center justify-center text-emerald-700 font-bold text-xs">
+                      {idx + 1}
+                    </div>
+                    <h4 className="text-sm font-bold font-sans text-slate-800">
+                      {app.title}
+                    </h4>
+                    <p className="text-xs text-slate-600 font-sans leading-relaxed">
+                      {app.description}
+                    </p>
+                  </div>
+                  <div className="pt-2 text-[10px] font-mono text-emerald-700 font-semibold flex items-center gap-1">
+                    <span>Verified Engineering Case</span>
+                    <ArrowRight className="w-3 h-3" />
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}
@@ -1849,49 +2106,129 @@ export const GenericGuidedLab = ({ simulation, activeTab, onUpdateScore }) => {
       {(activeTab === 'challenge' || activeTab === 'challenges') && (
         <div className="max-w-4xl mx-auto space-y-6 text-left">
           <div className="p-6 md:p-8 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-6">
-            <div>
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-bold bg-purple-50 text-purple-800 border border-purple-200 mb-2">
-                <CheckCircle2 className="w-3.5 h-3.5 text-purple-600" />
-                CONCEPTUAL MASTERY CHALLENGE
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-100 pb-4">
+              <div>
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-bold bg-purple-50 text-purple-800 border border-purple-200 mb-2">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-purple-600" />
+                  CONCEPTUAL MASTERY CHALLENGE
+                </div>
+                <h3 className="text-xl font-bold font-sans text-slate-900">
+                  Inquiry & Conceptual Assessment
+                </h3>
+                <p className="text-xs text-slate-500 font-sans mt-0.5">
+                  Test your physical intuition and quantitative reasoning against real lab scenarios.
+                </p>
               </div>
-              <h3 className="text-xl font-bold font-sans text-slate-900">
-                Inquiry Assessment
-              </h3>
+
+              <div className="flex items-center gap-2">
+                <span className="px-3 py-1.5 rounded-lg bg-purple-50 border border-purple-200 text-xs font-mono font-bold text-purple-800">
+                  Score: {Object.values(challengeFeedback).filter(f => f === 'correct').length * 25} pts
+                </span>
+              </div>
             </div>
 
-            <div className="space-y-4">
-              <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
-                <div className="text-xs font-mono font-bold text-slate-800">
-                  Q1: Based on the governing equations in this simulation, what happens when the primary independent variable is doubled?
+            <div className="space-y-6">
+              {simDetails?.quiz && simDetails.quiz.length > 0 ? (
+                simDetails.quiz.map((q, qIndex) => {
+                  const isAnswered = selectedAnswers[q.id] !== undefined;
+                  const feedback = challengeFeedback[q.id];
+
+                  return (
+                    <div key={q.id} className="p-5 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
+                      <div className="flex items-start gap-2.5">
+                        <span className="w-6 h-6 rounded-md bg-purple-100 text-purple-800 font-mono font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                          Q{qIndex + 1}
+                        </span>
+                        <div className="text-sm font-semibold font-sans text-slate-800">
+                          {q.question}
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs font-mono pt-1">
+                        {q.options.map((opt, idx) => {
+                          const isSelected = selectedAnswers[q.id] === idx;
+                          let btnStyle = 'bg-white border-slate-200 hover:bg-slate-100 text-slate-700';
+
+                          if (isSelected) {
+                            if (opt.correct) {
+                              btnStyle = 'bg-emerald-100 border-emerald-400 text-emerald-900 font-bold shadow-sm';
+                            } else {
+                              btnStyle = 'bg-rose-100 border-rose-400 text-rose-900 font-bold shadow-sm';
+                            }
+                          } else if (isAnswered && opt.correct) {
+                            btnStyle = 'bg-emerald-50/70 border-emerald-300 text-emerald-800 font-medium';
+                          }
+
+                          return (
+                            <button
+                              key={idx}
+                              onClick={() => {
+                                sounds.playClick();
+                                setSelectedAnswers(prev => ({ ...prev, [q.id]: idx }));
+                                setChallengeFeedback(prev => ({ ...prev, [q.id]: opt.correct ? 'correct' : 'incorrect' }));
+                                if (opt.correct) {
+                                  sounds.playDing();
+                                  confetti({ particleCount: 45, spread: 60, origin: { y: 0.7 } });
+                                  if (onUpdateScore) onUpdateScore(25);
+                                }
+                              }}
+                              className={`p-3 rounded-lg border text-left transition-all ${btnStyle}`}
+                            >
+                              {opt.text}
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      {feedback && (
+                        <div className={`p-3.5 rounded-lg text-xs font-sans leading-relaxed border ${
+                          feedback === 'correct' 
+                            ? 'bg-emerald-50 border-emerald-200 text-emerald-800' 
+                            : 'bg-rose-50 border-rose-200 text-rose-800'
+                        }`}>
+                          <div className="font-bold font-mono text-[11px] mb-1 flex items-center gap-1">
+                            {feedback === 'correct' ? '✓ Correct Answer!' : '✗ Not Quite!'}
+                          </div>
+                          <p>{q.explanation}</p>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
+                  <div className="text-xs font-mono font-bold text-slate-800">
+                    Q1: Based on governing physical laws, what happens when energy is added to this system?
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs font-mono">
+                    {[
+                      { text: 'A) The dependent output scales according to conservation laws', correct: true },
+                      { text: 'B) The system resets to zero', correct: false },
+                      { text: 'C) Entropy decreases to negative infinity', correct: false },
+                      { text: 'D) Physical constants change unpredictably', correct: false }
+                    ].map((opt, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => handleAnswerSubmit('q1', idx, opt.correct)}
+                        className={`p-2.5 rounded-lg border text-left transition-colors ${
+                          selectedAnswers['q1'] === idx
+                            ? opt.correct
+                              ? 'bg-emerald-100 border-emerald-300 text-emerald-900'
+                              : 'bg-rose-100 border-rose-300 text-rose-900'
+                            : 'bg-white border-slate-200 hover:bg-slate-100 text-slate-700'
+                        }`}
+                      >
+                        {opt.text}
+                      </button>
+                    ))}
+                  </div>
+                  {challengeFeedback['q1'] && (
+                    <p className={`text-xs font-mono ${challengeFeedback['q1'] === 'correct' ? 'text-emerald-700' : 'text-rose-700'}`}>
+                      {challengeFeedback['q1'] === 'correct' ? '✓ Correct! Scaling obeys the governing physical law.' : '✗ Try again. Consider the proportionality in the formula.'}
+                    </p>
+                  )}
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs font-mono">
-                  {[
-                    { text: 'A) The dependent output scales according to the governing physical law', correct: true },
-                    { text: 'B) The system resets to zero', correct: false },
-                    { text: 'C) Conservation laws are violated', correct: false },
-                    { text: 'D) Wavelength drops to negative infinity', correct: false }
-                  ].map((opt, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => handleAnswerSubmit('q1', idx, opt.correct)}
-                      className={`p-2.5 rounded-lg border text-left transition-colors ${
-                        selectedAnswers['q1'] === idx
-                          ? opt.correct
-                            ? 'bg-emerald-100 border-emerald-300 text-emerald-900'
-                            : 'bg-rose-100 border-rose-300 text-rose-900'
-                          : 'bg-white border-slate-200 hover:bg-slate-100 text-slate-700'
-                      }`}
-                    >
-                      {opt.text}
-                    </button>
-                  ))}
-                </div>
-                {challengeFeedback['q1'] && (
-                  <p className={`text-xs font-mono ${challengeFeedback['q1'] === 'correct' ? 'text-emerald-700' : 'text-rose-700'}`}>
-                    {challengeFeedback['q1'] === 'correct' ? '✓ Correct! Scaling obeys the governing physical law.' : '✗ Try again. Consider the proportionality in the formula.'}
-                  </p>
-                )}
-              </div>
+              )}
             </div>
           </div>
         </div>
