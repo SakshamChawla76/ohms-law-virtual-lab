@@ -70,21 +70,21 @@ export const ViGraph = ({
   };
 
   return (
-    <div className="w-full rounded-2xl glass-card p-4 space-y-3.5 select-none border border-white/10 shadow-xl bg-slate-900/60 backdrop-blur-xl">
+    <div className="w-full rounded-2xl p-4 space-y-3.5 select-none border border-outline-variant/30 shadow-sm bg-surface-container-lowest">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-outline-variant/20 pb-3">
         <div className="flex items-center gap-2.5">
-          <div className="p-2 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400">
+          <div className="p-2 rounded-xl bg-teal-50 border border-teal-200 text-teal-700">
             <LineChart className="w-4 h-4" />
           </div>
           <div>
-            <h3 className="text-sm font-bold text-slate-100 uppercase font-mono tracking-wider flex items-center gap-2">
+            <h3 className="text-sm font-bold text-on-surface uppercase font-mono tracking-wider flex items-center gap-2">
               V-I Precision Curve Tracer
-              <span className="text-[10px] text-cyan-400 font-mono font-normal">
+              <span className="text-[10px] text-teal-700 font-mono font-semibold">
                 [PLOT: V vs I]
               </span>
             </h3>
-            <p className="text-[11px] text-slate-400 font-sans">
+            <p className="text-[11px] text-on-surface-variant font-sans">
               Cartesian linear coordinate plane with least-squares regression and uncertainty error bounds.
             </p>
           </div>
@@ -97,8 +97,8 @@ export const ViGraph = ({
             disabled={!isUnlocked}
             className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition-all flex items-center gap-1.5 border ${
               showBestFit
-                ? 'bg-amber-500/20 text-amber-300 border-amber-500/50 shadow-[0_0_12px_rgba(245,158,11,0.25)]'
-                : 'bg-white/5 text-slate-300 border-white/10 hover:bg-white/10 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed'
+                ? 'bg-amber-50 text-amber-800 border-amber-300 shadow-xs'
+                : 'bg-surface-container text-on-surface-variant border-outline-variant/30 hover:bg-surface-container-high hover:text-on-surface disabled:opacity-40 disabled:cursor-not-allowed'
             }`}
           >
             <Sparkles className="w-3.5 h-3.5" />
@@ -108,7 +108,7 @@ export const ViGraph = ({
           {isUnlocked && showBestFit && (
             <button
               onClick={() => onOpenVerificationModal(slope, percentError)}
-              className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white font-mono font-bold text-xs flex items-center gap-1.5 shadow-[0_0_15px_rgba(16,185,129,0.3)] transition-all transform active:scale-95 border-none"
+              className="px-3.5 py-1.5 rounded-xl bg-teal-700 hover:bg-teal-800 text-white font-mono font-bold text-xs flex items-center gap-1.5 shadow-xs transition-all transform active:scale-95 border-none"
             >
               <CheckCircle2 className="w-4 h-4" />
               VERIFY LAW
@@ -376,22 +376,22 @@ export const ViGraph = ({
 
       {/* Regression Slope & Statistics Banner */}
       {showBestFit && trials.length >= 2 && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 p-3 rounded-xl bg-black/40 border border-white/10 text-xs font-mono">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 p-3 rounded-xl bg-surface-container border border-outline-variant/20 text-xs font-mono">
           <div>
-            <span className="text-slate-400 block text-[10px] uppercase">Slope (ΔV / ΔI)</span>
-            <span className="text-base font-bold text-amber-400 font-mono">{slope.toFixed(2)} Ω</span>
+            <span className="text-on-surface-variant block text-[10px] uppercase">Slope (ΔV / ΔI)</span>
+            <span className="text-base font-bold text-teal-800 font-mono">{slope.toFixed(2)} Ω</span>
           </div>
           <div>
-            <span className="text-slate-400 block text-[10px] uppercase">Linearity R²</span>
-            <span className="text-base font-bold text-emerald-400 font-mono">{rSquared.toFixed(4)}</span>
+            <span className="text-on-surface-variant block text-[10px] uppercase">Linearity R²</span>
+            <span className="text-base font-bold text-emerald-800 font-mono">{rSquared.toFixed(4)}</span>
           </div>
           <div>
-            <span className="text-slate-400 block text-[10px] uppercase">Nominal Standard</span>
-            <span className="text-base font-bold text-slate-200 font-mono">{nominalResistance.toFixed(0)} Ω</span>
+            <span className="text-on-surface-variant block text-[10px] uppercase">Nominal Standard</span>
+            <span className="text-base font-bold text-on-surface font-mono">{nominalResistance.toFixed(0)} Ω</span>
           </div>
           <div>
-            <span className="text-slate-400 block text-[10px] uppercase">Deviation Error</span>
-            <span className={`text-base font-bold font-mono ${percentError < 3.0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+            <span className="text-on-surface-variant block text-[10px] uppercase">Deviation Error</span>
+            <span className={`text-base font-bold font-mono ${percentError < 3.0 ? 'text-emerald-800' : 'text-rose-800'}`}>
               {percentError.toFixed(2)}%
             </span>
           </div>
@@ -399,8 +399,8 @@ export const ViGraph = ({
       )}
 
       {/* Engineering Footnote */}
-      <div className="flex items-center gap-1.5 text-[11px] text-slate-400 font-mono">
-        <HelpCircle className="w-3 h-3 text-slate-500 shrink-0" />
+      <div className="flex items-center gap-1.5 text-[11px] text-on-surface-variant font-mono">
+        <HelpCircle className="w-3.5 h-3.5 text-teal-600 shrink-0" />
         <span>
           Mathematical formulation: V = I·R. The linear regression gradient m directly establishes conductor resistance R = ΔV / ΔI.
         </span>

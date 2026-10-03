@@ -15,30 +15,30 @@ export const SwitchControl = ({
   };
 
   return (
-    <div className="w-full rounded-2xl glass-card p-4 select-none relative overflow-hidden flex flex-col justify-between border border-white/10 shadow-xl bg-slate-900/60 backdrop-blur-xl">
+    <div className="w-full rounded-2xl p-4 select-none relative overflow-hidden flex flex-col justify-between border border-outline-variant/30 shadow-sm bg-surface-container-lowest">
       {/* Fastener Screws */}
-      <div className="absolute top-2 left-2 w-2 h-2 rounded-full bg-slate-700 border border-slate-600 shadow-inner" />
-      <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-slate-700 border border-slate-600 shadow-inner" />
-      <div className="absolute bottom-2 left-2 w-2 h-2 rounded-full bg-slate-700 border border-slate-600 shadow-inner" />
-      <div className="absolute bottom-2 right-2 w-2 h-2 rounded-full bg-slate-700 border border-slate-600 shadow-inner" />
+      <div className="absolute top-2 left-2 w-2 h-2 rounded-full bg-slate-300 border border-slate-400 shadow-inner" />
+      <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-slate-300 border border-slate-400 shadow-inner" />
+      <div className="absolute bottom-2 left-2 w-2 h-2 rounded-full bg-slate-300 border border-slate-400 shadow-inner" />
+      <div className="absolute bottom-2 right-2 w-2 h-2 rounded-full bg-slate-300 border border-slate-400 shadow-inner" />
 
       {/* Header & Anodized Nameplate */}
-      <div className="flex items-center justify-between border-b border-white/10 pb-2 mb-3 px-1">
+      <div className="flex items-center justify-between border-b border-outline-variant/20 pb-2 mb-3 px-1">
         <div className="flex items-center gap-2">
-          <div className="p-1.5 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-emerald-400">
+          <div className="p-1.5 rounded-lg bg-teal-50 border border-teal-200 text-teal-700">
             <ToggleRight className="w-3.5 h-3.5" />
           </div>
           <div>
-            <div className="text-xs font-bold text-slate-100 uppercase tracking-wider font-mono">
+            <div className="text-xs font-bold text-on-surface uppercase tracking-wider font-mono">
               HEAVY-DUTY KNIFE SWITCH
             </div>
-            <div className="text-[10px] font-mono text-slate-400">SINGLE-POLE SINGLE-THROW (SPST)</div>
+            <div className="text-[10px] font-mono text-on-surface-variant">SINGLE-POLE SINGLE-THROW (SPST)</div>
           </div>
         </div>
         <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold border transition-all ${
           isClosed 
-            ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 shadow-[0_0_10px_rgba(16,185,129,0.25)]' 
-            : 'bg-white/5 text-slate-400 border-white/10'
+            ? 'bg-emerald-50 text-emerald-800 border-emerald-300' 
+            : 'bg-surface-container text-on-surface-variant border-outline-variant/30'
         }`}>
           {isClosed ? 'CIRCUIT CLOSED' : 'CIRCUIT OPEN'}
         </span>

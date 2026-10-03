@@ -39,23 +39,23 @@ export const VoltmeterWidget = ({
   }
 
   return (
-    <div className="w-72 rounded-2xl glass-card p-4 select-none relative overflow-hidden border border-white/10 shadow-xl bg-slate-900/60 backdrop-blur-xl">
+    <div className="w-72 rounded-2xl p-4 select-none relative overflow-hidden border border-outline-variant/30 shadow-sm bg-surface-container-lowest">
       {/* Corner Fastener Screws */}
-      <div className="absolute top-2 left-2 w-2 h-2 rounded-full bg-slate-700 border border-slate-600 shadow-inner" />
-      <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-slate-700 border border-slate-600 shadow-inner" />
-      <div className="absolute bottom-2 left-2 w-2 h-2 rounded-full bg-slate-700 border border-slate-600 shadow-inner" />
-      <div className="absolute bottom-2 right-2 w-2 h-2 rounded-full bg-slate-700 border border-slate-600 shadow-inner" />
+      <div className="absolute top-2 left-2 w-2 h-2 rounded-full bg-slate-300 border border-slate-400 shadow-inner" />
+      <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-slate-300 border border-slate-400 shadow-inner" />
+      <div className="absolute bottom-2 left-2 w-2 h-2 rounded-full bg-slate-300 border border-slate-400 shadow-inner" />
+      <div className="absolute bottom-2 right-2 w-2 h-2 rounded-full bg-slate-300 border border-slate-400 shadow-inner" />
 
       {/* Instrument Nameplate */}
-      <div className="flex items-center justify-between border-b border-white/10 pb-2 mb-3 px-1">
+      <div className="flex items-center justify-between border-b border-outline-variant/20 pb-2 mb-3 px-1">
         <div>
-          <div className="flex items-center gap-1.5 text-xs font-bold text-slate-100 tracking-wider font-mono">
-            <span className="w-2 h-2 rounded-full bg-cyan-400 inline-block animate-pulse shadow-[0_0_8px_rgba(34,211,238,0.8)]" />
+          <div className="flex items-center gap-1.5 text-xs font-bold text-on-surface tracking-wider font-mono">
+            <span className="w-2 h-2 rounded-full bg-teal-600 inline-block animate-pulse" />
             <span>PRECISION DC VOLTMETER</span>
           </div>
-          <div className="text-[10px] font-mono text-slate-400">MODEL V-120 • 20,000 Ω/V</div>
+          <div className="text-[10px] font-mono text-on-surface-variant">MODEL V-120 • 20,000 Ω/V</div>
         </div>
-        <span className="text-[10px] font-mono uppercase px-2.5 py-0.5 rounded-full bg-cyan-500/20 border border-cyan-500/40 text-cyan-300 font-bold shadow-[0_0_10px_rgba(6,182,212,0.2)]">
+        <span className="text-[10px] font-mono uppercase px-2.5 py-0.5 rounded-full bg-teal-50 border border-teal-300 text-teal-800 font-bold">
           PARALLEL
         </span>
       </div>

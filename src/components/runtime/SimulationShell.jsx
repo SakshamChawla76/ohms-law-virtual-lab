@@ -1,20 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  ArrowLeft, 
-  BookOpen, 
-  FlaskConical, 
-  GraduationCap, 
-  Award, 
-  Clock, 
-  Volume2, 
-  VolumeX, 
-  Zap,
-  Atom,
-  Lightbulb,
-  Play,
-  Rocket,
-  Star
-} from 'lucide-react';
 import { sounds } from '../../engine/audioEffects';
 
 export const SimulationShell = ({
@@ -51,114 +35,112 @@ export const SimulationShell = ({
   const isPhysics = simulation.branch === 'physics';
 
   const tabItems = [
-    { id: 'curiosity', label: '1. Curiosity', icon: Lightbulb },
-    { id: 'sandbox', label: '2. Sandbox', icon: Play, highlight: true },
-    { id: 'challenge', label: '3. Challenge', icon: Rocket, aliases: ['challenges'] },
-    { id: 'applications', label: '4. Apply', icon: Star },
+    { id: 'curiosity', label: '1. Curiosity', icon: 'lightbulb' },
+    { id: 'sandbox', label: '2. Experiment Bench', icon: 'play_arrow', highlight: true },
+    { id: 'challenge', label: '3. Challenge', icon: 'flag' },
+    { id: 'applications', label: '4. Real World', icon: 'public' },
   ];
 
   return (
-    <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] flex flex-col bg-cosmos">
-      {/* Header */}
-      <header className="sticky top-0 z-40 bg-[#0f0f23]/90 backdrop-blur-xl border-b border-white/[0.06] shadow-lg select-none">
-        {/* Gradient accent bar */}
-        <div className="h-0.5" style={{
-          background: isPhysics 
-            ? 'linear-gradient(90deg, #4f8cff, #7c5cfc, #a78bfa)' 
-            : 'linear-gradient(90deg, #34d399, #22d3ee, #38bdf8)'
-        }} />
-
-        <div className="max-w-7xl mx-auto px-4 py-2.5 flex flex-col md:flex-row items-center justify-between gap-3">
-          {/* Back + Title */}
-          <div className="flex items-center gap-3 w-full md:w-auto">
+    <div className="min-h-screen bg-surface-container-low text-on-surface flex flex-col font-sans">
+      {/* ─── AICOS Simulation Top Bar ─── */}
+      <header className="sticky top-0 z-40 bg-surface-container-lowest/90 backdrop-blur-md border-b border-outline-variant/30 px-4 sm:px-6 py-3 shadow-sm select-none">
+        <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center justify-between gap-3">
+          {/* Left: Back to Catalog Button + Experiment Info */}
+          <div className="flex items-center gap-3 w-full lg:w-auto justify-between lg:justify-start">
             <button
               id="hub-back-btn"
               onClick={() => {
                 sounds.playClick();
                 onBackToHub();
               }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/[0.06] hover:bg-white/[0.1] border border-white/[0.08] text-[var(--text-secondary)] hover:text-white text-xs font-display font-bold transition-all"
-              title="Return to Simulations Hub"
+              className="group flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-surface-container hover:bg-teal-50 text-on-surface-variant hover:text-teal-700 text-xs sm:text-sm font-bold transition-all duration-200 border border-transparent hover:border-teal-200"
+              title="Return to Catalog"
             >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              <span>Hub</span>
+              <span className="material-symbols-outlined text-sm group-hover:-translate-x-1 transition-transform">
+                arrow_back
+              </span>
+              <span>Back to Catalog</span>
             </button>
 
-            <div className="flex items-center gap-2.5">
-              <span className={`p-1.5 rounded-xl text-white shadow-lg ${
-                isPhysics 
-                  ? 'bg-gradient-to-br from-blue-500 to-indigo-600 shadow-blue-500/20' 
-                  : 'bg-gradient-to-br from-emerald-500 to-teal-600 shadow-emerald-500/20'
-              }`}>
-                {isPhysics ? <Zap className="w-4 h-4" /> : <Atom className="w-4 h-4" />}
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-black text-on-surface tracking-tight font-display">
+                {simulation.name}
               </span>
-
-              <div>
-                <h1 className="text-sm md:text-base font-display font-extrabold tracking-tight text-white line-clamp-1">
-                  {simulation.name}
-                </h1>
-                <p className="text-[11px] font-data text-[var(--text-muted)] line-clamp-1">
-                  {simulation.standards.join(' · ')} · {simulation.difficulty}
-                </p>
-              </div>
+              <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-surface-container-high text-on-surface-variant border border-outline-variant/20 uppercase tracking-wider hidden sm:inline-block">
+                {simulation.gradeLevel || 'Class 10'}
+              </span>
+              <span className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-md border uppercase tracking-wider ${
+                isPhysics 
+                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200/60'
+                  : 'bg-teal-50 text-teal-700 border-teal-200/60'
+              }`}>
+                {simulation.branch}
+              </span>
             </div>
           </div>
 
-          {/* 4-Stage Navigation Tabs */}
-          <nav className="flex items-center gap-1 bg-white/[0.04] p-1 rounded-xl border border-white/[0.06] text-xs font-display">
-            {tabItems.map(tab => {
-              const isActive = activeTab === tab.id || (tab.aliases && tab.aliases.includes(activeTab));
+          {/* Center: Stage Navigation Chips */}
+          <div className="flex items-center gap-1.5 p-1 bg-surface-container rounded-xl border border-outline-variant/30 overflow-x-auto w-full lg:w-auto justify-center">
+            {tabItems.map((tab) => {
+              const isActive = activeTab === tab.id;
               return (
                 <button
                   key={tab.id}
-                  onClick={() => { sounds.playTick(); setActiveTab(tab.id); }}
-                  className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 font-bold ${
-                    tab.highlight && isActive
-                      ? `${isPhysics 
-                          ? 'bg-gradient-to-r from-blue-500 to-indigo-600 shadow-[0_2px_10px_rgba(79,140,255,0.3)]'
-                          : 'bg-gradient-to-r from-emerald-500 to-teal-600 shadow-[0_2px_10px_rgba(52,211,153,0.3)]'
-                        } text-white`
-                      : isActive
-                        ? 'bg-white/[0.1] text-white border border-white/[0.1]'
-                        : 'text-[var(--text-secondary)] hover:text-white hover:bg-white/[0.06]'
+                  onClick={() => {
+                    sounds.playClick();
+                    setActiveTab(tab.id);
+                  }}
+                  className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${
+                    isActive
+                      ? 'bg-white text-teal-700 shadow-sm'
+                      : 'text-on-surface-variant hover:text-on-surface'
                   }`}
                 >
-                  <tab.icon className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">{tab.label}</span>
+                  <span className="material-symbols-outlined text-sm">
+                    {tab.icon}
+                  </span>
+                  <span>{tab.label}</span>
                 </button>
               );
             })}
-          </nav>
+          </div>
 
-          {/* Telemetry */}
-          <div className="flex items-center gap-2 font-data text-xs">
-            <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/[0.04] border border-white/[0.06]">
-              <Clock className="w-3.5 h-3.5 text-emerald-400" />
-              <span className="font-bold text-emerald-300">{formatTime(elapsedSeconds)}</span>
+          {/* Right: Live Telemetry, Timer & Audio */}
+          <div className="flex items-center gap-3 w-full lg:w-auto justify-end">
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-surface-container border border-outline-variant/20 text-xs font-mono text-on-surface-variant">
+              <span className="material-symbols-outlined text-sm text-teal-600">timer</span>
+              <span>{formatTime(elapsedSeconds)}</span>
             </div>
 
-            <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/[0.04] border border-white/[0.06]">
-              <Award className="w-3.5 h-3.5 text-amber-400" />
-              <span className="font-bold text-amber-300">{score}</span>
-              <span className="text-[10px] text-[var(--text-muted)]">/{maxScore}</span>
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-teal-50 border border-teal-200 text-xs font-bold text-teal-800">
+              <span className="material-symbols-outlined text-sm text-teal-600">military_tech</span>
+              <span>{score}/{maxScore} pts</span>
             </div>
 
             <button
               onClick={toggleAudio}
-              className="p-2 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.06] text-[var(--text-secondary)] hover:text-white transition-colors"
-              title={isMuted ? "Unmute Audio" : "Mute Audio"}
+              className={`p-1.5 rounded-lg border transition-colors ${
+                isMuted 
+                  ? 'bg-surface-container text-on-surface-variant/50 border-outline-variant/30' 
+                  : 'bg-teal-50 text-teal-700 border-teal-200'
+              }`}
+              title={isMuted ? "Unmute audio" : "Mute audio"}
             >
-              {isMuted ? <VolumeX className="w-4 h-4 text-rose-400" /> : <Volume2 className="w-4 h-4 text-emerald-400" />}
+              <span className="material-symbols-outlined text-base">
+                {isMuted ? 'volume_off' : 'volume_up'}
+              </span>
             </button>
           </div>
         </div>
       </header>
 
-      {/* Main Simulation Content Area */}
-      <main className="flex-1 w-full max-w-7xl mx-auto px-4 py-4 simulation-container">
-        {children}
+      {/* ─── Simulation Active Stage Viewport ─── */}
+      <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 flex flex-col">
+        <div className="w-full flex-grow relative rounded-2xl border border-outline-variant/30 overflow-hidden shadow-sm bg-surface-container-lowest p-1 sm:p-2">
+          {children}
+        </div>
       </main>
     </div>
   );
 };
-

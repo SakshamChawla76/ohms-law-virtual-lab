@@ -8,37 +8,47 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Layered elevation system for dark mode
-        background: '#09090b',
-        surface: '#18181b',
-        elevated: '#202023',
-        card: '#18181b',
-        border: '#27272a',
-        text: {
-          primary: '#fafafa',
-          secondary: '#a1a1aa',
-          tertiary: '#52525b',
-          muted: '#71717a',
+        // AICOS Design System Colors & Surfaces
+        'primary': {
+          DEFAULT: '#0f766e',
+          50: '#f0fdfa',
+          100: '#ccfbf1',
+          200: '#99f6e4',
+          300: '#5eead4',
+          400: '#2dd4bf',
+          500: '#14b8a6',
+          600: '#0d9488',
+          700: '#0f766e',
+          800: '#115e59',
+          900: '#134e4a',
         },
-        // Brand accent - Electric Indigo
-        primary: {
-          50: '#eef2ff',
-          100: '#e0e7ff',
-          200: '#c7d3ff',
-          300: '#a5b5ff',
-          400: '#818fff',
-          500: '#6366f1',  // Main accent
-          600: '#4f46e5',
-          700: '#4338ca',
-          800: '#3730a3',
-          900: '#312e81',
-          950: '#1e1b4b',
+        'primary-container': '#ccfbf1',
+        'on-primary-container': '#0f766e',
+        'surface-container-lowest': '#ffffff',
+        'surface-container-low': '#f7f8f8',
+        'surface-container': '#f1f3f4',
+        'surface-container-high': '#e4e8e9',
+        'surface-container-highest': '#d0d6d8',
+        'on-surface': '#1c2124',
+        'on-surface-variant': '#5b6770',
+        'outline': '#7d888d',
+        'outline-variant': '#d0d6d8',
+        background: '#f7f8f8',
+        surface: '#f7f8f8',
+        elevated: '#ffffff',
+        card: '#ffffff',
+        border: '#d0d6d8',
+        text: {
+          primary: '#1c2124',
+          secondary: '#5b6770',
+          tertiary: '#7d888d',
+          muted: '#94a3b8',
         },
         // Semantic colors
-        success: '#10b981',
-        warning: '#f59e0b',
-        error: '#ef4444',
-        info: '#06b6d4',
+        success: '#15803d',
+        warning: '#b45309',
+        error: '#b91c1c',
+        info: '#0f766e',
         // Laboratory-specific colors
         lab: {
           bench: '#09090b',
@@ -82,7 +92,8 @@ export default {
         surfaceActive: '#222226',
       },
       fontFamily: {
-        display: ['Nunito', 'Inter', 'system-ui', 'sans-serif'],
+        manrope: ['Manrope', 'sans-serif'],
+        display: ['Manrope', 'Inter', 'system-ui', 'sans-serif'],
         sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
         mono: ['JetBrains Mono', 'Monaco', 'monospace'],
         meter: ['JetBrains Mono', 'monospace'],

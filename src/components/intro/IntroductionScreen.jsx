@@ -18,48 +18,42 @@ export const IntroductionScreen = ({
   return (
     <div className="max-w-6xl mx-auto px-4 py-8 space-y-8">
       {/* Hero Section */}
-      <div className="relative overflow-hidden rounded-3xl p-8 md:p-12 animate-fade-in-up"
-        style={{
-          background: 'linear-gradient(135deg, rgba(79,140,255,0.1) 0%, rgba(124,92,252,0.06) 50%, rgba(30,30,58,0.5) 100%)',
-          border: '1px solid rgba(255,255,255,0.08)',
-          backdropFilter: 'blur(16px)'
-        }}
-      >
-        <div className="absolute -right-16 -top-16 w-80 h-80 rounded-full blur-3xl pointer-events-none" style={{ background: 'rgba(79,140,255,0.08)' }} />
-        <div className="absolute -left-16 -bottom-16 w-80 h-80 rounded-full blur-3xl pointer-events-none" style={{ background: 'rgba(124,92,252,0.06)' }} />
+      <div className="relative overflow-hidden rounded-3xl p-8 md:p-12 bg-surface-container-lowest border border-outline-variant/30 shadow-md">
+        <div className="absolute -right-16 -top-16 w-80 h-80 rounded-full blur-3xl pointer-events-none bg-teal-500/10" />
+        <div className="absolute -left-16 -bottom-16 w-80 h-80 rounded-full blur-3xl pointer-events-none bg-emerald-500/10" />
 
         <div className="relative z-10 max-w-3xl space-y-5">
-          <div className="badge-pill badge-physics inline-flex">
-            <Sparkles className="w-3.5 h-3.5" />
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-teal-50 border border-teal-200 text-teal-800 text-xs font-bold uppercase tracking-wider">
+            <Sparkles className="w-3.5 h-3.5 text-teal-600" />
             Physics Laboratory Simulation · Standard Experiment
           </div>
 
-          <h1 className="font-display font-extrabold text-4xl md:text-5xl tracking-tight text-white leading-tight">
-            Verification of <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-sky-400 to-cyan-400">Ohm's Law</span>
+          <h1 className="font-display font-extrabold text-3xl md:text-5xl tracking-tight text-on-surface leading-tight">
+            Verification of <span className="text-teal-700">Ohm's Law</span>
           </h1>
 
-          <p className="text-[var(--text-secondary)] text-base md:text-lg leading-relaxed">
+          <p className="text-on-surface-variant text-base md:text-lg leading-relaxed">
             Conduct a rigorous, hands-on physics experiment to verify that the potential difference across a conductor is directly proportional to the current flowing through it at constant temperature.
           </p>
 
           {/* Quick Formula Banner */}
-          <div className="inline-flex items-center gap-6 p-4 rounded-2xl glass-card-static">
-            <div className="text-center border-r border-white/[0.1] pr-6">
-              <span className="text-[11px] text-[var(--text-muted)] uppercase tracking-widest block font-data">Core Law</span>
-              <span className="text-3xl font-extrabold font-data text-blue-400 tracking-wider">V = IR</span>
+          <div className="inline-flex flex-wrap items-center gap-6 p-4 rounded-2xl bg-surface-container border border-outline-variant/20 shadow-sm">
+            <div className="text-center border-r border-outline-variant/30 pr-6">
+              <span className="text-[11px] text-on-surface-variant uppercase tracking-widest block font-mono font-bold">Core Law</span>
+              <span className="text-3xl font-extrabold font-mono text-teal-700 tracking-wider">V = IR</span>
             </div>
-            <div className="grid grid-cols-3 gap-4 text-xs font-data">
+            <div className="grid grid-cols-3 gap-4 text-xs font-mono">
               <div>
-                <span className="text-[var(--text-muted)] block">V</span>
-                <span className="font-semibold text-emerald-400">Voltage (V)</span>
+                <span className="text-on-surface-variant block">V</span>
+                <span className="font-bold text-emerald-700">Voltage (V)</span>
               </div>
               <div>
-                <span className="text-[var(--text-muted)] block">I</span>
-                <span className="font-semibold text-amber-400">Current (A)</span>
+                <span className="text-on-surface-variant block">I</span>
+                <span className="font-bold text-amber-700">Current (A)</span>
               </div>
               <div>
-                <span className="text-[var(--text-muted)] block">R</span>
-                <span className="font-semibold text-sky-400">Resistance (Ω)</span>
+                <span className="text-on-surface-variant block">R</span>
+                <span className="font-bold text-teal-700">Resistance (Ω)</span>
               </div>
             </div>
           </div>
@@ -68,7 +62,7 @@ export const IntroductionScreen = ({
           <div className="flex flex-wrap items-center gap-3 pt-2">
             <button
               onClick={() => { sounds.playSuccess(); setMode('guided'); onNavigate('lab'); }}
-              className="btn-primary text-sm px-6 py-3"
+              className="flex items-center gap-2 px-6 py-3 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-sm shadow-sm transition-all active:scale-95"
             >
               <Zap className="w-4 h-4 fill-current" />
               Start Experiment (Guided)
@@ -77,23 +71,22 @@ export const IntroductionScreen = ({
 
             <button
               onClick={() => { sounds.playTick(); onNavigate('theory'); }}
-              className="btn-ghost"
+              className="flex items-center gap-2 px-4 py-3 rounded-xl bg-surface-container hover:bg-teal-50 text-on-surface-variant hover:text-teal-700 border border-outline-variant/30 text-sm font-bold transition-all"
             >
               Learn Theory
             </button>
 
             <button
               onClick={() => { sounds.playTick(); onNavigate('apparatus'); }}
-              className="btn-ghost"
+              className="flex items-center gap-2 px-4 py-3 rounded-xl bg-surface-container hover:bg-teal-50 text-on-surface-variant hover:text-teal-700 border border-outline-variant/30 text-sm font-bold transition-all"
             >
-              <Layers className="w-4 h-4 text-blue-400" />
+              <Layers className="w-4 h-4 text-teal-600" />
               Identify Apparatus
             </button>
 
             <button
               onClick={() => { sounds.playTick(); setMode('sandbox'); onNavigate('lab'); }}
-              className="btn-ghost"
-              style={{ borderColor: 'rgba(167,139,250,0.3)', color: '#c4b5fd' }}
+              className="flex items-center gap-2 px-4 py-3 rounded-xl bg-surface-container hover:bg-teal-50 text-teal-700 border border-teal-200 text-sm font-bold transition-all"
             >
               Practice Mode (Sandbox)
             </button>
@@ -104,90 +97,92 @@ export const IntroductionScreen = ({
       {/* Grid: Objectives, Safety & Expected Graph */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Objectives */}
-        <div className="glass-card-static p-6 space-y-4 animate-fade-in-up animate-delay-100">
-          <div className="h-10 w-10 rounded-xl flex items-center justify-center" style={{ background: 'rgba(79,140,255,0.12)', border: '1px solid rgba(79,140,255,0.2)' }}>
-            <CheckCircle2 className="w-5 h-5 text-blue-400" />
+        <div className="bg-surface-container-lowest p-6 rounded-2xl border border-outline-variant/30 shadow-sm space-y-4">
+          <div className="h-10 w-10 rounded-xl flex items-center justify-center bg-teal-50 border border-teal-200 text-teal-600 shadow-sm">
+            <CheckCircle2 className="w-5 h-5" />
           </div>
-          <h2 className="text-lg font-display font-bold text-white">Experiment Objectives</h2>
-          <ul className="space-y-2.5 text-xs text-[var(--text-secondary)] leading-relaxed">
+          <h2 className="text-lg font-display font-bold text-on-surface">Experiment Objectives</h2>
+          <ul className="space-y-2.5 text-xs text-on-surface-variant leading-relaxed">
             <li className="flex items-start gap-2">
-              <span className="h-1.5 w-1.5 rounded-full bg-blue-400 mt-1.5 shrink-0" />
-              Correctly assemble a DC series-parallel circuit on the virtual workbench.
+              <span className="h-1.5 w-1.5 rounded-full bg-teal-600 mt-1.5 shrink-0" />
+              <span>Correctly assemble a DC series-parallel circuit on the virtual workbench.</span>
             </li>
             <li className="flex items-start gap-2">
-              <span className="h-1.5 w-1.5 rounded-full bg-blue-400 mt-1.5 shrink-0" />
-              Place the ammeter in <strong className="text-white">series</strong> and the voltmeter in <strong className="text-white">parallel</strong> across the test resistor.
+              <span className="h-1.5 w-1.5 rounded-full bg-teal-600 mt-1.5 shrink-0" />
+              <span>Place the ammeter in <strong className="text-on-surface font-extrabold">series</strong> and the voltmeter in <strong className="text-on-surface font-extrabold">parallel</strong> across the test resistor.</span>
             </li>
             <li className="flex items-start gap-2">
-              <span className="h-1.5 w-1.5 rounded-full bg-blue-400 mt-1.5 shrink-0" />
-              Vary DC voltage from 0 to 10 V and record at least 5 sets of simultaneous (V, I) readings.
+              <span className="h-1.5 w-1.5 rounded-full bg-teal-600 mt-1.5 shrink-0" />
+              <span>Vary DC voltage from 0 to 10 V and record at least 5 sets of simultaneous (V, I) readings.</span>
             </li>
             <li className="flex items-start gap-2">
-              <span className="h-1.5 w-1.5 rounded-full bg-blue-400 mt-1.5 shrink-0" />
-              Plot the V-I characteristic graph, draw the best-fit line, and compute resistance from slope (R = ΔV / ΔI).
+              <span className="h-1.5 w-1.5 rounded-full bg-teal-600 mt-1.5 shrink-0" />
+              <span>Plot the V-I characteristic graph, draw the best-fit line, and compute resistance from slope (R = ΔV / ΔI).</span>
             </li>
           </ul>
         </div>
 
         {/* Safety & Protocol Instructions */}
-        <div className="glass-card-static p-6 space-y-4 animate-fade-in-up animate-delay-200">
-          <div className="h-10 w-10 rounded-xl flex items-center justify-center" style={{ background: 'rgba(251,191,36,0.12)', border: '1px solid rgba(251,191,36,0.2)' }}>
-            <ShieldAlert className="w-5 h-5 text-amber-400" />
+        <div className="bg-surface-container-lowest p-6 rounded-2xl border border-outline-variant/30 shadow-sm space-y-4">
+          <div className="h-10 w-10 rounded-xl flex items-center justify-center bg-amber-50 border border-amber-200 text-amber-600 shadow-sm">
+            <ShieldAlert className="w-5 h-5" />
           </div>
-          <h2 className="text-lg font-display font-bold text-white">Safety & Laboratory Rules</h2>
-          <ul className="space-y-2.5 text-xs text-[var(--text-secondary)] leading-relaxed">
+          <h2 className="text-lg font-display font-bold text-on-surface">Safety &amp; Laboratory Rules</h2>
+          <ul className="space-y-2.5 text-xs text-on-surface-variant leading-relaxed">
             <li className="flex items-start gap-2">
-              <span className="h-1.5 w-1.5 rounded-full bg-amber-400 mt-1.5 shrink-0" />
-              <strong className="text-white">Keep the switch OPEN</strong> while establishing and checking wire connections.
+              <span className="h-1.5 w-1.5 rounded-full bg-amber-500 mt-1.5 shrink-0" />
+              <span><strong className="text-on-surface font-extrabold">Keep the switch OPEN</strong> while establishing and checking wire connections.</span>
             </li>
             <li className="flex items-start gap-2">
-              <span className="h-1.5 w-1.5 rounded-full bg-amber-400 mt-1.5 shrink-0" />
-              <strong className="text-white">Never connect an ammeter in parallel</strong> across the power supply (causes instant short-circuit).
+              <span className="h-1.5 w-1.5 rounded-full bg-amber-500 mt-1.5 shrink-0" />
+              <span><strong className="text-on-surface font-extrabold">Never connect an ammeter in parallel</strong> across the power supply (causes instant short-circuit).</span>
             </li>
             <li className="flex items-start gap-2">
-              <span className="h-1.5 w-1.5 rounded-full bg-amber-400 mt-1.5 shrink-0" />
-              Observe polarity: Connect positive (+) red terminals towards the positive rail of the power source.
+              <span className="h-1.5 w-1.5 rounded-full bg-amber-500 mt-1.5 shrink-0" />
+              <span>Observe polarity: Connect positive (+) red terminals towards the positive rail of the power source.</span>
             </li>
             <li className="flex items-start gap-2">
-              <span className="h-1.5 w-1.5 rounded-full bg-amber-400 mt-1.5 shrink-0" />
-              Take readings promptly to avoid prolonged resistive heating, which alters wire resistance.
+              <span className="h-1.5 w-1.5 rounded-full bg-amber-500 mt-1.5 shrink-0" />
+              <span>Take readings promptly to avoid prolonged resistive heating, which alters wire resistance.</span>
             </li>
           </ul>
         </div>
 
-        {/* Expected Graph Preview */}
-        <div className="glass-card-static p-6 space-y-4 flex flex-col justify-between animate-fade-in-up animate-delay-300">
+        {/* Expected Graph Characteristic Preview */}
+        <div className="bg-surface-container-lowest p-6 rounded-2xl border border-outline-variant/30 shadow-sm space-y-4 flex flex-col justify-between">
           <div>
-            <div className="h-10 w-10 rounded-xl flex items-center justify-center mb-3" style={{ background: 'rgba(52,211,153,0.12)', border: '1px solid rgba(52,211,153,0.2)' }}>
-              <LineChart className="w-5 h-5 text-emerald-400" />
+            <div className="h-10 w-10 rounded-xl flex items-center justify-center bg-teal-50 border border-teal-200 text-teal-600 shadow-sm mb-4">
+              <LineChart className="w-5 h-5" />
             </div>
-            <h2 className="text-lg font-display font-bold text-white">Expected V-I Graph</h2>
-            <p className="text-xs text-[var(--text-secondary)] mt-1">
+            <h2 className="text-lg font-display font-bold text-on-surface">Expected V-I Graph</h2>
+            <p className="text-xs text-on-surface-variant leading-relaxed mt-2">
               For an ohmic conductor at constant temperature, the V-I plot is a straight line passing through the origin.
             </p>
 
-            {/* Micro Graph Visualization */}
-            <div className="mt-4 h-28 w-full rounded-xl relative p-3 flex items-end" style={{ background: 'rgba(15,15,35,0.6)', border: '1px solid rgba(255,255,255,0.06)' }}>
-              <div className="absolute left-3 top-2 text-[10px] font-data text-blue-400 font-bold">V (Volts) ↑</div>
-              <div className="absolute right-3 bottom-1 text-[10px] font-data text-amber-400 font-bold">→ I (Amps)</div>
+            {/* Visual plot representation */}
+            <div className="mt-4 p-3 bg-surface-container rounded-xl border border-outline-variant/20 relative h-28 flex items-center justify-center overflow-hidden">
               {/* Axes */}
-              <div className="absolute left-6 bottom-5 right-4 h-[1px]" style={{ background: 'rgba(255,255,255,0.12)' }} />
-              <div className="absolute left-6 bottom-5 top-5 w-[1px]" style={{ background: 'rgba(255,255,255,0.12)' }} />
-              {/* Slanted Line */}
-              <svg className="absolute inset-0 w-full h-full pointer-events-none">
-                <line x1="24" y1="90" x2="190" y2="28" stroke="#4f8cff" strokeWidth="2.5" strokeDasharray="3 3" />
-                <circle cx="50" cy="78" r="3" fill="#fbbf24" />
-                <circle cx="85" cy="65" r="3" fill="#fbbf24" />
-                <circle cx="120" cy="52" r="3" fill="#fbbf24" />
-                <circle cx="155" cy="40" r="3" fill="#fbbf24" />
+              <div className="absolute left-6 bottom-4 top-2 w-0.5 bg-outline-variant" />
+              <div className="absolute left-6 right-4 bottom-4 h-0.5 bg-outline-variant" />
+              
+              {/* Linear trendline */}
+              <svg className="w-full h-full" viewBox="0 0 100 60">
+                <line x1="24" y1="52" x2="80" y2="12" stroke="#0f766e" strokeWidth="2" strokeDasharray="3 2" />
+                <circle cx="35" cy="44" r="2.5" fill="#f59e0b" />
+                <circle cx="48" cy="34" r="2.5" fill="#f59e0b" />
+                <circle cx="61" cy="24" r="2.5" fill="#f59e0b" />
+                <circle cx="74" cy="16" r="2.5" fill="#f59e0b" />
               </svg>
-              <span className="text-[10px] font-data text-[var(--text-muted)] ml-auto mr-1 mb-1">Slope = ΔV/ΔI = R</span>
+              
+              <span className="absolute left-1 top-2 text-[9px] font-mono font-bold text-teal-700">V (Volts) ↑</span>
+              <span className="absolute right-4 bottom-1 text-[9px] font-mono font-bold text-amber-700">→ I (Amps)</span>
+              <span className="absolute right-6 top-6 text-[8px] font-mono text-on-surface-variant font-bold">Slope = ΔV/ΔI = R</span>
             </div>
           </div>
 
-          <div className="pt-2 border-t border-white/[0.06] flex items-center justify-between text-xs text-[var(--text-muted)]">
+          <div className="pt-2 border-t border-outline-variant/20 flex items-center justify-between text-xs font-mono font-bold text-on-surface-variant">
             <span>Formula</span>
-            <span className="font-data font-bold text-blue-400">R = V / I</span>
+            <span className="text-teal-700">R = V / I</span>
           </div>
         </div>
       </div>

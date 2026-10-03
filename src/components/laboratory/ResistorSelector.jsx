@@ -25,27 +25,27 @@ export const ResistorSelector = ({
   const bands = getColorBands(resistance);
 
   return (
-    <div className="w-full rounded-2xl glass-card p-4 select-none relative overflow-hidden flex flex-col justify-between border border-white/10 shadow-xl bg-slate-900/60 backdrop-blur-xl">
+    <div className="w-full rounded-2xl p-4 select-none relative overflow-hidden flex flex-col justify-between border border-outline-variant/30 shadow-sm bg-surface-container-lowest">
       {/* Fastener Screws */}
-      <div className="absolute top-2 left-2 w-2 h-2 rounded-full bg-slate-700 border border-slate-600 shadow-inner" />
-      <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-slate-700 border border-slate-600 shadow-inner" />
-      <div className="absolute bottom-2 left-2 w-2 h-2 rounded-full bg-slate-700 border border-slate-600 shadow-inner" />
-      <div className="absolute bottom-2 right-2 w-2 h-2 rounded-full bg-slate-700 border border-slate-600 shadow-inner" />
+      <div className="absolute top-2 left-2 w-2 h-2 rounded-full bg-slate-300 border border-slate-400 shadow-inner" />
+      <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-slate-300 border border-slate-400 shadow-inner" />
+      <div className="absolute bottom-2 left-2 w-2 h-2 rounded-full bg-slate-300 border border-slate-400 shadow-inner" />
+      <div className="absolute bottom-2 right-2 w-2 h-2 rounded-full bg-slate-300 border border-slate-400 shadow-inner" />
 
       {/* Header & Anodized Nameplate */}
-      <div className="flex items-center justify-between border-b border-white/10 pb-2 mb-3 px-1">
+      <div className="flex items-center justify-between border-b border-outline-variant/20 pb-2 mb-3 px-1">
         <div className="flex items-center gap-2">
-          <div className="p-1.5 rounded-lg bg-cyan-500/15 border border-cyan-500/30 text-cyan-400">
+          <div className="p-1.5 rounded-lg bg-teal-50 border border-teal-200 text-teal-700">
             <Cpu className="w-3.5 h-3.5" />
           </div>
           <div>
-            <div className="text-xs font-bold text-slate-100 uppercase tracking-wider font-mono">
+            <div className="text-xs font-bold text-on-surface uppercase tracking-wider font-mono">
               STANDARD RESISTOR BANK
             </div>
-            <div className="text-[10px] font-mono text-slate-400">CERAMIC WIRE-WOUND • 50W</div>
+            <div className="text-[10px] font-mono text-on-surface-variant">CERAMIC WIRE-WOUND • 50W</div>
           </div>
         </div>
-        <span className="px-2 py-0.5 rounded-full bg-cyan-500/20 border border-cyan-500/40 text-cyan-300 text-[10px] font-mono font-bold shadow-[0_0_10px_rgba(6,182,212,0.2)]">
+        <span className="px-2 py-0.5 rounded-full bg-teal-50 border border-teal-300 text-teal-800 text-[10px] font-mono font-bold">
           OHMIC LOAD
         </span>
       </div>

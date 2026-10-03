@@ -22,32 +22,32 @@ export const PowerSupplyControl = ({
   const presets = [2.0, 4.0, 6.0, 8.0, 10.0];
 
   return (
-    <div className="w-full rounded-2xl glass-card p-4 select-none relative overflow-hidden flex flex-col justify-between border border-white/10 shadow-xl bg-slate-900/60 backdrop-blur-xl">
+    <div className="w-full rounded-2xl p-4 select-none relative overflow-hidden flex flex-col justify-between border border-outline-variant/30 shadow-sm bg-surface-container-lowest">
       {/* Corner Fastener Screws */}
-      <div className="absolute top-2 left-2 w-2 h-2 rounded-full bg-slate-700 border border-slate-600 shadow-inner" />
-      <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-slate-700 border border-slate-600 shadow-inner" />
-      <div className="absolute bottom-2 left-2 w-2 h-2 rounded-full bg-slate-700 border border-slate-600 shadow-inner" />
-      <div className="absolute bottom-2 right-2 w-2 h-2 rounded-full bg-slate-700 border border-slate-600 shadow-inner" />
+      <div className="absolute top-2 left-2 w-2 h-2 rounded-full bg-slate-300 border border-slate-400 shadow-inner" />
+      <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-slate-300 border border-slate-400 shadow-inner" />
+      <div className="absolute bottom-2 left-2 w-2 h-2 rounded-full bg-slate-300 border border-slate-400 shadow-inner" />
+      <div className="absolute bottom-2 right-2 w-2 h-2 rounded-full bg-slate-300 border border-slate-400 shadow-inner" />
 
       {/* Header & Anodized Nameplate */}
-      <div className="flex items-center justify-between border-b border-white/10 pb-2 mb-3 px-1">
+      <div className="flex items-center justify-between border-b border-outline-variant/20 pb-2 mb-3 px-1">
         <div className="flex items-center gap-2">
-          <div className="p-1.5 rounded-lg bg-amber-500/15 border border-amber-500/30 text-amber-400">
+          <div className="p-1.5 rounded-lg bg-teal-50 border border-teal-200 text-teal-700">
             <Zap className="w-3.5 h-3.5" />
           </div>
           <div>
-            <div className="text-xs font-bold text-slate-100 uppercase tracking-wider font-mono">
+            <div className="text-xs font-bold text-on-surface uppercase tracking-wider font-mono">
               DC BENCH POWER SUPPLY
             </div>
-            <div className="text-[10px] font-mono text-slate-400">REGULATED LINEAR 0–10V</div>
+            <div className="text-[10px] font-mono text-on-surface-variant">REGULATED LINEAR 0–10V</div>
           </div>
         </div>
         {isTripped ? (
-          <span className="px-2 py-0.5 rounded-full bg-rose-500/20 border border-rose-500/40 text-rose-300 text-[10px] font-mono font-bold animate-pulse shadow-[0_0_10px_rgba(244,63,94,0.3)]">
+          <span className="px-2 py-0.5 rounded-full bg-rose-50 border border-rose-300 text-rose-800 text-[10px] font-mono font-bold animate-pulse">
             FAULT TRIP
           </span>
         ) : (
-          <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-[10px] font-mono font-bold shadow-[0_0_10px_rgba(16,185,129,0.2)]">
+          <span className="px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-300 text-emerald-800 text-[10px] font-mono font-bold">
             OUTPUT ACTIVE
           </span>
         )}

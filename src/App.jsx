@@ -45,6 +45,7 @@ export const App = () => {
   const [activeSimulationId, setActiveSimulationId] = useState(null);
   const [simTab, setSimTab] = useState('sandbox');
   const [simScores, setSimScores] = useState({});
+  const [hubSearchQuery, setHubSearchQuery] = useState('');
 
   // Ohm's Law Screen & Mode navigation
   const [currentScreen, setCurrentScreen] = useState('intro');
@@ -295,16 +296,38 @@ export const App = () => {
   };
 
   // ----------------------------------------------------
-  // ROUTE 1: CENTRAL SIMULATION HUB
+  // ----------------------------------------------------
+  // ROUTE 1: CENTRAL SIMULATION HUB (LABS ONLY)
   // ----------------------------------------------------
   if (!activeSimulationId) {
     return (
-      <SimulationHub
-        onSelectSimulation={(id) => {
-          setActiveSimulationId(id);
-          setSimTab('sandbox');
-        }}
-      />
+      <div className="min-h-screen bg-surface-container-low text-on-surface flex flex-col font-sans">
+        {/* Main Hub Viewport */}
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
+          <SimulationHub
+            searchQuery={hubSearchQuery}
+            setSearchQuery={setHubSearchQuery}
+            onOpenSettings={() => setIsSettingsOpen(true)}
+            onOpenHelp={() => setIsHelpOpen(true)}
+            onSelectSimulation={(id) => {
+              setActiveSimulationId(id);
+              setSimTab('sandbox');
+            }}
+          />
+        </main>
+
+        <TeacherSettingsModal
+          isOpen={isSettingsOpen}
+          onClose={() => setIsSettingsOpen(false)}
+          config={config}
+          onSaveConfig={handleSaveConfig}
+        />
+
+        <HelpGuideModal
+          isOpen={isHelpOpen}
+          onClose={() => setIsHelpOpen(false)}
+        />
+      </div>
     );
   }
 
@@ -316,7 +339,7 @@ export const App = () => {
   // ----------------------------------------------------
   if (activeSimulationId === 'ohms-law') {
     return (
-      <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] flex flex-col font-sans bg-cosmos">
+      <div className="min-h-screen bg-surface-container-low text-on-surface flex flex-col font-sans">
         <Header
           currentScreen={currentScreen}
           setScreen={setCurrentScreen}

@@ -196,23 +196,23 @@ export const CircuitCanvas = ({
   };
 
   return (
-    <div className="w-full rounded-2xl glass-card p-4 space-y-3.5 shadow-xl select-none border border-white/10 bg-slate-900/60 backdrop-blur-xl">
+    <div className="w-full rounded-2xl p-4 space-y-3.5 shadow-sm select-none border border-outline-variant/30 bg-surface-container-lowest">
       {/* Workbench Toolbar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b border-white/10 pb-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b border-outline-variant/20 pb-3">
         <div className="flex items-center gap-2">
-          <div className="p-1.5 rounded-lg bg-cyan-500/15 border border-cyan-500/30 text-cyan-400">
+          <div className="p-1.5 rounded-lg bg-teal-50 border border-teal-200 text-teal-700">
             <Layers className="w-4 h-4" />
           </div>
           <div>
-            <h2 className="text-xs font-bold text-slate-100 font-mono tracking-wide uppercase flex items-center gap-2">
+            <h2 className="text-xs font-bold text-on-surface font-mono tracking-wide uppercase flex items-center gap-2">
               <span>ESD Workbench Station</span>
               {wires.length > 0 && (
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 font-mono font-bold border border-cyan-500/40 shadow-[0_0_8px_rgba(6,182,212,0.2)]">
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-teal-50 text-teal-800 font-mono font-bold border border-teal-300 shadow-xs">
                   {wires.length} Leads Connected
                 </span>
               )}
             </h2>
-            <p className="text-[10px] font-mono text-slate-400">
+            <p className="text-[10px] font-mono text-on-surface-variant">
               Click or drag banana leads between posts. Click wire midpoint to disconnect.
             </p>
           </div>
@@ -221,11 +221,11 @@ export const CircuitCanvas = ({
         {/* View Mode & Simulation Bar */}
         <div className="flex flex-wrap items-center gap-2">
           {/* Real vs Schematic */}
-          <div className="flex items-center bg-black/40 p-0.5 rounded-xl border border-white/10 text-xs font-mono">
+          <div className="flex items-center bg-surface-container p-0.5 rounded-xl border border-outline-variant/30 text-xs font-mono">
             <button
               onClick={() => { sounds.playTick(); setViewMode('realistic'); }}
               className={`px-2.5 py-1 rounded-lg flex items-center gap-1.5 transition-all ${
-                viewMode === 'realistic' ? 'bg-cyan-500/20 text-cyan-300 font-bold border border-cyan-500/50 shadow-[0_0_10px_rgba(6,182,212,0.25)]' : 'text-slate-400 hover:text-slate-200'
+                viewMode === 'realistic' ? 'bg-surface-container-lowest text-teal-800 font-bold shadow-xs border border-outline-variant/20' : 'text-on-surface-variant hover:text-on-surface'
               }`}
             >
               <LayoutGrid className="w-3 h-3" />
@@ -234,7 +234,7 @@ export const CircuitCanvas = ({
             <button
               onClick={() => { sounds.playTick(); setViewMode('schematic'); }}
               className={`px-2.5 py-1 rounded-lg flex items-center gap-1.5 transition-all ${
-                viewMode === 'schematic' ? 'bg-cyan-500/20 text-cyan-300 font-bold border border-cyan-500/50 shadow-[0_0_10px_rgba(6,182,212,0.25)]' : 'text-slate-400 hover:text-slate-200'
+                viewMode === 'schematic' ? 'bg-surface-container-lowest text-teal-800 font-bold shadow-xs border border-outline-variant/20' : 'text-on-surface-variant hover:text-on-surface'
               }`}
             >
               <FileCode2 className="w-3 h-3" />
@@ -247,8 +247,8 @@ export const CircuitCanvas = ({
             onClick={() => setShowCurrentFlow(!showCurrentFlow)}
             className={`px-2.5 py-1 rounded-xl text-xs font-mono border transition-all flex items-center gap-1.5 ${
               showCurrentFlow 
-                ? 'bg-sky-500/20 text-sky-300 border-sky-500/50 font-bold shadow-[0_0_8px_rgba(56,189,248,0.25)]' 
-                : 'bg-white/5 text-slate-400 border-white/10 hover:bg-white/10 hover:text-white'
+                ? 'bg-teal-50 text-teal-800 border-teal-300 font-bold shadow-xs' 
+                : 'bg-surface-container text-on-surface-variant border-outline-variant/30 hover:bg-surface-container-high hover:text-on-surface'
             }`}
             title="Toggle charge particle visualization"
           >
@@ -257,13 +257,13 @@ export const CircuitCanvas = ({
           </button>
 
           {/* Speed */}
-          <div className="hidden sm:flex items-center bg-black/40 p-0.5 rounded-xl border border-white/10 text-xs font-mono">
+          <div className="hidden sm:flex items-center bg-surface-container p-0.5 rounded-xl border border-outline-variant/30 text-xs font-mono">
             {[0.25, 1.0, 2.0].map((s) => (
               <button
                 key={s}
                 onClick={() => { sounds.playTick(); setSimSpeed(s); }}
                 className={`px-2 py-0.5 rounded-lg transition-all ${
-                  simSpeed === s ? 'bg-amber-500/20 text-amber-300 font-bold border border-amber-500/40 shadow-[0_0_8px_rgba(245,158,11,0.2)]' : 'text-slate-400 hover:text-slate-200'
+                  simSpeed === s ? 'bg-surface-container-lowest text-teal-800 font-bold shadow-xs border border-outline-variant/20' : 'text-on-surface-variant hover:text-on-surface'
                 }`}
               >
                 {s === 0.25 ? '0.25x' : `${s}x`}
@@ -274,7 +274,7 @@ export const CircuitCanvas = ({
           {/* Auto-Wire Button */}
           <button
             onClick={() => { sounds.playSuccess(); onAutoWire(); }}
-            className="px-3 py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 text-xs font-mono font-bold flex items-center gap-1.5 transition-all shadow-[0_0_12px_rgba(16,185,129,0.2)] active:translate-y-0.5"
+            className="px-3 py-1.5 rounded-xl bg-teal-700 hover:bg-teal-800 text-white text-xs font-mono font-bold flex items-center gap-1.5 transition-all shadow-xs active:translate-y-0.5"
             title="Automatically assemble standard Ohm's Law circuit"
           >
             <Wand2 className="w-3.5 h-3.5" />
@@ -284,7 +284,7 @@ export const CircuitCanvas = ({
           {/* Clear Wires Button */}
           <button
             onClick={() => { sounds.playSnap(); onClearWires(); }}
-            className="px-2.5 py-1.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-500/30 text-xs font-mono flex items-center gap-1.5 transition-all active:translate-y-0.5"
+            className="px-2.5 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-800 border border-rose-300 text-xs font-mono flex items-center gap-1.5 transition-all active:translate-y-0.5"
             title="Remove all wires from the canvas"
           >
             <RotateCcw className="w-3.5 h-3.5" />

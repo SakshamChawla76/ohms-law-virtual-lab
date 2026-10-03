@@ -40,23 +40,23 @@ export const AmmeterWidget = ({
   }
 
   return (
-    <div className="w-72 rounded-2xl glass-card p-4 select-none relative overflow-hidden border border-white/10 shadow-xl bg-slate-900/60 backdrop-blur-xl">
+    <div className="w-72 rounded-2xl p-4 select-none relative overflow-hidden border border-outline-variant/30 shadow-sm bg-surface-container-lowest">
       {/* Corner Fastener Screws */}
-      <div className="absolute top-2 left-2 w-2 h-2 rounded-full bg-slate-700 border border-slate-600 shadow-inner" />
-      <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-slate-700 border border-slate-600 shadow-inner" />
-      <div className="absolute bottom-2 left-2 w-2 h-2 rounded-full bg-slate-700 border border-slate-600 shadow-inner" />
-      <div className="absolute bottom-2 right-2 w-2 h-2 rounded-full bg-slate-700 border border-slate-600 shadow-inner" />
+      <div className="absolute top-2 left-2 w-2 h-2 rounded-full bg-slate-300 border border-slate-400 shadow-inner" />
+      <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-slate-300 border border-slate-400 shadow-inner" />
+      <div className="absolute bottom-2 left-2 w-2 h-2 rounded-full bg-slate-300 border border-slate-400 shadow-inner" />
+      <div className="absolute bottom-2 right-2 w-2 h-2 rounded-full bg-slate-300 border border-slate-400 shadow-inner" />
 
       {/* Instrument Nameplate */}
-      <div className="flex items-center justify-between border-b border-white/10 pb-2 mb-3 px-1">
+      <div className="flex items-center justify-between border-b border-outline-variant/20 pb-2 mb-3 px-1">
         <div>
-          <div className="flex items-center gap-1.5 text-xs font-bold text-slate-100 tracking-wider font-mono">
-            <span className="w-2 h-2 rounded-full bg-amber-400 inline-block animate-pulse shadow-[0_0_8px_rgba(251,191,36,0.8)]" />
+          <div className="flex items-center gap-1.5 text-xs font-bold text-on-surface tracking-wider font-mono">
+            <span className="w-2 h-2 rounded-full bg-amber-500 inline-block animate-pulse" />
             <span>PRECISION DC AMMETER</span>
           </div>
-          <div className="text-[10px] font-mono text-slate-400">MODEL A-101 • CLASS 0.5</div>
+          <div className="text-[10px] font-mono text-on-surface-variant">MODEL A-101 • CLASS 0.5</div>
         </div>
-        <span className="text-[10px] font-mono uppercase px-2.5 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 font-bold shadow-[0_0_10px_rgba(245,158,11,0.2)]">
+        <span className="text-[10px] font-mono uppercase px-2.5 py-0.5 rounded-full bg-amber-50 border border-amber-300 text-amber-800 font-bold">
           SERIES
         </span>
       </div>
