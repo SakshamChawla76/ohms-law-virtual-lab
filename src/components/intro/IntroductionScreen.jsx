@@ -1,24 +1,72 @@
-import React from 'react';
-import { 
-  Zap, 
-  ArrowRight, 
-  ShieldAlert, 
-  Activity, 
-  CheckCircle2, 
+import React, { useRef, useEffect } from 'react';
+import {
+  Zap,
+  ArrowRight,
+  ShieldAlert,
+  Activity,
+  CheckCircle2,
   Layers,
   Sparkles,
   LineChart
 } from 'lucide-react';
+import anime from '../../lib/anime';
 import { sounds } from '../../engine/audioEffects';
+
+const springSnappy = { type: 'spring', stiffness: 400, damping: 30, mass: 0.8 };
 
 export const IntroductionScreen = ({
   onNavigate,
   setMode,
 }) => {
+  const heroRef = useRef(null);
+  const cardsRef = useRef(null);
+  const ctaRef = useRef(null);
+
+  useEffect(() => {
+    if (!heroRef.current) return;
+    anime({
+      targets: heroRef.current,
+      opacity: [0, 1],
+      translateY: [24, 0],
+      easing: 'easeOutExpo',
+      duration: 700,
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!cardsRef.current) return;
+    anime({
+      targets: cardsRef.current,
+      opacity: [0, 1],
+      translateY: [20, 0],
+      easing: 'easeOutExpo',
+      duration: 600,
+      delay: anime.stagger(120),
+    });
+  }, []);
+
+  const handleButtonHover = (e, animate) => {
+    anime({
+      targets: e.currentTarget,
+      scale: animate ? 1.04 : 1,
+      translateY: animate ? -2 : 0,
+      ...springSnappy,
+    });
+  };
+
+  const handleSecondaryButtonHover = (e, animate) => {
+    anime({
+      targets: e.currentTarget,
+      scale: animate ? 1.03 : 1,
+      backgroundColor: animate ? 'rgba(20, 184, 166, 0.1)' : 'transparent',
+      ...springSnappy,
+    });
+  };
+
   return (
     <div className="max-w-6xl mx-auto px-4 py-8 space-y-8">
       {/* Hero Section */}
-      <div className="relative overflow-hidden rounded-3xl p-8 md:p-12 bg-surface-container-lowest border border-outline-variant/30 shadow-md">
+      <div ref={heroRef} className="relative overflow-hidden rounded-3xl p-8 md:p-12 bg-surface-container-lowest border border-outline-variant/30 shadow-md">
         <div className="absolute -right-16 -top-16 w-80 h-80 rounded-full blur-3xl pointer-events-none bg-teal-500/10" />
         <div className="absolute -left-16 -bottom-16 w-80 h-80 rounded-full blur-3xl pointer-events-none bg-emerald-500/10" />
 
@@ -59,10 +107,12 @@ export const IntroductionScreen = ({
           </div>
 
           {/* Call to Actions */}
-          <div className="flex flex-wrap items-center gap-3 pt-2">
+          <div ref={ctaRef} className="flex flex-wrap items-center gap-3 pt-2">
             <button
               onClick={() => { sounds.playSuccess(); setMode('guided'); onNavigate('lab'); }}
-              className="flex items-center gap-2 px-6 py-3 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-sm shadow-sm transition-all active:scale-95"
+              onMouseEnter={(e) => handleButtonHover(e, true)}
+              onMouseLeave={(e) => handleButtonHover(e, false)}
+              className="flex items-center gap-2 px-6 py-3 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-sm shadow-sm active:scale-95 transition-all"
             >
               <Zap className="w-4 h-4 fill-current" />
               Start Experiment (Guided)
@@ -71,6 +121,8 @@ export const IntroductionScreen = ({
 
             <button
               onClick={() => { sounds.playTick(); onNavigate('theory'); }}
+              onMouseEnter={(e) => handleSecondaryButtonHover(e, true)}
+              onMouseLeave={(e) => handleSecondaryButtonHover(e, false)}
               className="flex items-center gap-2 px-4 py-3 rounded-xl bg-surface-container hover:bg-teal-50 text-on-surface-variant hover:text-teal-700 border border-outline-variant/30 text-sm font-bold transition-all"
             >
               Learn Theory
@@ -78,6 +130,8 @@ export const IntroductionScreen = ({
 
             <button
               onClick={() => { sounds.playTick(); onNavigate('apparatus'); }}
+              onMouseEnter={(e) => handleSecondaryButtonHover(e, true)}
+              onMouseLeave={(e) => handleSecondaryButtonHover(e, false)}
               className="flex items-center gap-2 px-4 py-3 rounded-xl bg-surface-container hover:bg-teal-50 text-on-surface-variant hover:text-teal-700 border border-outline-variant/30 text-sm font-bold transition-all"
             >
               <Layers className="w-4 h-4 text-teal-600" />
@@ -86,6 +140,8 @@ export const IntroductionScreen = ({
 
             <button
               onClick={() => { sounds.playTick(); setMode('sandbox'); onNavigate('lab'); }}
+              onMouseEnter={(e) => handleSecondaryButtonHover(e, true)}
+              onMouseLeave={(e) => handleSecondaryButtonHover(e, false)}
               className="flex items-center gap-2 px-4 py-3 rounded-xl bg-surface-container hover:bg-teal-50 text-teal-700 border border-teal-200 text-sm font-bold transition-all"
             >
               Practice Mode (Sandbox)
@@ -95,7 +151,7 @@ export const IntroductionScreen = ({
       </div>
 
       {/* Grid: Objectives, Safety & Expected Graph */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div ref={cardsRef} className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Objectives */}
         <div className="bg-surface-container-lowest p-6 rounded-2xl border border-outline-variant/30 shadow-sm space-y-4">
           <div className="h-10 w-10 rounded-xl flex items-center justify-center bg-teal-50 border border-teal-200 text-teal-600 shadow-sm">
@@ -164,7 +220,7 @@ export const IntroductionScreen = ({
               {/* Axes */}
               <div className="absolute left-6 bottom-4 top-2 w-0.5 bg-outline-variant" />
               <div className="absolute left-6 right-4 bottom-4 h-0.5 bg-outline-variant" />
-              
+
               {/* Linear trendline */}
               <svg className="w-full h-full" viewBox="0 0 100 60">
                 <line x1="24" y1="52" x2="80" y2="12" stroke="#0f766e" strokeWidth="2" strokeDasharray="3 2" />
@@ -173,7 +229,7 @@ export const IntroductionScreen = ({
                 <circle cx="61" cy="24" r="2.5" fill="#f59e0b" />
                 <circle cx="74" cy="16" r="2.5" fill="#f59e0b" />
               </svg>
-              
+
               <span className="absolute left-1 top-2 text-[9px] font-mono font-bold text-teal-700">V (Volts) ↑</span>
               <span className="absolute right-4 bottom-1 text-[9px] font-mono font-bold text-amber-700">→ I (Amps)</span>
               <span className="absolute right-6 top-6 text-[8px] font-mono text-on-surface-variant font-bold">Slope = ΔV/ΔI = R</span>

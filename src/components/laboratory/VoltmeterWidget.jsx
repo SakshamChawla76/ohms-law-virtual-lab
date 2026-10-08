@@ -1,5 +1,6 @@
-import React from 'react';
-import { Activity } from 'lucide-react';
+import React, { useEffect, useRef } from 'react';
+import { BatteryCharging } from 'lucide-react';
+import anime from '../../lib/anime';
 
 export const VoltmeterWidget = ({
   voltage,
@@ -8,16 +9,17 @@ export const VoltmeterWidget = ({
   const maxScale = 12.0;
   const clampedVoltage = Math.min(Math.max(voltage, 0), maxScale);
   const needleAngle = -50 + (clampedVoltage / maxScale) * 100;
+  const needleRef = useRef(null);
 
   // Generate 60 fine calibration division ticks (0 to 12V in 0.2V increments)
   const ticks = [];
   for (let i = 0; i <= 60; i++) {
     const val = (i / 60) * maxScale;
-    const isMajor = i % 10 === 0; // 0, 2, 4, 6, 8, 10, 12 V
+    const isMajor = i % 10 === 0;
     const isMedium = i % 5 === 0 && !isMajor;
     const angle = -50 + (i / 60) * 100;
     const rad = (angle - 90) * (Math.PI / 180);
-    
+
     // Radii
     const rOuter = 82;
     const rInner = isMajor ? 68 : isMedium ? 73 : 76;
@@ -38,6 +40,17 @@ export const VoltmeterWidget = ({
     });
   }
 
+  useEffect(() => {
+    if (needleRef.current) {
+      anime({
+        targets: needleRef.current,
+        rotate: needleAngle,
+        duration: 300,
+        easing: 'spring(1, 80, 10, 0)',
+      });
+    }
+  }, [needleAngle]);
+
   return (
     <div className="w-72 rounded-2xl p-4 select-none relative overflow-hidden border border-outline-variant/30 shadow-sm bg-surface-container-lowest">
       {/* Corner Fastener Screws */}
@@ -50,7 +63,7 @@ export const VoltmeterWidget = ({
       <div className="flex items-center justify-between border-b border-outline-variant/20 pb-2 mb-3 px-1">
         <div>
           <div className="flex items-center gap-1.5 text-xs font-bold text-on-surface tracking-wider font-mono">
-            <span className="w-2 h-2 rounded-full bg-teal-600 inline-block animate-pulse" />
+            <span className="w-2 h-2 rounded-full bg-teal-600 inline-block" style={{ animation: 'pulse-glow 2s ease-in-out infinite' }} />
             <span>PRECISION DC VOLTMETER</span>
           </div>
           <div className="text-[10px] font-mono text-on-surface-variant">MODEL V-120 • 20,000 Ω/V</div>
@@ -138,20 +151,10 @@ export const VoltmeterWidget = ({
           </text>
         </svg>
 
-        {/* Dynamic Cast Shadow Beneath Needle */}
-        <div
-          className="absolute bottom-1 w-0.5 h-24 bg-black/60 origin-bottom transition-transform duration-300 ease-out blur-[1.5px] pointer-events-none"
-          style={{
-            transform: `rotate(${needleAngle + 2}deg) translate(2px, 0)`,
-          }}
-        />
-
         {/* Precision Knife-Edge Needle Pointer */}
         <div
-          className="absolute bottom-1 w-1 h-25 origin-bottom transition-transform duration-300 ease-out z-20 pointer-events-none"
-          style={{
-            transform: `rotate(${needleAngle}deg)`,
-          }}
+          ref={needleRef}
+          className="absolute bottom-1 w-1 h-25 origin-bottom z-20 pointer-events-none"
         >
           {/* Vermilion pointer arm with glow */}
           <div className="w-0.5 h-20 bg-rose-500 mx-auto rounded-t-sm shadow-[0_0_8px_rgba(244,63,94,0.8)]" />
@@ -184,8 +187,8 @@ export const VoltmeterWidget = ({
         </div>
         <div className="flex items-baseline gap-1 font-mono">
           <span className={`text-xl font-bold tracking-widest ${
-            isActive && voltage > 0 
-              ? 'text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.5)]' 
+            isActive && voltage > 0
+              ? 'text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.5)]'
               : 'text-slate-500'
           }`}>
             {isActive ? voltage.toFixed(2) : '0.00'}

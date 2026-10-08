@@ -1,7 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import anime from '../../lib/anime';
 import confetti from 'canvas-confetti';
 import { CheckCircle2, XCircle, HelpCircle, ArrowRight, ShieldCheck, Award } from 'lucide-react';
 import { sounds } from '../../engine/audioEffects';
+
+const springSnappy = { type: 'spring', stiffness: 400, damping: 30, mass: 0.8 };
+const springFluid = { type: 'spring', stiffness: 260, damping: 25, mass: 0.9 };
 
 export const VerificationModal = ({
   isOpen,
@@ -13,6 +17,45 @@ export const VerificationModal = ({
 }) => {
   const [selectedChoice, setSelectedChoice] = useState(null);
   const [hasSubmitted, setHasSubmitted] = useState(false);
+  const overlayRef = useRef(null);
+  const modalRef = useRef(null);
+  const choiceRefs = useRef([]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    if (overlayRef.current) {
+      anime({
+        targets: overlayRef.current,
+        opacity: [0, 1],
+        duration: 300,
+        easing: 'easeOutExpo',
+      });
+    }
+
+    if (modalRef.current) {
+      anime({
+        targets: modalRef.current,
+        opacity: [0, 1],
+        translateY: [20, 0],
+        scale: [0.95, 1],
+        duration: 500,
+        easing: 'easeOutExpo',
+      });
+    }
+
+    choiceRefs.current = choiceRefs.current.filter(Boolean);
+    if (choiceRefs.current.length > 0) {
+      anime({
+        targets: choiceRefs.current,
+        opacity: [0, 1],
+        translateX: [-10, 0],
+        duration: 400,
+        delay: anime.stagger(100),
+        easing: 'easeOutExpo',
+      });
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -33,9 +76,45 @@ export const VerificationModal = ({
     }
   };
 
+  const handleOverlayClick = () => {
+    anime({
+      targets: overlayRef.current,
+      opacity: 0,
+      duration: 200,
+      easing: 'easeOutExpo',
+      complete: () => onClose(),
+    });
+  };
+
+  const handleChoiceHover = (e, idx, animate) => {
+    anime({
+      targets: e.currentTarget,
+      scale: animate ? 1.02 : 1,
+      borderColor: animate ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.1)',
+      boxShadow: animate ? '0 0 20px rgba(255,255,255,0.05)' : 'none',
+      ...springFluid,
+    });
+  };
+
+  const handleActionButtonHover = (e, animate) => {
+    anime({
+      targets: e.currentTarget,
+      scale: animate ? 1.05 : 1,
+      ...springSnappy,
+    });
+  };
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md select-none animate-fadeIn">
-      <div className="w-full max-w-xl rounded-3xl glass-card border border-white/15 shadow-2xl p-6 md:p-8 space-y-5 text-slate-100 bg-slate-900/95 backdrop-blur-2xl">
+    <div
+      ref={overlayRef}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md select-none"
+      onClick={handleOverlayClick}
+    >
+      <div
+        ref={modalRef}
+        className="w-full max-w-xl rounded-3xl glass-card border border-white/15 shadow-2xl p-6 md:p-8 space-y-5 text-slate-100 bg-slate-900/95 backdrop-blur-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Modal Header */}
         <div className="text-center space-y-1.5 border-b border-white/10 pb-4">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-mono font-bold uppercase shadow-[0_0_10px_rgba(245,158,11,0.2)]">
@@ -54,7 +133,10 @@ export const VerificationModal = ({
         {!hasSubmitted ? (
           <div className="space-y-3">
             <button
+              ref={el => choiceRefs.current[0] = el}
               onClick={() => handleSubmit('yes')}
+              onMouseEnter={(e) => handleChoiceHover(e, 0, true)}
+              onMouseLeave={(e) => handleChoiceHover(e, 0, false)}
               className="w-full p-4 rounded-2xl bg-white/5 hover:bg-emerald-500/15 border border-white/10 hover:border-emerald-500/50 text-left transition-all flex items-center justify-between group shadow-sm"
             >
               <div>
@@ -69,7 +151,10 @@ export const VerificationModal = ({
             </button>
 
             <button
+              ref={el => choiceRefs.current[1] = el}
               onClick={() => handleSubmit('no')}
+              onMouseEnter={(e) => handleChoiceHover(e, 1, true)}
+              onMouseLeave={(e) => handleChoiceHover(e, 1, false)}
               className="w-full p-4 rounded-2xl bg-white/5 hover:bg-rose-500/15 border border-white/10 hover:border-rose-500/50 text-left transition-all flex items-center justify-between group shadow-sm"
             >
               <div>
@@ -84,7 +169,10 @@ export const VerificationModal = ({
             </button>
 
             <button
+              ref={el => choiceRefs.current[2] = el}
               onClick={() => handleSubmit('cannot_determine')}
+              onMouseEnter={(e) => handleChoiceHover(e, 2, true)}
+              onMouseLeave={(e) => handleChoiceHover(e, 2, false)}
               className="w-full p-4 rounded-2xl bg-white/5 hover:bg-amber-500/15 border border-white/10 hover:border-amber-500/50 text-left transition-all flex items-center justify-between group shadow-sm"
             >
               <div>
@@ -125,14 +213,18 @@ export const VerificationModal = ({
             <div className="flex items-center justify-between pt-3 border-t border-white/10">
               <button
                 onClick={onClose}
-                className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 text-xs font-mono border border-white/10 transition-colors"
+                onMouseEnter={(e) => handleActionButtonHover(e, true)}
+                onMouseLeave={(e) => handleActionButtonHover(e, false)}
+                className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 text-xs font-mono border border-white/10"
               >
                 RETURN TO WORKBENCH
               </button>
 
               <button
                 onClick={onProceedToQuiz}
-                className="px-5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white text-xs font-mono font-bold flex items-center gap-2 shadow-[0_0_15px_rgba(245,158,11,0.3)] transition-all"
+                onMouseEnter={(e) => handleActionButtonHover(e, true)}
+                onMouseLeave={(e) => handleActionButtonHover(e, false)}
+                className="px-5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white text-xs font-mono font-bold flex items-center gap-2 shadow-[0_0_15px_rgba(245,158,11,0.3)] border-none"
               >
                 <span>PROCEED TO QUIZ</span>
                 <ArrowRight className="w-3.5 h-3.5" />

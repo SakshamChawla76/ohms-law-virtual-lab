@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { ToggleRight, Power, ShieldAlert } from 'lucide-react';
+import anime from '../../lib/anime';
 import { sounds } from '../../engine/audioEffects';
 
 export const SwitchControl = ({
@@ -7,6 +8,29 @@ export const SwitchControl = ({
   setIsClosed,
   disabled = false,
 }) => {
+  const bladeRef = useRef(null);
+  const indicatorRef = useRef(null);
+
+  useEffect(() => {
+    if (bladeRef.current) {
+      anime({
+        targets: bladeRef.current,
+        rotate: isClosed ? 0 : -36,
+        duration: 250,
+        easing: 'spring(350, 22, 8)',
+      });
+    }
+    if (indicatorRef.current) {
+      anime({
+        targets: indicatorRef.current,
+        scale: isClosed ? [1, 1.15, 1] : 1,
+        opacity: isClosed ? [1, 0.7, 1] : 1,
+        duration: 400,
+        easing: 'spring(300, 25, 8)',
+      });
+    }
+  }, [isClosed]);
+
   const toggle = () => {
     if (disabled) return;
     const nextState = !isClosed;
@@ -35,9 +59,9 @@ export const SwitchControl = ({
             <div className="text-[10px] font-mono text-on-surface-variant">SINGLE-POLE SINGLE-THROW (SPST)</div>
           </div>
         </div>
-        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold border transition-all ${
-          isClosed 
-            ? 'bg-emerald-50 text-emerald-800 border-emerald-300' 
+        <span ref={indicatorRef} className={`px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold border transition-all ${
+          isClosed
+            ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
             : 'bg-surface-container text-on-surface-variant border-outline-variant/30'
         }`}>
           {isClosed ? 'CIRCUIT CLOSED' : 'CIRCUIT OPEN'}
@@ -45,11 +69,11 @@ export const SwitchControl = ({
       </div>
 
       {/* Interactive Physical Copper Knife Switch Graphic */}
-      <div 
+      <div
         onClick={toggle}
         className={`p-4 rounded-xl bg-black/40 border cursor-pointer select-none transition-all flex flex-col items-center justify-center relative overflow-hidden group mb-3 ${
-          isClosed 
-            ? 'border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.15)]' 
+          isClosed
+            ? 'border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.15)]'
             : 'border-white/5 hover:border-white/20'
         }`}
         title="Click to toggle mechanical knife switch"
@@ -62,7 +86,8 @@ export const SwitchControl = ({
           </div>
 
           {/* Hinged Solid Copper Knife Blade with Insulated Bakelite Knob */}
-          <div 
+          <div
+            ref={bladeRef}
             className="absolute left-11 w-32 h-3.5 bg-gradient-to-r from-amber-500 via-amber-400 to-amber-300 origin-left transition-transform duration-200 ease-out rounded-sm shadow-lg z-10 border border-amber-300"
             style={{
               transform: isClosed ? 'rotate(0deg)' : 'rotate(-36deg)',
@@ -83,7 +108,7 @@ export const SwitchControl = ({
 
         {/* State Callout */}
         <div className="mt-2 flex items-center gap-2">
-          <Power className={`w-3.5 h-3.5 ${isClosed ? 'text-emerald-400 animate-pulse' : 'text-slate-500'}`} />
+          <Power className={`w-3.5 h-3.5 ${isClosed ? 'text-emerald-400' : 'text-slate-500'}`} />
           <span className="text-xs font-mono font-semibold text-slate-300 group-hover:text-white transition-colors">
             {isClosed ? 'CLICK TO OPEN SWITCH' : 'CLICK TO CLOSE SWITCH'}
           </span>

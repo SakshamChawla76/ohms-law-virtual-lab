@@ -1,9 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { 
-  Zap, 
-  RotateCcw, 
-  Wand2, 
-  Eye, 
+import {
+  Zap,
+  RotateCcw,
+  Wand2,
+  Eye,
   EyeOff,
   BatteryCharging,
   Cpu,
@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { getTerminalPositions } from '../../engine/circuitSimulator';
 import { sounds } from '../../engine/audioEffects';
+import anime from '../../lib/anime';
 
 export const CircuitCanvas = ({
   components,
@@ -51,6 +52,7 @@ export const CircuitCanvas = ({
   const containerRef = useRef(null);
   const animationFrameRef = useRef(null);
   const [particleOffset, setParticleOffset] = useState(0);
+  const particlesRef = useRef([]);
 
   // Compute all terminal coordinates
   const allTerminals = {};
@@ -186,6 +188,55 @@ export const CircuitCanvas = ({
     };
   }, [analysis.isValid, isSwitchClosed, analysis.actualCurrent, showCurrentFlow, flowDirection, simSpeed]);
 
+  // Anime.js spring animations for terminal buttons
+  useEffect(() => {
+    const terminals = containerRef.current?.querySelectorAll('[data-terminal]');
+    if (!terminals) return;
+
+    terminals.forEach(term => {
+      term.addEventListener('pointerenter', () => {
+        anime({
+          targets: term,
+          scale: 1.3,
+          duration: 200,
+          easing: 'spring(400, 30, 8)',
+        });
+      });
+      term.addEventListener('pointerleave', () => {
+        anime({
+          targets: term,
+          scale: 1,
+          duration: 300,
+          easing: 'spring(300, 25, 8)',
+        });
+      });
+      term.addEventListener('pointerdown', () => {
+        anime({
+          targets: term,
+          scale: 0.85,
+          duration: 100,
+          easing: 'spring(500, 40, 10)',
+        });
+      });
+      term.addEventListener('pointerup', () => {
+        anime({
+          targets: term,
+          scale: 1.2,
+          duration: 200,
+          easing: 'spring(400, 30, 8)',
+        });
+        setTimeout(() => {
+          anime({
+            targets: term,
+            scale: 1,
+            duration: 300,
+            easing: 'spring(300, 25, 8)',
+          });
+        }, 200);
+      });
+    });
+  }, [components, wires, activeFromTerm, snappedTermId]);
+
   // Authentic Test Lead Cable Colors (Heavy-duty silicone insulation)
   const getWireColor = (fromId, toId) => {
     const isPos = fromId.includes('pos') || toId.includes('pos');
@@ -246,8 +297,8 @@ export const CircuitCanvas = ({
           <button
             onClick={() => setShowCurrentFlow(!showCurrentFlow)}
             className={`px-2.5 py-1 rounded-xl text-xs font-mono border transition-all flex items-center gap-1.5 ${
-              showCurrentFlow 
-                ? 'bg-teal-50 text-teal-800 border-teal-300 font-bold shadow-xs' 
+              showCurrentFlow
+                ? 'bg-teal-50 text-teal-800 border-teal-300 font-bold shadow-xs'
                 : 'bg-surface-container text-on-surface-variant border-outline-variant/30 hover:bg-surface-container-high hover:text-on-surface'
             }`}
             title="Toggle charge particle visualization"
@@ -327,7 +378,7 @@ export const CircuitCanvas = ({
             className="absolute z-10 select-none group"
           >
             {/* Component Repositioning Handle */}
-            <div 
+            <div
               onPointerDown={(e) => handleStartDragComponent(comp.id, comp.x, comp.y, e)}
               className="absolute -top-5 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded bg-slate-800 border border-slate-600 text-[8px] font-mono text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 cursor-grab active:cursor-grabbing whitespace-nowrap shadow-md z-30"
             >
@@ -360,7 +411,7 @@ export const CircuitCanvas = ({
 
                 {/* 2. Switch Module */}
                 {comp.type === 'switch' && (
-                  <div 
+                  <div
                     onClick={(e) => { e.stopPropagation(); onToggleSwitch(); }}
                     className={`w-36 h-24 rounded-xl bg-slate-900/90 border p-2 flex flex-col justify-between items-center text-center cursor-pointer transition-all shadow-[0_8px_25px_rgba(0,0,0,0.6)] backdrop-blur-md ${
                       isSwitchClosed ? 'border-emerald-500/60 shadow-[0_0_15px_rgba(16,185,129,0.2)]' : 'border-white/15 hover:border-white/30'
@@ -375,7 +426,7 @@ export const CircuitCanvas = ({
                     </div>
                     <div className="relative w-24 h-7 flex items-center justify-between px-2 bg-black/50 rounded-lg border border-white/10">
                       <div className="w-3 h-4 bg-amber-500 rounded-sm border border-amber-400" />
-                      <div 
+                      <div
                         className="absolute left-4 w-18 h-1.5 bg-gradient-to-r from-amber-500 to-amber-400 origin-left transition-transform duration-200 rounded shadow-md z-10"
                         style={{ transform: isSwitchClosed ? 'rotate(0deg)' : 'rotate(-28deg)' }}
                       >
@@ -428,7 +479,7 @@ export const CircuitCanvas = ({
                     </div>
                     <div className="w-30 h-6 bg-slate-800 rounded border border-slate-700 flex items-center justify-around px-2 shadow-inner relative overflow-hidden">
                       {analysis.powerWatts > 0.2 && (
-                        <div 
+                        <div
                           className="absolute inset-0 bg-red-500/30 animate-pulse pointer-events-none"
                           style={{ opacity: Math.min(1, analysis.powerWatts / 1.5) }}
                         />
@@ -483,12 +534,12 @@ export const CircuitCanvas = ({
                 )}
 
                 {comp.type === 'switch' && (
-                  <div 
+                  <div
                     onClick={(e) => { e.stopPropagation(); onToggleSwitch(); }}
                     className="flex items-center justify-center gap-1 py-2 cursor-pointer"
                   >
                     <div className="w-2 h-2 rounded-full border-2 border-white" />
-                    <div 
+                    <div
                       className="w-10 h-0.5 bg-amber-400 origin-left transition-transform duration-200"
                       style={{ transform: isSwitchClosed ? 'rotate(0deg)' : 'rotate(-28deg)' }}
                     />
@@ -560,8 +611,8 @@ export const CircuitCanvas = ({
             const midY = (p1.y + p2.y) / 2 + sag * 0.75;
 
             return (
-              <g 
-                key={w.id} 
+              <g
+                key={w.id}
                 className="pointer-events-auto cursor-pointer group"
                 onMouseEnter={() => setHoveredWireId(w.id)}
                 onMouseLeave={() => setHoveredWireId(null)}
@@ -621,8 +672,8 @@ export const CircuitCanvas = ({
 
                 {/* Midpoint Delete Scissor Button */}
                 {isHovered && (
-                  <g 
-                    transform={`translate(${midX}, ${midY})`} 
+                  <g
+                    transform={`translate(${midX}, ${midY})`}
                     onClick={() => {
                       onRemoveWire(w.id);
                       sounds.playSnap();
@@ -644,8 +695,8 @@ export const CircuitCanvas = ({
             <g>
               {(() => {
                 const p1 = allTerminals[activeFromTerm];
-                const targetPos = snappedTermId && allTerminals[snappedTermId] 
-                  ? allTerminals[snappedTermId] 
+                const targetPos = snappedTermId && allTerminals[snappedTermId]
+                  ? allTerminals[snappedTermId]
                   : mousePos;
                 const dx = targetPos.x - p1.x;
                 const dy = targetPos.y - p1.y;
@@ -710,6 +761,7 @@ export const CircuitCanvas = ({
 
               {/* Machined 5-Way Binding Post */}
               <button
+                data-terminal={termId}
                 onPointerDown={(e) => handleTerminalPointerDown(termId, e)}
                 onPointerUp={(e) => handleTerminalPointerUp(termId, e)}
                 onClick={(e) => {

@@ -1,8 +1,39 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import anime from '../../lib/anime';
+
+const springSnappy = { type: 'spring', stiffness: 400, damping: 30, mass: 0.8 };
+const springFluid = { type: 'spring', stiffness: 260, damping: 25, mass: 0.9 };
 
 export const AicosSidebar = ({ activeRoute = 'simulation-lab', onNavigate, isCollapsed, setIsCollapsed }) => {
   const [collapsed, setCollapsed] = useState(false);
   const isSidebarCollapsed = isCollapsed !== undefined ? isCollapsed : collapsed;
+  const sidebarRef = useRef(null);
+  const navItemRefs = useRef([]);
+
+  useEffect(() => {
+    if (!sidebarRef.current) return;
+    anime({
+      targets: sidebarRef.current,
+      opacity: [0, 1],
+      translateX: [-20, 0],
+      duration: 500,
+      easing: 'easeOutExpo',
+    });
+  }, []);
+
+  useEffect(() => {
+    navItemRefs.current = navItemRefs.current.filter(Boolean);
+    if (navItemRefs.current.length === 0) return;
+    anime({
+      targets: navItemRefs.current,
+      opacity: [0, 1],
+      translateX: [-8, 0],
+      duration: 350,
+      delay: anime.stagger(40),
+      easing: 'easeOutExpo',
+    });
+  }, [isSidebarCollapsed]);
+
   const toggleCollapse = () => {
     if (setIsCollapsed) {
       setIsCollapsed(!isSidebarCollapsed);
@@ -30,8 +61,33 @@ export const AicosSidebar = ({ activeRoute = 'simulation-lab', onNavigate, isCol
     { id: 'settings', label: 'Settings', icon: 'settings' },
   ];
 
+  const handleCollapseButtonHover = (e, animate) => {
+    anime({
+      targets: e.currentTarget,
+      scale: animate ? 1.1 : 1,
+      ...springSnappy,
+    });
+  };
+
+  const handleNavItemHover = (e, animate) => {
+    anime({
+      targets: e.currentTarget,
+      scale: animate ? 1.03 : 1,
+      ...springFluid,
+    });
+  };
+
+  const handleLogoutButtonHover = (e, animate) => {
+    anime({
+      targets: e.currentTarget,
+      scale: animate ? 1.03 : 1,
+      ...springSnappy,
+    });
+  };
+
   return (
-    <aside 
+    <aside
+      ref={sidebarRef}
       className={`fixed top-0 left-0 bottom-0 z-40 bg-surface-container-lowest border-r border-outline-variant/30 flex flex-col transition-all duration-300 ease-in-out ${
         isSidebarCollapsed ? 'w-20' : 'w-64'
       }`}
@@ -50,9 +106,11 @@ export const AicosSidebar = ({ activeRoute = 'simulation-lab', onNavigate, isCol
           </div>
         )}
 
-        <button 
+        <button
           onClick={toggleCollapse}
           title={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          onMouseEnter={(e) => handleCollapseButtonHover(e, true)}
+          onMouseLeave={(e) => handleCollapseButtonHover(e, false)}
           className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-surface-container text-on-surface-variant active:scale-95 transition-all duration-200 flex-shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
         >
           <span className="material-symbols-outlined text-xl">
@@ -63,7 +121,7 @@ export const AicosSidebar = ({ activeRoute = 'simulation-lab', onNavigate, isCol
 
       {/* Student Profile Card (From Students.xlsx: Layla Richardson) */}
       <div className="p-3 border-b border-outline-variant/20 flex-shrink-0">
-        <div 
+        <div
           className={`flex items-center rounded-xl p-2 transition-colors duration-200 hover:bg-surface-container/60 cursor-pointer ${
             isSidebarCollapsed ? 'justify-center' : 'gap-3'
           }`}
@@ -93,22 +151,25 @@ export const AicosSidebar = ({ activeRoute = 'simulation-lab', onNavigate, isCol
 
       {/* Navigation List */}
       <nav className="flex-1 overflow-y-auto px-3 py-3 space-y-1 custom-scrollbar">
-        {menuItems.map((item) => {
+        {menuItems.map((item, idx) => {
           const isActive = item.id === activeRoute;
           return (
             <button
               key={item.id}
+              ref={el => navItemRefs.current[idx] = el}
               onClick={() => onNavigate && onNavigate(item.id)}
+              onMouseEnter={(e) => handleNavItemHover(e, true)}
+              onMouseLeave={(e) => handleNavItemHover(e, false)}
               className={`w-full group relative flex items-center rounded-lg transition-all duration-200 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
                 isSidebarCollapsed ? 'justify-center py-2.5 px-0' : 'gap-3 px-3 py-2.5'
               } ${
-                isActive 
-                  ? 'text-teal-700 bg-teal-500/[0.12] font-bold border-r-2 border-teal-600' 
+                isActive
+                  ? 'text-teal-700 bg-teal-500/[0.12] font-bold border-r-2 border-teal-600'
                   : 'text-on-surface-variant hover:text-teal-700 hover:bg-surface-container/60'
               }`}
               title={isSidebarCollapsed ? item.label : undefined}
             >
-              <span 
+              <span
                 className={`material-symbols-outlined text-[20px] transition-transform duration-200 group-hover:scale-110 flex-shrink-0 ${
                   isActive ? 'text-teal-600' : 'text-on-surface-variant group-hover:text-teal-600'
                 }`}
@@ -134,6 +195,8 @@ export const AicosSidebar = ({ activeRoute = 'simulation-lab', onNavigate, isCol
       <div className="p-3 border-t border-outline-variant/20 flex-shrink-0">
         <button
           onClick={() => {}}
+          onMouseEnter={(e) => handleLogoutButtonHover(e, true)}
+          onMouseLeave={(e) => handleLogoutButtonHover(e, false)}
           className={`w-full group flex items-center rounded-lg transition-all duration-200 text-sm font-semibold text-error hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error/40 ${
             isSidebarCollapsed ? 'justify-center py-2.5 px-0' : 'gap-3 px-3 py-2.5'
           }`}

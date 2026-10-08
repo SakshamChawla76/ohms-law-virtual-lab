@@ -1,16 +1,24 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { 
-  Zap, 
-  ArrowRight, 
-  Layers, 
-  Sliders, 
-  Gauge, 
-  ShieldCheck, 
+import confetti from 'canvas-confetti';
+import {
+  GraduationCap,
+  CheckCircle2,
+  XCircle,
+  ArrowRight,
+  RotateCcw,
   Sparkles,
-  HelpCircle,
-  Activity
+  Award,
+  Sliders,
+  Activity,
+  Layers,
+  Zap
 } from 'lucide-react';
+import anime from '../../lib/anime';
+import { QUIZ_QUESTIONS } from '../../config/quizData';
 import { sounds } from '../../engine/audioEffects';
+
+const springSnappy = { type: 'spring', stiffness: 400, damping: 30, mass: 0.8 };
+const springFluid = { type: 'spring', stiffness: 260, damping: 25, mass: 0.9 };
 
 export const TheoryScreen = ({ onNavigate }) => {
   const [demoVoltage, setDemoVoltage] = useState(4.0);
@@ -19,6 +27,7 @@ export const TheoryScreen = ({ onNavigate }) => {
 
   // Particle animation on canvas
   const canvasRef = useRef(null);
+  const mainRef = useRef(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -94,14 +103,41 @@ export const TheoryScreen = ({ onNavigate }) => {
     };
   }, [demoCurrent]);
 
+  useEffect(() => {
+    if (!mainRef.current) return;
+    anime({
+      targets: mainRef.current,
+      opacity: [0, 1],
+      translateY: [16, 0],
+      easing: 'easeOutExpo',
+      duration: 600,
+    });
+  }, []);
+
   const handleSliderChange = (e) => {
     const val = parseFloat(e.target.value);
     setDemoVoltage(val);
     sounds.playTick();
   };
 
+  const handleNavButtonHover = (e, animate) => {
+    anime({
+      targets: e.currentTarget,
+      scale: animate ? 1.03 : 1,
+      ...springSnappy,
+    });
+  };
+
+  const handleOptionHover = (e, animate) => {
+    anime({
+      targets: e.currentTarget,
+      scale: animate ? 1.02 : 1,
+      ...springFluid,
+    });
+  };
+
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8 space-y-8 animate-fadeIn text-on-surface">
+    <div ref={mainRef} className="max-w-6xl mx-auto px-4 py-8 space-y-8 text-on-surface">
       {/* Title Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-outline-variant/30 pb-6">
         <div>
@@ -117,6 +153,8 @@ export const TheoryScreen = ({ onNavigate }) => {
 
         <button
           onClick={() => { sounds.playTick(); onNavigate('apparatus'); }}
+          onMouseEnter={(e) => handleNavButtonHover(e, true)}
+          onMouseLeave={(e) => handleNavButtonHover(e, false)}
           className="self-start md:self-auto px-5 py-3 rounded-2xl bg-teal-700 hover:bg-teal-800 text-white font-bold text-xs flex items-center gap-2 shadow-sm active:scale-95 transition-all"
         >
           <Layers className="w-4 h-4" />
@@ -128,7 +166,11 @@ export const TheoryScreen = ({ onNavigate }) => {
       {/* 4 Interactive Theory Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {/* Voltage */}
-        <div className="p-5 rounded-2xl bg-surface-container-lowest border border-outline-variant/30 shadow-sm space-y-2 hover:border-emerald-500/50 hover:shadow-md transition-all group">
+        <div
+          className="p-5 rounded-2xl bg-surface-container-lowest border border-outline-variant/30 shadow-sm space-y-2 hover:border-emerald-500/50 hover:shadow-md transition-all group"
+          onMouseEnter={(e) => handleOptionHover(e, true)}
+          onMouseLeave={(e) => handleOptionHover(e, false)}
+        >
           <div className="h-9 w-9 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-700 font-bold font-mono text-sm shadow-sm group-hover:scale-105 transition-transform">
             V
           </div>
@@ -142,7 +184,11 @@ export const TheoryScreen = ({ onNavigate }) => {
         </div>
 
         {/* Current */}
-        <div className="p-5 rounded-2xl bg-surface-container-lowest border border-outline-variant/30 shadow-sm space-y-2 hover:border-amber-500/50 hover:shadow-md transition-all group">
+        <div
+          className="p-5 rounded-2xl bg-surface-container-lowest border border-outline-variant/30 shadow-sm space-y-2 hover:border-amber-500/50 hover:shadow-md transition-all group"
+          onMouseEnter={(e) => handleOptionHover(e, true)}
+          onMouseLeave={(e) => handleOptionHover(e, false)}
+        >
           <div className="h-9 w-9 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-700 font-bold font-mono text-sm shadow-sm group-hover:scale-105 transition-transform">
             I
           </div>
@@ -156,7 +202,11 @@ export const TheoryScreen = ({ onNavigate }) => {
         </div>
 
         {/* Resistance */}
-        <div className="p-5 rounded-2xl bg-surface-container-lowest border border-outline-variant/30 shadow-sm space-y-2 hover:border-teal-500/50 hover:shadow-md transition-all group">
+        <div
+          className="p-5 rounded-2xl bg-surface-container-lowest border border-outline-variant/30 shadow-sm space-y-2 hover:border-teal-500/50 hover:shadow-md transition-all group"
+          onMouseEnter={(e) => handleOptionHover(e, true)}
+          onMouseLeave={(e) => handleOptionHover(e, false)}
+        >
           <div className="h-9 w-9 rounded-xl bg-teal-50 border border-teal-200 flex items-center justify-center text-teal-700 font-bold font-mono text-sm shadow-sm group-hover:scale-105 transition-transform">
             R
           </div>
@@ -170,7 +220,11 @@ export const TheoryScreen = ({ onNavigate }) => {
         </div>
 
         {/* Ohm's Law */}
-        <div className="p-5 rounded-2xl bg-teal-50/60 border border-teal-200/80 shadow-sm space-y-2 hover:border-teal-400 hover:shadow-md transition-all group">
+        <div
+          className="p-5 rounded-2xl bg-teal-50/60 border border-teal-200/80 shadow-sm space-y-2 hover:border-teal-400 hover:shadow-md transition-all group"
+          onMouseEnter={(e) => handleOptionHover(e, true)}
+          onMouseLeave={(e) => handleOptionHover(e, false)}
+        >
           <div className="h-9 w-9 rounded-xl bg-teal-600 text-white flex items-center justify-center font-bold text-sm shadow-sm group-hover:scale-105 transition-transform">
             <Zap className="w-4 h-4" />
           </div>
@@ -281,8 +335,8 @@ export const TheoryScreen = ({ onNavigate }) => {
           <div className="p-5 rounded-2xl bg-surface-container border border-outline-variant/30 flex flex-col items-center justify-center">
             <div className="relative w-36 h-20 overflow-hidden flex items-end justify-center">
               <div className="absolute inset-0 w-36 h-36 rounded-full border-4 border-slate-300 border-t-teal-600" />
-              <div 
-                className="absolute bottom-0 w-1.5 h-16 bg-rose-500 origin-bottom transition-transform duration-200 shadow-md"
+              <div
+                className="absolute bottom-0 w-1.5 h-16 bg-rose-500 origin-bottom shadow-md"
                 style={{
                   transform: `rotate(${-60 + (demoCurrent / 0.20) * 120}deg)`,
                 }}
@@ -303,11 +357,11 @@ export const TheoryScreen = ({ onNavigate }) => {
               const i = (v / demoResistance).toFixed(2);
               const isActive = Math.abs(demoVoltage - v) < 0.5;
               return (
-                <div 
+                <div
                   key={v}
                   className={`p-3 rounded-xl border transition-all ${
-                    isActive 
-                      ? 'bg-teal-50 border-teal-500 text-teal-800 font-bold scale-105 shadow-sm' 
+                    isActive
+                      ? 'bg-teal-50 border-teal-500 text-teal-800 font-bold scale-105 shadow-sm'
                       : 'bg-surface-container-lowest border-outline-variant/30 text-on-surface-variant hover:border-teal-300'
                   }`}
                 >
@@ -322,4 +376,3 @@ export const TheoryScreen = ({ onNavigate }) => {
     </div>
   );
 };
-

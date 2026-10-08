@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Gauge } from 'lucide-react';
+import anime from '../../lib/anime';
 
 export const AmmeterWidget = ({
   current,
@@ -10,7 +11,9 @@ export const AmmeterWidget = ({
   const clampedCurrent = Math.min(Math.max(current, 0), maxScale);
   const needleAngle = -50 + (clampedCurrent / maxScale) * 100;
 
-  // Generate 50 fine calibration division ticks
+  const needleRef = useRef(null);
+
+  // Generate 50 fine calibration division ticks (0 to 1.0 A in 0.02 A increments)
   const ticks = [];
   for (let i = 0; i <= 50; i++) {
     const val = (i / 50) * maxScale;
@@ -18,8 +21,7 @@ export const AmmeterWidget = ({
     const isMedium = i % 5 === 0 && !isMajor;
     const angle = -50 + (i / 50) * 100;
     const rad = (angle - 90) * (Math.PI / 180);
-    
-    // Radii
+
     const rOuter = 82;
     const rInner = isMajor ? 68 : isMedium ? 73 : 76;
     const rText = 58;
@@ -38,6 +40,15 @@ export const AmmeterWidget = ({
       val: val.toFixed(1),
     });
   }
+
+  useEffect(() => {
+    anime({
+      targets: needleRef.current,
+      rotate: needleAngle,
+      duration: 300,
+      easing: 'spring(1, 80, 10, 0)',
+    });
+  }, [needleAngle]);
 
   return (
     <div className="w-72 rounded-2xl p-4 select-none relative overflow-hidden border border-outline-variant/30 shadow-sm bg-surface-container-lowest">
@@ -139,20 +150,10 @@ export const AmmeterWidget = ({
           </text>
         </svg>
 
-        {/* Dynamic Cast Shadow Beneath Needle */}
-        <div
-          className="absolute bottom-1 w-0.5 h-24 bg-black/60 origin-bottom transition-transform duration-300 ease-out blur-[1.5px] pointer-events-none"
-          style={{
-            transform: `rotate(${needleAngle + 2}deg) translate(2px, 0)`,
-          }}
-        />
-
         {/* Precision Knife-Edge Needle Pointer */}
         <div
-          className="absolute bottom-1 w-1 h-25 origin-bottom transition-transform duration-300 ease-out z-20 pointer-events-none"
-          style={{
-            transform: `rotate(${needleAngle}deg)`,
-          }}
+          ref={needleRef}
+          className="absolute bottom-1 w-1 h-25 origin-bottom z-20 pointer-events-none"
         >
           {/* Vermilion pointer arm with glow */}
           <div className="w-0.5 h-20 bg-rose-500 mx-auto rounded-t-sm shadow-[0_0_8px_rgba(244,63,94,0.8)]" />

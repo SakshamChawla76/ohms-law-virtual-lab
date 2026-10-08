@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Cpu, Flame } from 'lucide-react';
+import anime from '../../lib/anime';
 import { sounds } from '../../engine/audioEffects';
 
 export const ResistorSelector = ({
@@ -7,6 +8,8 @@ export const ResistorSelector = ({
   setResistance,
   options = [10, 20, 50, 100],
 }) => {
+  const colorBandsRef = useRef(null);
+
   const getColorBands = (r) => {
     switch (r) {
       case 10:
@@ -23,6 +26,18 @@ export const ResistorSelector = ({
   };
 
   const bands = getColorBands(resistance);
+
+  useEffect(() => {
+    if (colorBandsRef.current) {
+      anime({
+        targets: colorBandsRef.current,
+        scale: [1, 1.08, 1],
+        opacity: [1, 0.7, 1],
+        duration: 350,
+        easing: 'spring(300, 25, 8)',
+      });
+    }
+  }, [resistance]);
 
   return (
     <div className="w-full rounded-2xl p-4 select-none relative overflow-hidden flex flex-col justify-between border border-outline-variant/30 shadow-sm bg-surface-container-lowest">
@@ -69,7 +84,7 @@ export const ResistorSelector = ({
             </div>
 
             {/* Precision EIA Identification Bands */}
-            <div className="relative z-10 flex items-center justify-between w-full px-2">
+            <div ref={colorBandsRef} className="relative z-10 flex items-center justify-between w-full px-2">
               <div className="flex gap-2">
                 <div className="w-3 h-11 rounded-sm shadow-md" style={{ backgroundColor: bands.band1 }} title="1st Significant Digit" />
                 <div className="w-3 h-11 rounded-sm shadow-md" style={{ backgroundColor: bands.band2 }} title="2nd Significant Digit" />

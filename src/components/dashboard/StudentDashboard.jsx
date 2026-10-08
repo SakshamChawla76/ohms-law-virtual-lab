@@ -1,15 +1,19 @@
-import React from 'react';
-import { 
-  Award, 
-  CheckCircle2, 
-  FileText, 
-  RotateCcw, 
-  BookOpen, 
+import React, { useEffect, useRef } from 'react';
+import {
+  Award,
+  CheckCircle2,
+  FileText,
+  RotateCcw,
+  BookOpen,
   Printer,
   Sparkles,
   ArrowRight
 } from 'lucide-react';
+import anime from '../../lib/anime';
 import { sounds } from '../../engine/audioEffects';
+
+const springSnappy = { type: 'spring', stiffness: 400, damping: 30, mass: 0.8 };
+const springFluid = { type: 'spring', stiffness: 260, damping: 25, mass: 0.9 };
 
 export const StudentDashboard = ({
   scoreState,
@@ -19,12 +23,12 @@ export const StudentDashboard = ({
   onRestart,
   onNavigateToLab,
 }) => {
-  const totalScore = Math.max(0, 
-    scoreState.circuitAssembly + 
-    scoreState.meterConnection + 
-    scoreState.measurements + 
-    scoreState.calculations + 
-    scoreState.graphAnalysis - 
+  const totalScore = Math.max(0,
+    scoreState.circuitAssembly +
+    scoreState.meterConnection +
+    scoreState.measurements +
+    scoreState.calculations +
+    scoreState.graphAnalysis -
     scoreState.penalties
   );
 
@@ -40,8 +44,63 @@ export const StudentDashboard = ({
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (Math.min(100, totalScore) / 100) * circumference;
 
+  const mainRef = useRef(null);
+  const progressRingRef = useRef(null);
+  const metricRefs = useRef([]);
+
+  useEffect(() => {
+    if (!mainRef.current) return;
+    anime({
+      targets: mainRef.current,
+      opacity: [0, 1],
+      translateY: [16, 0],
+      easing: 'easeOutExpo',
+      duration: 600,
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!progressRingRef.current) return;
+    anime({
+      targets: progressRingRef.current,
+      strokeDashoffset: [circumference, strokeDashoffset],
+      duration: 1200,
+      easing: 'easeOutExpo',
+    });
+  }, [circumference, strokeDashoffset]);
+
+  useEffect(() => {
+    metricRefs.current = metricRefs.current.filter(Boolean);
+    if (metricRefs.current.length === 0) return;
+    anime({
+      targets: metricRefs.current,
+      opacity: [0, 1],
+      translateY: [12, 0],
+      easing: 'easeOutExpo',
+      duration: 500,
+      delay: anime.stagger(100),
+    });
+  }, []);
+
+  const handleActionButtonHover = (e, animate) => {
+    anime({
+      targets: e.currentTarget,
+      scale: animate ? 1.04 : 1,
+      ...springSnappy,
+    });
+  };
+
+  const handleMetricCardHover = (e, animate) => {
+    anime({
+      targets: e.currentTarget,
+      scale: animate ? 1.03 : 1,
+      borderColor: animate ? 'rgba(6, 182, 212, 0.33)' : 'rgba(255,255,255,0.1)',
+      ...springFluid,
+    });
+  };
+
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8 space-y-8 animate-fadeIn text-slate-100">
+    <div ref={mainRef} className="max-w-5xl mx-auto px-4 py-8 space-y-8 text-slate-100">
       {/* Printable Report Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/10 pb-6 print:border-black">
         <div>
@@ -60,6 +119,8 @@ export const StudentDashboard = ({
         <div className="flex items-center gap-2.5 print:hidden">
           <button
             onClick={handlePrint}
+            onMouseEnter={(e) => handleActionButtonHover(e, true)}
+            onMouseLeave={(e) => handleActionButtonHover(e, false)}
             className="px-4 py-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 text-slate-200 font-semibold text-xs border border-white/10 flex items-center gap-2 transition-all shadow-sm hover:border-cyan-500/30"
           >
             <Printer className="w-4 h-4 text-cyan-400" />
@@ -68,6 +129,8 @@ export const StudentDashboard = ({
 
           <button
             onClick={onRestart}
+            onMouseEnter={(e) => handleActionButtonHover(e, true)}
+            onMouseLeave={(e) => handleActionButtonHover(e, false)}
             className="px-4 py-2.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 font-semibold text-xs flex items-center gap-2 transition-all shadow-sm"
           >
             <RotateCcw className="w-4 h-4 text-rose-400" />
@@ -96,13 +159,14 @@ export const StudentDashboard = ({
                 />
                 {/* Glowing Progress */}
                 <circle
+                  ref={progressRingRef}
                   cx="55"
                   cy="55"
                   r={radius}
                   stroke={isPassed ? '#10b981' : '#f43f5e'}
                   strokeWidth="8"
                   strokeDasharray={circumference}
-                  strokeDashoffset={strokeDashoffset}
+                  strokeDashoffset={circumference}
                   strokeLinecap="round"
                   fill="none"
                   className="transition-all duration-1000 ease-out"
@@ -121,8 +185,8 @@ export const StudentDashboard = ({
             </div>
 
             <span className={`text-xs font-bold uppercase tracking-wider mt-3 px-3 py-1 rounded-full border ${
-              isPassed 
-                ? 'text-emerald-300 bg-emerald-500/10 border-emerald-500/30 print:text-emerald-800' 
+              isPassed
+                ? 'text-emerald-300 bg-emerald-500/10 border-emerald-500/30 print:text-emerald-800'
                 : 'text-rose-300 bg-rose-500/10 border-rose-500/30 print:text-rose-800'
             }`}>
               {isPassed ? 'VERIFICATION PASSED' : 'REVISION RECOMMENDED'}
@@ -131,7 +195,10 @@ export const StudentDashboard = ({
 
           {/* Metrics */}
           <div className="md:col-span-3 grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs font-mono">
-            <div className="p-4 rounded-2xl bg-slate-800/40 border border-white/10 space-y-1 hover:border-cyan-500/30 transition-all print:bg-gray-100 print:border-gray-300">
+            <div
+              ref={el => metricRefs.current[0] = el}
+              className="p-4 rounded-2xl bg-slate-800/40 border border-white/10 space-y-1 hover:border-cyan-500/30 transition-all print:bg-gray-100 print:border-gray-300"
+            >
               <span className="text-slate-400 print:text-slate-600 text-[10px] uppercase block tracking-wider">Recorded Trials</span>
               <span className="text-2xl font-bold text-white print:text-black">{trials.length} / 5</span>
               <span className="text-emerald-400 print:text-emerald-700 text-[10px] block font-semibold flex items-center gap-1">
@@ -139,19 +206,28 @@ export const StudentDashboard = ({
               </span>
             </div>
 
-            <div className="p-4 rounded-2xl bg-slate-800/40 border border-white/10 space-y-1 hover:border-cyan-500/30 transition-all print:bg-gray-100 print:border-gray-300">
+            <div
+              ref={el => metricRefs.current[1] = el}
+              className="p-4 rounded-2xl bg-slate-800/40 border border-white/10 space-y-1 hover:border-cyan-500/30 transition-all print:bg-gray-100 print:border-gray-300"
+            >
               <span className="text-slate-400 print:text-slate-600 text-[10px] uppercase block tracking-wider">Circuit Topology</span>
               <span className="text-2xl font-bold text-emerald-400 print:text-emerald-700">Valid</span>
               <span className="text-slate-400 print:text-slate-600 text-[10px] block truncate">Series & Parallel OK</span>
             </div>
 
-            <div className="p-4 rounded-2xl bg-slate-800/40 border border-white/10 space-y-1 hover:border-cyan-500/30 transition-all print:bg-gray-100 print:border-gray-300">
+            <div
+              ref={el => metricRefs.current[2] = el}
+              className="p-4 rounded-2xl bg-slate-800/40 border border-white/10 space-y-1 hover:border-cyan-500/30 transition-all print:bg-gray-100 print:border-gray-300"
+            >
               <span className="text-slate-400 print:text-slate-600 text-[10px] uppercase block tracking-wider">Quiz Accuracy</span>
               <span className="text-2xl font-bold text-amber-400 print:text-amber-700">{quizScore} / 8</span>
               <span className="text-slate-400 print:text-slate-600 text-[10px] block">{((quizScore / 8) * 100).toFixed(0)}% Score</span>
             </div>
 
-            <div className="p-4 rounded-2xl bg-slate-800/40 border border-white/10 space-y-1 hover:border-cyan-500/30 transition-all print:bg-gray-100 print:border-gray-300">
+            <div
+              ref={el => metricRefs.current[3] = el}
+              className="p-4 rounded-2xl bg-slate-800/40 border border-white/10 space-y-1 hover:border-cyan-500/30 transition-all print:bg-gray-100 print:border-gray-300"
+            >
               <span className="text-slate-400 print:text-slate-600 text-[10px] uppercase block tracking-wider">Resistor Tested</span>
               <span className="text-2xl font-bold text-cyan-400 print:text-cyan-700">{nominalResistance} Ω</span>
               <span className="text-slate-400 print:text-slate-600 text-[10px] block">Ohmic Load</span>
@@ -168,35 +244,31 @@ export const StudentDashboard = ({
         </h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5 text-xs font-mono">
-          <div className="p-4 rounded-2xl bg-slate-800/40 border border-white/10 hover:border-cyan-500/30 transition-all print:bg-gray-50 print:border-gray-300">
-            <span className="text-slate-400 print:text-slate-600 block text-[10px] uppercase">1. Assembly</span>
-            <div className="text-xl font-bold text-emerald-400 print:text-emerald-700 mt-1">{scoreState.circuitAssembly} / 20</div>
-            <p className="text-[10px] text-slate-400 print:text-slate-600 mt-1.5 leading-relaxed">Closed series loop with supply & switch.</p>
-          </div>
-
-          <div className="p-4 rounded-2xl bg-slate-800/40 border border-white/10 hover:border-cyan-500/30 transition-all print:bg-gray-50 print:border-gray-300">
-            <span className="text-slate-400 print:text-slate-600 block text-[10px] uppercase">2. Meters</span>
-            <div className="text-xl font-bold text-emerald-400 print:text-emerald-700 mt-1">{scoreState.meterConnection} / 20</div>
-            <p className="text-[10px] text-slate-400 print:text-slate-600 mt-1.5 leading-relaxed">Ammeter in series, voltmeter in parallel.</p>
-          </div>
-
-          <div className="p-4 rounded-2xl bg-slate-800/40 border border-white/10 hover:border-cyan-500/30 transition-all print:bg-gray-50 print:border-gray-300">
-            <span className="text-slate-400 print:text-slate-600 block text-[10px] uppercase">3. Data</span>
-            <div className="text-xl font-bold text-emerald-400 print:text-emerald-700 mt-1">{scoreState.measurements} / 20</div>
-            <p className="text-[10px] text-slate-400 print:text-slate-600 mt-1.5 leading-relaxed">Recording 5+ distinct (V, I) trials.</p>
-          </div>
-
-          <div className="p-4 rounded-2xl bg-slate-800/40 border border-white/10 hover:border-cyan-500/30 transition-all print:bg-gray-50 print:border-gray-300">
-            <span className="text-slate-400 print:text-slate-600 block text-[10px] uppercase">4. R = V/I Calc</span>
-            <div className="text-xl font-bold text-emerald-400 print:text-emerald-700 mt-1">{scoreState.calculations} / 20</div>
-            <p className="text-[10px] text-slate-400 print:text-slate-600 mt-1.5 leading-relaxed">Precise trial resistance computing.</p>
-          </div>
-
-          <div className="p-4 rounded-2xl bg-slate-800/40 border border-white/10 hover:border-cyan-500/30 transition-all print:bg-gray-50 print:border-gray-300">
-            <span className="text-slate-400 print:text-slate-600 block text-[10px] uppercase">5. Graph Analysis</span>
-            <div className="text-xl font-bold text-emerald-400 print:text-emerald-700 mt-1">{scoreState.graphAnalysis} / 20</div>
-            <p className="text-[10px] text-slate-400 print:text-slate-600 mt-1.5 leading-relaxed">Slope = R linear regression verified.</p>
-          </div>
+          {[
+            { label: '1. Assembly', value: scoreState.circuitAssembly, max: 20, color: 'emerald' },
+            { label: '2. Meters', value: scoreState.meterConnection, max: 20, color: 'emerald' },
+            { label: '3. Data', value: scoreState.measurements, max: 20, color: 'emerald' },
+            { label: '4. R = V/I Calc', value: scoreState.calculations, max: 20, color: 'emerald' },
+            { label: '5. Graph Analysis', value: scoreState.graphAnalysis, max: 20, color: 'emerald' },
+          ].map((rubric, idx) => (
+            <div
+              key={idx}
+              ref={el => metricRefs.current[4 + idx] = el}
+              className="p-4 rounded-2xl bg-slate-800/40 border border-white/10 hover:border-cyan-500/30 transition-all print:bg-gray-50 print:border-gray-300"
+              onMouseEnter={(e) => handleMetricCardHover(e, true)}
+              onMouseLeave={(e) => handleMetricCardHover(e, false)}
+            >
+              <span className="text-slate-400 print:text-slate-600 block text-[10px] uppercase">{rubric.label}</span>
+              <div className="text-xl font-bold text-emerald-400 print:text-emerald-700 mt-1">{rubric.value} / {rubric.max}</div>
+              <p className="text-[10px] text-slate-400 print:text-slate-600 mt-1.5 leading-relaxed">
+                {idx === 0 && 'Closed series loop with supply & switch.'}
+                {idx === 1 && 'Ammeter in series, voltmeter in parallel.'}
+                {idx === 2 && 'Recording 5+ distinct (V, I) trials.'}
+                {idx === 3 && 'Precise trial resistance computing.'}
+                {idx === 4 && 'Slope = R linear regression verified.'}
+              </p>
+            </div>
+          ))}
         </div>
 
         {scoreState.penalties > 0 && (
@@ -252,6 +324,8 @@ export const StudentDashboard = ({
       <div className="text-center pt-2 print:hidden">
         <button
           onClick={onNavigateToLab}
+          onMouseEnter={(e) => handleActionButtonHover(e, true)}
+          onMouseLeave={(e) => handleActionButtonHover(e, false)}
           className="px-8 py-3.5 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-bold text-xs shadow-lg shadow-cyan-500/25 active:scale-95 transition-all inline-flex items-center gap-2"
         >
           <Sparkles className="w-4 h-4" />
@@ -262,4 +336,3 @@ export const StudentDashboard = ({
     </div>
   );
 };
-

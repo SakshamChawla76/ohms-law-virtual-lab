@@ -1,16 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import anime from '../../lib/anime';
 import confetti from 'canvas-confetti';
-import { 
-  GraduationCap, 
-  CheckCircle2, 
-  XCircle, 
-  ArrowRight, 
-  RotateCcw, 
+import {
+  GraduationCap,
+  CheckCircle2,
+  XCircle,
+  ArrowRight,
+  RotateCcw,
   Sparkles,
   Award
 } from 'lucide-react';
 import { QUIZ_QUESTIONS } from '../../config/quizData';
 import { sounds } from '../../engine/audioEffects';
+
+const springSnappy = { type: 'spring', stiffness: 400, damping: 30, mass: 0.8 };
+const springFluid = { type: 'spring', stiffness: 260, damping: 25, mass: 0.9 };
 
 export const ConceptualQuiz = ({
   onNavigate,
@@ -20,9 +24,58 @@ export const ConceptualQuiz = ({
   const [selectedAnswers, setSelectedAnswers] = useState({});
   const [showExplanation, setShowExplanation] = useState(false);
   const [isFinished, setIsFinished] = useState(false);
+  const mainRef = useRef(null);
+  const progressBarRef = useRef(null);
+  const explanationRef = useRef(null);
+  const finishedRef = useRef(null);
 
   const currentQ = QUIZ_QUESTIONS[currentIdx];
   const userChoice = selectedAnswers[currentQ.id];
+
+  useEffect(() => {
+    if (!mainRef.current) return;
+    anime({
+      targets: mainRef.current,
+      opacity: [0, 1],
+      translateY: [16, 0],
+      easing: 'easeOutExpo',
+      duration: 600,
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!progressBarRef.current) return;
+    anime({
+      targets: progressBarRef.current,
+      width: `${((currentIdx + 1) / QUIZ_QUESTIONS.length) * 100}%`,
+      duration: 500,
+      easing: 'easeOutExpo',
+    });
+  }, [currentIdx]);
+
+  useEffect(() => {
+    if (showExplanation && explanationRef.current) {
+      anime({
+        targets: explanationRef.current,
+        opacity: [0, 1],
+        translateY: [8, 0],
+        duration: 400,
+        easing: 'easeOutExpo',
+      });
+    }
+  }, [showExplanation]);
+
+  useEffect(() => {
+    if (isFinished && finishedRef.current) {
+      anime({
+        targets: finishedRef.current,
+        opacity: [0, 1],
+        translateY: [16, 0],
+        duration: 500,
+        easing: 'easeOutExpo',
+      });
+    }
+  }, [isFinished]);
 
   const handleSelect = (choiceIdx) => {
     if (userChoice !== undefined) return; // already answered
@@ -78,8 +131,32 @@ export const ConceptualQuiz = ({
 
   const totalScore = QUIZ_QUESTIONS.filter(q => selectedAnswers[q.id] === q.correctIndex).length;
 
+  const handleOptionHover = (e, animate) => {
+    anime({
+      targets: e.currentTarget,
+      scale: animate ? 1.01 : 1,
+      ...springFluid,
+    });
+  };
+
+  const handleNavButtonHover = (e, animate) => {
+    anime({
+      targets: e.currentTarget,
+      scale: animate ? 1.05 : 1,
+      ...springSnappy,
+    });
+  };
+
+  const handleActionButtonHover = (e, animate) => {
+    anime({
+      targets: e.currentTarget,
+      scale: animate ? 1.04 : 1,
+      ...springSnappy,
+    });
+  };
+
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8 space-y-6 animate-fadeIn text-slate-100">
+    <div ref={mainRef} className="max-w-4xl mx-auto px-4 py-8 space-y-6 text-slate-100">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/10 pb-6">
         <div>
@@ -99,7 +176,9 @@ export const ConceptualQuiz = ({
           </div>
           <button
             onClick={() => onNavigate('dashboard')}
-            className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-slate-200 font-semibold text-xs border border-white/10 flex items-center gap-1.5 transition-all shadow-sm"
+            onMouseEnter={(e) => handleActionButtonHover(e, true)}
+            onMouseLeave={(e) => handleActionButtonHover(e, false)}
+            className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-slate-200 font-semibold text-xs border border-white/10 flex items-center gap-1.5 shadow-sm"
           >
             <Award className="w-4 h-4 text-amber-400" />
             View Student Report
@@ -120,7 +199,8 @@ export const ConceptualQuiz = ({
           {/* Progress Bar */}
           <div className="w-full h-2 rounded-full bg-black/40 overflow-hidden border border-white/5">
             <div
-              className="h-full bg-gradient-to-r from-cyan-500 via-blue-500 to-indigo-500 transition-all duration-300 shadow-[0_0_12px_rgba(6,182,212,0.5)]"
+              ref={progressBarRef}
+              className="h-full bg-gradient-to-r from-cyan-500 via-blue-500 to-indigo-500 shadow-[0_0_12px_rgba(6,182,212,0.5)]"
               style={{ width: `${((currentIdx + 1) / QUIZ_QUESTIONS.length) * 100}%` }}
             />
           </div>
@@ -153,7 +233,9 @@ export const ConceptualQuiz = ({
                   key={idx}
                   onClick={() => handleSelect(idx)}
                   disabled={hasAnswered}
-                  className={`w-full p-4 rounded-2xl border text-left transition-all flex items-center justify-between text-xs md:text-sm shadow-sm ${style}`}
+                  onMouseEnter={(e) => handleOptionHover(e, true)}
+                  onMouseLeave={(e) => handleOptionHover(e, false)}
+                  className={`w-full p-4 rounded-2xl border text-left flex items-center justify-between text-xs md:text-sm shadow-sm ${style}`}
                 >
                   <div className="flex items-center gap-3">
                     <span className="w-6 h-6 rounded-lg bg-white/10 border border-white/15 flex items-center justify-center font-mono font-bold text-xs shrink-0 text-slate-300">
@@ -170,7 +252,7 @@ export const ConceptualQuiz = ({
 
           {/* Educational Explanation Box */}
           {showExplanation && (
-            <div className="p-4 rounded-2xl bg-blue-950/40 border border-blue-500/30 text-xs font-mono space-y-1 text-blue-200 animate-fadeIn shadow-md">
+            <div ref={explanationRef} className="p-4 rounded-2xl bg-blue-950/40 border border-blue-500/30 space-y-1 text-xs font-mono text-blue-200 shadow-md">
               <div className="font-bold text-blue-300 flex items-center gap-1.5">
                 <Sparkles className="w-3.5 h-3.5 text-blue-400" />
                 Physical Explanation:
@@ -186,7 +268,9 @@ export const ConceptualQuiz = ({
             <button
               onClick={handlePrev}
               disabled={currentIdx === 0}
-              className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed text-slate-300 text-xs font-semibold border border-white/10 transition-colors"
+              onMouseEnter={(e) => handleNavButtonHover(e, true)}
+              onMouseLeave={(e) => handleNavButtonHover(e, false)}
+              className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed text-slate-300 text-xs font-semibold border border-white/10"
             >
               Previous
             </button>
@@ -194,7 +278,9 @@ export const ConceptualQuiz = ({
             {userChoice !== undefined && (
               <button
                 onClick={handleNext}
-                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-400 hover:to-indigo-500 text-white font-bold text-xs flex items-center gap-2 shadow-[0_0_15px_rgba(79,140,255,0.3)] transition-all border-none"
+                onMouseEnter={(e) => handleNavButtonHover(e, true)}
+                onMouseLeave={(e) => handleNavButtonHover(e, false)}
+                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-400 hover:to-indigo-500 text-white font-bold text-xs flex items-center gap-2 shadow-[0_0_15px_rgba(79,140,255,0.3)] border-none"
               >
                 {currentIdx < QUIZ_QUESTIONS.length - 1 ? 'Next Question' : 'Finish Quiz'}
                 <ArrowRight className="w-4 h-4" />
@@ -204,9 +290,9 @@ export const ConceptualQuiz = ({
         </div>
       ) : (
         /* Quiz Finished Result Screen */
-        <div className="p-8 rounded-3xl glass-card border border-white/10 text-center space-y-6 shadow-2xl bg-slate-900/60 backdrop-blur-xl animate-fadeIn">
+        <div ref={finishedRef} className="p-8 rounded-3xl glass-card border border-white/10 text-center space-y-6 shadow-2xl bg-slate-900/60 backdrop-blur-xl">
           <div className="h-20 w-20 mx-auto rounded-3xl bg-blue-500/20 border border-blue-500/40 flex items-center justify-center text-blue-400 shadow-[0_0_20px_rgba(79,140,255,0.3)]">
-            <Award className="w-10 h-10 animate-bounce" />
+            <Award className="w-10 h-10" />
           </div>
 
           <div className="space-y-2">
@@ -219,7 +305,9 @@ export const ConceptualQuiz = ({
           <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
             <button
               onClick={handleRestart}
-              className="px-5 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-slate-200 font-semibold text-xs border border-white/10 flex items-center gap-2 shadow-sm transition-all"
+              onMouseEnter={(e) => handleActionButtonHover(e, true)}
+              onMouseLeave={(e) => handleActionButtonHover(e, false)}
+              className="px-5 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-slate-200 font-semibold text-xs border border-white/10 flex items-center gap-2 shadow-sm"
             >
               <RotateCcw className="w-4 h-4" />
               Retake Quiz
@@ -227,7 +315,9 @@ export const ConceptualQuiz = ({
 
             <button
               onClick={() => onNavigate('dashboard')}
-              className="px-6 py-3 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-400 hover:to-indigo-500 text-white font-bold text-xs flex items-center gap-2 shadow-[0_0_15px_rgba(79,140,255,0.3)] transition-all border-none"
+              onMouseEnter={(e) => handleNavButtonHover(e, true)}
+              onMouseLeave={(e) => handleNavButtonHover(e, false)}
+              className="px-6 py-3 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-400 hover:to-indigo-500 text-white font-bold text-xs flex items-center gap-2 shadow-[0_0_15px_rgba(79,140,255,0.3)] border-none"
             >
               <Award className="w-4 h-4" />
               View Student Dashboard & Certificate

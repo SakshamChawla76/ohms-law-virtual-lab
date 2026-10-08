@@ -1,5 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import anime from '../lib/anime';
 import { sounds } from '../engine/audioEffects';
+
+const springSnappy = { type: 'spring', stiffness: 400, damping: 30, mass: 0.8 };
+const springFluid = { type: 'spring', stiffness: 260, damping: 25, mass: 0.9 };
 
 export const Header = ({
   currentScreen,
@@ -14,6 +18,9 @@ export const Header = ({
 }) => {
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [isMuted, setIsMuted] = useState(!sounds.enabled);
+  const headerRef = useRef(null);
+  const navRefs = useRef([]);
+  const actionRefs = useRef([]);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -21,6 +28,30 @@ export const Header = ({
     }, 1000);
     return () => clearInterval(timer);
   }, []);
+
+  useEffect(() => {
+    if (!headerRef.current) return;
+    anime({
+      targets: headerRef.current,
+      opacity: [0, 1],
+      translateY: [-10, 0],
+      duration: 500,
+      easing: 'easeOutExpo',
+    });
+  }, []);
+
+  useEffect(() => {
+    navRefs.current = navRefs.current.filter(Boolean);
+    if (navRefs.current.length === 0) return;
+    anime({
+      targets: navRefs.current,
+      opacity: [0, 1],
+      translateY: [6, 0],
+      duration: 400,
+      delay: anime.stagger(50),
+      easing: 'easeOutExpo',
+    });
+  }, [currentScreen]);
 
   const formatTime = (secs) => {
     const mins = Math.floor(secs / 60);
@@ -34,12 +65,12 @@ export const Header = ({
     if (sounds.enabled) sounds.playSnap();
   };
 
-  const totalScore = Math.max(0, 
-    scoreState.circuitAssembly + 
-    scoreState.meterConnection + 
-    scoreState.measurements + 
-    scoreState.calculations + 
-    scoreState.graphAnalysis - 
+  const totalScore = Math.max(0,
+    scoreState.circuitAssembly +
+    scoreState.meterConnection +
+    scoreState.measurements +
+    scoreState.calculations +
+    scoreState.graphAnalysis -
     scoreState.penalties
   );
 
@@ -52,8 +83,49 @@ export const Header = ({
     { id: 'dashboard', label: 'Report', icon: 'analytics' },
   ];
 
+  const handleBackButtonHover = (e, animate) => {
+    anime({
+      targets: e.currentTarget,
+      scale: animate ? 1.05 : 1,
+      translateX: animate ? -2 : 0,
+      ...springSnappy,
+    });
+  };
+
+  const handleNavButtonHover = (e, animate) => {
+    anime({
+      targets: e.currentTarget,
+      scale: animate ? 1.08 : 1,
+      ...springFluid,
+    });
+  };
+
+  const handleModeButtonHover = (e, animate) => {
+    anime({
+      targets: e.currentTarget,
+      scale: animate ? 1.1 : 1,
+      ...springSnappy,
+    });
+  };
+
+  const handleIconButtonHover = (e, animate) => {
+    anime({
+      targets: e.currentTarget,
+      scale: animate ? 1.15 : 1,
+      ...springSnappy,
+    });
+  };
+
+  const handleActionButtonHover = (e, animate) => {
+    anime({
+      targets: e.currentTarget,
+      scale: animate ? 1.06 : 1,
+      ...springSnappy,
+    });
+  };
+
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-outline-variant/30 bg-surface-container-lowest/90 backdrop-blur-md shadow-sm select-none">
+    <header ref={headerRef} className="sticky top-0 z-40 w-full border-b border-outline-variant/30 bg-surface-container-lowest/90 backdrop-blur-md shadow-sm select-none">
       <div className="max-w-7xl mx-auto px-4 py-2.5 flex flex-col lg:flex-row items-center justify-between gap-3">
         {/* Brand & Instrument Name */}
         <div className="flex items-center gap-3 w-full lg:w-auto justify-between lg:justify-start">
@@ -64,10 +136,12 @@ export const Header = ({
                 sounds.playClick();
                 onBackToHub();
               }}
-              className="group flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface-container hover:bg-teal-50 text-on-surface-variant hover:text-teal-700 text-xs font-bold transition-all border border-transparent hover:border-teal-200"
+              onMouseEnter={(e) => handleBackButtonHover(e, true)}
+              onMouseLeave={(e) => handleBackButtonHover(e, false)}
+              className="group flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface-container hover:bg-teal-50 text-on-surface-variant hover:text-teal-700 text-xs font-bold border border-transparent hover:border-teal-200"
               title="Return to Catalog"
             >
-              <span className="material-symbols-outlined text-sm group-hover:-translate-x-1 transition-transform">
+              <span className="material-symbols-outlined text-sm">
                 arrow_back
               </span>
               <span>Back to Catalog</span>
@@ -96,16 +170,19 @@ export const Header = ({
 
         {/* Center: Stage Navigation Chips */}
         <div className="flex items-center gap-1 p-1 bg-surface-container rounded-xl border border-outline-variant/30 overflow-x-auto w-full lg:w-auto justify-center">
-          {navItems.map((item) => {
+          {navItems.map((item, idx) => {
             const isActive = currentScreen === item.id;
             return (
               <button
                 key={item.id}
+                ref={el => navRefs.current[idx] = el}
                 onClick={() => {
                   sounds.playClick();
                   setScreen(item.id);
                 }}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${
+                onMouseEnter={(e) => handleNavButtonHover(e, true)}
+                onMouseLeave={(e) => handleNavButtonHover(e, false)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap ${
                   isActive
                     ? 'bg-white text-teal-700 shadow-sm'
                     : 'text-on-surface-variant hover:text-on-surface'
@@ -129,9 +206,11 @@ export const Header = ({
                 sounds.playSnap();
                 setMode('guided');
               }}
-              className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition-all ${
-                mode === 'guided' 
-                  ? 'bg-white text-teal-700 shadow-sm' 
+              onMouseEnter={(e) => handleModeButtonHover(e, true)}
+              onMouseLeave={(e) => handleModeButtonHover(e, false)}
+              className={`px-2.5 py-1 rounded-md text-[11px] font-bold ${
+                mode === 'guided'
+                  ? 'bg-white text-teal-700 shadow-sm'
                   : 'text-on-surface-variant hover:text-on-surface'
               }`}
             >
@@ -142,9 +221,11 @@ export const Header = ({
                 sounds.playSnap();
                 setMode('exploration');
               }}
-              className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition-all ${
-                mode === 'exploration' 
-                  ? 'bg-white text-teal-700 shadow-sm' 
+              onMouseEnter={(e) => handleModeButtonHover(e, true)}
+              onMouseLeave={(e) => handleModeButtonHover(e, false)}
+              className={`px-2.5 py-1 rounded-md text-[11px] font-bold ${
+                mode === 'exploration'
+                  ? 'bg-white text-teal-700 shadow-sm'
                   : 'text-on-surface-variant hover:text-on-surface'
               }`}
             >
@@ -167,9 +248,11 @@ export const Header = ({
           {/* Sound Toggle */}
           <button
             onClick={toggleSound}
+            onMouseEnter={(e) => handleIconButtonHover(e, true)}
+            onMouseLeave={(e) => handleIconButtonHover(e, false)}
             className={`p-1.5 rounded-lg border transition-colors ${
-              isMuted 
-                ? 'bg-surface-container text-on-surface-variant/50 border-outline-variant/30' 
+              isMuted
+                ? 'bg-surface-container text-on-surface-variant/50 border-outline-variant/30'
                 : 'bg-teal-50 text-teal-700 border-teal-200'
             }`}
             title={isMuted ? "Unmute audio" : "Mute audio"}
@@ -183,6 +266,8 @@ export const Header = ({
           {onResetLab && (
             <button
               onClick={onResetLab}
+              onMouseEnter={(e) => handleIconButtonHover(e, true)}
+              onMouseLeave={(e) => handleIconButtonHover(e, false)}
               className="p-1.5 rounded-lg bg-surface-container text-on-surface-variant hover:text-teal-700 hover:bg-teal-50 border border-outline-variant/30 transition-colors"
               title="Reset Circuit"
             >
@@ -194,6 +279,8 @@ export const Header = ({
           {onOpenHelp && (
             <button
               onClick={onOpenHelp}
+              onMouseEnter={(e) => handleIconButtonHover(e, true)}
+              onMouseLeave={(e) => handleIconButtonHover(e, false)}
               className="p-1.5 rounded-lg bg-surface-container text-on-surface-variant hover:text-teal-700 hover:bg-teal-50 border border-outline-variant/30 transition-colors"
               title="Help & Guidance"
             >
@@ -205,6 +292,8 @@ export const Header = ({
           {onOpenSettings && (
             <button
               onClick={onOpenSettings}
+              onMouseEnter={(e) => handleIconButtonHover(e, true)}
+              onMouseLeave={(e) => handleIconButtonHover(e, false)}
               className="p-1.5 rounded-lg bg-surface-container text-on-surface-variant hover:text-teal-700 hover:bg-teal-50 border border-outline-variant/30 transition-colors"
               title="Experiment Settings"
             >

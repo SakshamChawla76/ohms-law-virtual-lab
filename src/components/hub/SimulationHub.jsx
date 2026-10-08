@@ -1,11 +1,15 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { SIMULATIONS_DATA } from '../../data/simulationsRegistry';
 import { SimulationCard } from './SimulationCard';
+import anime from '../../lib/anime';
 import { sounds } from '../../engine/audioEffects';
 
-export const SimulationHub = ({ 
-  onSelectSimulation, 
-  searchQuery, 
+const springSnappy = { type: 'spring', stiffness: 400, damping: 30, mass: 0.8 };
+const springFluid = { type: 'spring', stiffness: 260, damping: 25, mass: 0.9 };
+
+export const SimulationHub = ({
+  onSelectSimulation,
+  searchQuery,
   setSearchQuery,
   onOpenSettings,
   onOpenHelp
@@ -14,6 +18,8 @@ export const SimulationHub = ({
   const [selectedSubject, setSelectedSubject] = useState('all');
   const [viewMode, setViewMode] = useState('cards'); // 'classes' or 'cards'
   const [localSearch, setLocalSearch] = useState('');
+  const heroRef = useRef(null);
+  const cardsRef = useRef(null);
 
   const activeSearch = searchQuery !== undefined ? searchQuery : localSearch;
   const updateSearch = setSearchQuery || setLocalSearch;
@@ -26,6 +32,29 @@ export const SimulationHub = ({
     { id: 'class-12', name: 'Class 12', labCount: 2, icon: 'school' },
   ];
 
+  useEffect(() => {
+    if (!heroRef.current) return;
+    anime({
+      targets: heroRef.current,
+      opacity: [0, 1],
+      translateY: [20, 0],
+      easing: 'easeOutExpo',
+      duration: 600,
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!cardsRef.current) return;
+    anime({
+      targets: cardsRef.current,
+      opacity: [0, 1],
+      translateY: [16, 0],
+      easing: 'easeOutExpo',
+      duration: 500,
+      delay: anime.stagger(80),
+    });
+  }, []);
+
   const handleSelectClass = (clsId) => {
     sounds.playSnap();
     setSelectedClass(clsId);
@@ -36,6 +65,23 @@ export const SimulationHub = ({
     sounds.playClick();
     setSelectedClass('all');
     setViewMode('classes');
+  };
+
+  const handleActionButtonHover = (e, animate) => {
+    anime({
+      targets: e.currentTarget,
+      scale: animate ? 1.05 : 1,
+      ...springSnappy,
+    });
+  };
+
+  const handleClassCardHover = (e, animate) => {
+    anime({
+      targets: e.currentTarget,
+      scale: animate ? 1.03 : 1,
+      translateY: animate ? -4 : 0,
+      ...springFluid,
+    });
   };
 
   const filteredSimulations = useMemo(() => {
@@ -93,6 +139,8 @@ export const SimulationHub = ({
           {onOpenHelp && (
             <button
               onClick={onOpenHelp}
+              onMouseEnter={(e) => handleActionButtonHover(e, true)}
+              onMouseLeave={(e) => handleActionButtonHover(e, false)}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface-container hover:bg-teal-50 text-on-surface-variant hover:text-teal-700 text-xs font-bold border border-outline-variant/30 transition-colors"
               title="Help & Safety Guide"
             >
@@ -104,6 +152,8 @@ export const SimulationHub = ({
           {onOpenSettings && (
             <button
               onClick={onOpenSettings}
+              onMouseEnter={(e) => handleActionButtonHover(e, true)}
+              onMouseLeave={(e) => handleActionButtonHover(e, false)}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface-container hover:bg-teal-50 text-on-surface-variant hover:text-teal-700 text-xs font-bold border border-outline-variant/30 transition-colors"
               title="Simulation & Teacher Settings"
             >
@@ -114,7 +164,7 @@ export const SimulationHub = ({
         </div>
       </div>
       {/* ─── Hero Banner (Exact AICOS /student/simulation-lab banner) ─── */}
-      <section className="relative overflow-hidden rounded-2xl p-6 sm:px-8 sm:py-7 text-white shadow-xl shadow-teal-900/20 border border-white/10 group bg-gradient-to-r from-teal-800 via-teal-700 to-emerald-800">
+      <section ref={heroRef} className="relative overflow-hidden rounded-2xl p-6 sm:px-8 sm:py-7 text-white shadow-xl shadow-teal-900/20 border border-white/10 group bg-gradient-to-r from-teal-800 via-teal-700 to-emerald-800">
         {/* Subtle decorative background symbols */}
         <div className="absolute right-4 top-2 text-white/5 pointer-events-none select-none">
           <span className="material-symbols-outlined text-[140px] leading-none">science</span>
@@ -197,6 +247,8 @@ export const SimulationHub = ({
           {selectedClass !== 'all' ? (
             <button
               onClick={handleBackToClasses}
+              onMouseEnter={(e) => handleActionButtonHover(e, true)}
+              onMouseLeave={(e) => handleActionButtonHover(e, false)}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface-container text-xs font-bold text-teal-700 hover:bg-teal-50 border border-teal-200 transition-colors"
             >
               <span className="material-symbols-outlined text-sm">arrow_back</span>
@@ -237,11 +289,13 @@ export const SimulationHub = ({
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div ref={cardsRef} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {classGroups.map((cls) => (
               <div
                 key={cls.id}
                 onClick={() => handleSelectClass(cls.id)}
+                onMouseEnter={(e) => handleClassCardHover(e, true)}
+                onMouseLeave={(e) => handleClassCardHover(e, false)}
                 className="bg-surface-container-lowest rounded-2xl border border-outline-variant/30 hover:border-teal-500/50 hover:shadow-2xl hover:shadow-teal-900/10 hover:-translate-y-2 hover:scale-[1.02] transition-all duration-300 cursor-pointer group flex flex-col overflow-hidden relative p-8 text-center items-center"
               >
                 <div className="w-20 h-20 rounded-full bg-teal-50 text-teal-600 flex items-center justify-center group-hover:scale-110 group-hover:bg-gradient-to-br group-hover:from-teal-500 group-hover:to-emerald-600 group-hover:text-white transition-all duration-300 shadow-sm mb-6 border border-teal-100 group-hover:border-transparent">

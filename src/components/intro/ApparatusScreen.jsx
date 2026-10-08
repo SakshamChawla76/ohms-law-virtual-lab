@@ -1,23 +1,39 @@
-import React, { useState } from 'react';
-import { 
-  Layers, 
-  ArrowRight, 
-  BatteryCharging, 
-  Cpu, 
-  Gauge, 
-  Activity, 
-  ToggleRight, 
-  Share2, 
-  CheckCircle2, 
+import React, { useState, useEffect, useRef } from 'react';
+import {
+  Layers,
+  ArrowRight,
+  BatteryCharging,
+  Cpu,
+  Gauge,
+  Activity,
+  ToggleRight,
+  Share2,
+  CheckCircle2,
   Info,
   ShieldAlert,
   Sparkles
 } from 'lucide-react';
+import anime from '../../lib/anime';
 import { APPARATUS_LIST } from '../../config/experimentConfig';
 import { sounds } from '../../engine/audioEffects';
 
+const springSnappy = { type: 'spring', stiffness: 400, damping: 30, mass: 0.8 };
+const springFluid = { type: 'spring', stiffness: 260, damping: 25, mass: 0.9 };
+
 export const ApparatusScreen = ({ onNavigate }) => {
   const [selectedApparatus, setSelectedApparatus] = useState(APPARATUS_LIST[0]);
+  const mainRef = useRef(null);
+
+  useEffect(() => {
+    if (!mainRef.current) return;
+    anime({
+      targets: mainRef.current,
+      opacity: [0, 1],
+      translateY: [16, 0],
+      easing: 'easeOutExpo',
+      duration: 600,
+    });
+  }, []);
 
   const getIcon = (iconName) => {
     switch (iconName) {
@@ -31,8 +47,24 @@ export const ApparatusScreen = ({ onNavigate }) => {
     }
   };
 
+  const handleNavButtonHover = (e, animate) => {
+    anime({
+      targets: e.currentTarget,
+      scale: animate ? 1.04 : 1,
+      ...springSnappy,
+    });
+  };
+
+  const handleApparatusItemHover = (e, animate) => {
+    anime({
+      targets: e.currentTarget,
+      scale: animate ? 1.02 : 1,
+      ...springFluid,
+    });
+  };
+
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8 space-y-8 animate-fadeIn text-on-surface">
+    <div ref={mainRef} className="max-w-6xl mx-auto px-4 py-8 space-y-8 text-on-surface">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-outline-variant/30 pb-6">
         <div>
@@ -48,6 +80,8 @@ export const ApparatusScreen = ({ onNavigate }) => {
 
         <button
           onClick={() => { sounds.playSuccess(); onNavigate('lab'); }}
+          onMouseEnter={(e) => handleNavButtonHover(e, true)}
+          onMouseLeave={(e) => handleNavButtonHover(e, false)}
           className="self-start md:self-auto px-6 py-3 rounded-2xl bg-teal-700 hover:bg-teal-800 text-white font-bold text-xs flex items-center gap-2 shadow-sm active:scale-95 transition-all"
         >
           <Sparkles className="w-4 h-4" />
@@ -72,6 +106,8 @@ export const ApparatusScreen = ({ onNavigate }) => {
                     sounds.playTick();
                     setSelectedApparatus(item);
                   }}
+                  onMouseEnter={(e) => handleApparatusItemHover(e, true)}
+                  onMouseLeave={(e) => handleApparatusItemHover(e, false)}
                   className={`w-full text-left p-3.5 rounded-2xl border transition-all flex items-center gap-3.5 ${
                     isSelected
                       ? 'bg-teal-50 border-teal-600 text-on-surface shadow-sm scale-[1.02]'
@@ -156,4 +192,3 @@ export const ApparatusScreen = ({ onNavigate }) => {
     </div>
   );
 };
-

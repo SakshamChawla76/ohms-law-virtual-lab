@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { BatteryCharging, Plus, Minus, Power, Zap } from 'lucide-react';
+import anime from '../../lib/anime';
 import { sounds } from '../../engine/audioEffects';
 
 export const PowerSupplyControl = ({
@@ -10,7 +11,8 @@ export const PowerSupplyControl = ({
   step = 0.5,
   isTripped = false,
 }) => {
-  const [knobRotation, setKnobRotation] = useState((voltage / max) * 270 - 135);
+  const knobRef = useRef(null);
+  const [knobRotation, setKnobRotation] = React.useState((voltage / max) * 270 - 135);
 
   const updateVoltage = (newVal) => {
     const clamped = Math.min(Math.max(Number(newVal.toFixed(1)), min), max);
@@ -18,6 +20,17 @@ export const PowerSupplyControl = ({
     setKnobRotation((clamped / max) * 270 - 135);
     sounds.playTick();
   };
+
+  useEffect(() => {
+    if (knobRef.current) {
+      anime({
+        targets: knobRef.current,
+        rotate: knobRotation,
+        duration: 200,
+        easing: 'spring(300, 25, 8)',
+      });
+    }
+  }, [knobRotation]);
 
   const presets = [2.0, 4.0, 6.0, 8.0, 10.0];
 
@@ -43,7 +56,7 @@ export const PowerSupplyControl = ({
           </div>
         </div>
         {isTripped ? (
-          <span className="px-2 py-0.5 rounded-full bg-rose-50 border border-rose-300 text-rose-800 text-[10px] font-mono font-bold animate-pulse">
+          <span className="px-2 py-0.5 rounded-full bg-rose-50 border border-rose-300 text-rose-800 text-[10px] font-mono font-bold" style={{ animation: 'pulse-glow 2s ease-in-out infinite' }}>
             FAULT TRIP
           </span>
         ) : (
@@ -74,7 +87,7 @@ export const PowerSupplyControl = ({
             OPERATION MODE
           </div>
           <div className="flex items-center gap-2 mt-1">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)] inline-block animate-pulse" />
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)] inline-block" style={{ animation: 'pulse-glow 2s ease-in-out infinite' }} />
             <span className="text-xs font-mono font-bold text-emerald-300">CV (STABLE)</span>
           </div>
         </div>
@@ -87,7 +100,8 @@ export const PowerSupplyControl = ({
           <div className="relative w-14 h-14 rounded-full bg-slate-800 border-2 border-slate-600 flex items-center justify-center cursor-pointer shadow-lg group">
             {/* Rotation Indicator Dot */}
             <div
-              className="absolute w-2 h-2 rounded-full bg-amber-400 border border-slate-900 transition-transform duration-100 ease-out shadow-[0_0_6px_rgba(251,191,36,0.8)]"
+              ref={knobRef}
+              className="absolute w-2 h-2 rounded-full bg-amber-400 border border-slate-900 shadow-[0_0_6px_rgba(251,191,36,0.8)]"
               style={{
                 transform: `rotate(${knobRotation}deg) translateY(-20px)`,
               }}
