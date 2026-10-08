@@ -10,11 +10,14 @@ import {
   ShieldCheck, 
   Activity, 
   Volume2, 
-  ArrowRight
+  ArrowRight,
+  Crosshair,
+  Sliders,
+  Flame
 } from 'lucide-react';
 import { sounds } from '../../../engine/audioEffects';
 
-export const CollisionSim = ({ simulation, activeTab, onUpdateScore }) => {
+export const CollisionSim = ({ simulation = {}, activeTab = 'sandbox', onUpdateScore }) => {
   // --- Physical Parameters ---
   const [massA, setMassA] = useState(1200); // kg
   const [massB, setMassB] = useState(800);  // kg
@@ -23,6 +26,7 @@ export const CollisionSim = ({ simulation, activeTab, onUpdateScore }) => {
   const [elasticity, setElasticity] = useState(1.0); // 0 (inelastic) to 1 (elastic)
   const [isSlowMo, setIsSlowMo] = useState(false);
   const [isPlaying, setIsPlaying] = useState(true);
+  const [showCenterOfMass, setShowCenterOfMass] = useState(true);
 
   // --- Real-time Animation State ---
   const [posA, setPosA] = useState(180);
@@ -31,6 +35,7 @@ export const CollisionSim = ({ simulation, activeTab, onUpdateScore }) => {
   const [curVelB, setCurVelB] = useState(-4);
   const [hasCollided, setHasCollided] = useState(false);
   const [sparks, setSparks] = useState([]);
+  const [shockwaves, setShockwaves] = useState([]);
 
   // --- Inquiry Challenge State ---
   const [selectedAnswers, setSelectedAnswers] = useState({});
@@ -38,9 +43,9 @@ export const CollisionSim = ({ simulation, activeTab, onUpdateScore }) => {
 
   const canvasRef = useRef(null);
   const animRef = useRef(null);
+  const draggingCarRef = useRef(null); // 'A' | 'B' | null
 
   // Theoretical calculations
-  // Momentum conservation: p = m1*v1 + m2*v2
   const initialMomentum = massA * velocityA + massB * velocityB;
   const initialKE = 0.5 * massA * Math.pow(velocityA, 2) + 0.5 * massB * Math.pow(velocityB, 2);
 
@@ -53,6 +58,7 @@ export const CollisionSim = ({ simulation, activeTab, onUpdateScore }) => {
     setCurVelB(velocityB);
     setHasCollided(false);
     setSparks([]);
+    setShockwaves([]);
     setIsPlaying(true);
   };
 
@@ -66,10 +72,10 @@ export const CollisionSim = ({ simulation, activeTab, onUpdateScore }) => {
     let vB = curVelB;
     let collided = hasCollided;
     let sparkList = [...sparks];
+    let shockList = [...shockwaves];
     let lastTime = performance.now();
 
     const carWidth = 64;
-    const carHeight = 36;
 
     const render = (now) => {
       const dt = Math.min((now - lastTime) / 1000, 0.05);
@@ -77,7 +83,7 @@ export const CollisionSim = ({ simulation, activeTab, onUpdateScore }) => {
 
       const timeScale = isSlowMo ? 0.3 : 1.0;
 
-      if (isPlaying) {
+      if (isPlaying && !draggingCarRef.current) {
         pA += vA * 45 * dt * timeScale;
         pB += vB * 45 * dt * timeScale;
 
@@ -87,9 +93,6 @@ export const CollisionSim = ({ simulation, activeTab, onUpdateScore }) => {
           setHasCollided(true);
           sounds.playZap();
 
-          // 1D Collision with Coefficient of Restitution (e)
-          // v1' = (m1*v1 + m2*v2 - m2*e*(v1 - v2)) / (m1 + m2)
-          // v2' = (m1*v1 + m2*v2 + m1*e*(v1 - v2)) / (m1 + m2)
           const m1 = massA;
           const m2 = massB;
           const u1 = vA;
@@ -101,32 +104,54 @@ export const CollisionSim = ({ simulation, activeTab, onUpdateScore }) => {
 
           vA = newVA;
           vB = newVB;
-          setCurVelA(newVA);
-          setCurVelB(newVB);
 
-          // Generate spark particles
+          // Prevent car overlap clipping
           const midX = (pA + pB) / 2;
-          for (let i = 0; i < 20; i++) {
+          pA = midX - carWidth / 2;
+          pB = midX + carWidth / 2;
+
+          // Impact sparks
+          const impactX = (pA + pB) / 2;
+          const impactCount = 20;
+          for (let i = 0; i < impactCount; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const speed = 60 + Math.random() * 160;
             sparkList.push({
-              x: midX,
-              y: 190 + (Math.random() - 0.5) * 20,
-              vx: (Math.random() - 0.5) * 180,
-              vy: (Math.random() - 0.5) * 180,
+              x: impactX,
+              y: 190 + (Math.random() - 0.5) * 16,
+              vx: Math.cos(angle) * speed,
+              vy: Math.sin(angle) * speed,
               life: 1.0,
-              color: Math.random() > 0.5 ? '#f59e0b' : '#38bdf8'
+              color: Math.random() > 0.4 ? '#f59e0b' : '#ef4444'
             });
           }
+
+          // Thermal / sound energy loss shockwave ring (if inelastic)
+          if (elasticity < 0.98) {
+            shockList.push({
+              x: impactX,
+              y: 190,
+              radius: 5,
+              maxRadius: 110,
+              alpha: 0.9
+            });
+          }
+
+          setCurVelA(vA);
+          setCurVelB(vB);
         }
 
-        // Wall bounce constraints
-        if (pA <= 50) {
-          pA = 50;
-          vA = -vA * 0.8;
+        // Boundary walls rebound
+        const trackLeft = 80;
+        const trackRight = 680;
+        if (pA - carWidth / 2 <= trackLeft && vA < 0) {
+          vA = -vA * 0.9;
+          sounds.playSnap();
           setCurVelA(vA);
         }
-        if (pB >= 710) {
-          pB = 710;
-          vB = -vB * 0.8;
+        if (pB + carWidth / 2 >= trackRight && vB > 0) {
+          vB = -vB * 0.9;
+          sounds.playSnap();
           setCurVelB(vB);
         }
 
@@ -135,12 +160,20 @@ export const CollisionSim = ({ simulation, activeTab, onUpdateScore }) => {
           ...s,
           x: s.x + s.vx * dt,
           y: s.y + s.vy * dt,
-          life: s.life - dt * 2
+          life: s.life - dt * 2.2
         })).filter(s => s.life > 0);
+
+        // Update shockwaves
+        shockList = shockList.map(sw => ({
+          ...sw,
+          radius: sw.radius + 180 * dt,
+          alpha: sw.alpha - dt * 1.8
+        })).filter(sw => sw.alpha > 0);
 
         setPosA(pA);
         setPosB(pB);
         setSparks(sparkList);
+        setShockwaves(shockList);
       }
 
       // Draw onto canvas
@@ -177,16 +210,72 @@ export const CollisionSim = ({ simulation, activeTab, onUpdateScore }) => {
       ctx.lineWidth = 2;
       ctx.strokeRect(30, trackY - 55, width - 60, 110);
 
-      // Centerline
+      // Arena boundary bumpers with hazard stripes
+      const drawBumperWall = (bx) => {
+        ctx.fillStyle = '#334155';
+        ctx.fillRect(bx - 12, trackY - 55, 24, 110);
+        ctx.fillStyle = '#f59e0b';
+        for (let y = trackY - 50; y < trackY + 50; y += 18) {
+          ctx.beginPath();
+          ctx.moveTo(bx - 12, y);
+          ctx.lineTo(bx + 12, y + 10);
+          ctx.lineTo(bx + 12, y + 14);
+          ctx.lineTo(bx - 12, y + 4);
+          ctx.fill();
+        }
+      };
+      drawBumperWall(42);
+      drawBumperWall(width - 42);
+
+      // Centerline with measurement ticks
       ctx.setLineDash([8, 8]);
       ctx.strokeStyle = '#94a3b8';
       ctx.beginPath();
-      ctx.moveTo(30, trackY);
-      ctx.lineTo(width - 30, trackY);
+      ctx.moveTo(55, trackY);
+      ctx.lineTo(width - 55, trackY);
       ctx.stroke();
       ctx.setLineDash([]);
 
-      // 3. Draw Spark Particles
+      // 3. Center of Mass Indicator (Proving Momentum Conservation)
+      const cmX = (massA * pA + massB * pB) / (massA + massB);
+      const vCM = (massA * vA + massB * vB) / (massA + massB);
+
+      if (showCenterOfMass) {
+        ctx.save();
+        ctx.translate(cmX, trackY);
+        // Diamond icon
+        ctx.fillStyle = '#8b5cf6';
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(0, -9);
+        ctx.lineTo(9, 0);
+        ctx.lineTo(0, 9);
+        ctx.lineTo(-9, 0);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        // Label
+        ctx.fillStyle = '#7c3aed';
+        ctx.font = 'bold 9px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText(`C.M. (v = ${vCM.toFixed(1)} m/s)`, 0, 22);
+        ctx.restore();
+      }
+
+      // 4. Inelastic Energy Loss Shockwave Rings
+      for (const sw of shockList) {
+        ctx.save();
+        ctx.strokeStyle = `rgba(168, 85, 247, ${Math.max(0, sw.alpha)})`;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(sw.x, sw.y, sw.radius, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      // 5. Draw Spark Particles
       for (const s of sparkList) {
         ctx.fillStyle = s.color;
         ctx.globalAlpha = Math.max(0, s.life);
@@ -196,24 +285,24 @@ export const CollisionSim = ({ simulation, activeTab, onUpdateScore }) => {
       }
       ctx.globalAlpha = 1.0;
 
-      // 4. Helper function to render a bumper car
-      const drawBumperCar = (x, y, color, label, mass, vel) => {
+      // 6. Helper function to render a bumper car
+      const drawBumperCar = (x, y, color, label, mass, vel, isA) => {
         ctx.save();
         ctx.translate(x, y);
 
         // Soft shadow
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.08)';
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.12)';
         ctx.beginPath();
-        ctx.ellipse(0, 18, 36, 12, 0, 0, Math.PI * 2);
+        ctx.ellipse(0, 18, 38, 12, 0, 0, Math.PI * 2);
         ctx.fill();
 
-        // Outer rubber bumper ring
+        // Heavy rubber impact bumper ring
         ctx.fillStyle = '#1e293b';
         ctx.beginPath();
-        ctx.roundRect(-34, -20, 68, 40, 16);
+        ctx.roundRect(-35, -20, 70, 40, 16);
         ctx.fill();
 
-        // Car chassis
+        // Car chassis body (shiny gradient)
         ctx.fillStyle = color;
         ctx.beginPath();
         ctx.roundRect(-28, -16, 56, 32, 12);
@@ -222,19 +311,36 @@ export const CollisionSim = ({ simulation, activeTab, onUpdateScore }) => {
         ctx.lineWidth = 1.5;
         ctx.stroke();
 
-        // Headlights / Windshield
-        ctx.fillStyle = '#ffffff';
+        // Chrome bumper highlight
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+        ctx.fillRect(-22, -14, 44, 4);
+
+        // Windshield
+        ctx.fillStyle = '#f8fafc';
         ctx.beginPath();
-        ctx.ellipse(vel >= 0 ? 14 : -14, 0, 7, 10, 0, 0, Math.PI * 2);
+        ctx.ellipse(vel >= 0 ? 14 : -14, 0, 8, 10, 0, 0, Math.PI * 2);
         ctx.fill();
         ctx.strokeStyle = '#64748b';
         ctx.lineWidth = 1;
         ctx.stroke();
 
-        // Steering wheel & seat
-        ctx.fillStyle = '#0f172a';
+        // Driver seat & head
+        ctx.fillStyle = isA ? '#60a5fa' : '#fde047';
         ctx.beginPath();
-        ctx.arc(vel >= 0 ? 0 : 0, 0, 6, 0, Math.PI * 2);
+        ctx.arc(0, 0, 6, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Ceiling power pole with sparking antenna tip
+        ctx.strokeStyle = '#475569';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(vel >= 0 ? -16 : 16, 0);
+        ctx.lineTo(vel >= 0 ? -24 : 24, -40);
+        ctx.stroke();
+        // Antenna contact tip
+        ctx.fillStyle = '#f59e0b';
+        ctx.beginPath();
+        ctx.arc(vel >= 0 ? -24 : 24, -40, 3, 0, Math.PI * 2);
         ctx.fill();
 
         // Label
@@ -243,15 +349,15 @@ export const CollisionSim = ({ simulation, activeTab, onUpdateScore }) => {
         ctx.textAlign = 'center';
         ctx.fillText(label, 0, -4);
 
-        // Mass readout
+        // Mass readout tag below
         ctx.fillStyle = '#0f172a';
         ctx.font = 'bold 10px monospace';
-        ctx.fillText(`${mass} kg`, 0, 32);
+        ctx.fillText(`${mass} kg`, 0, 34);
 
         // Velocity Vector Arrow
         if (Math.abs(vel) > 0.1) {
-          const arrowLen = vel * 6;
-          ctx.strokeStyle = '#2563eb';
+          const arrowLen = vel * 5;
+          ctx.strokeStyle = isA ? '#2563eb' : '#d97706';
           ctx.lineWidth = 2.5;
           ctx.beginPath();
           ctx.moveTo(0, -28);
@@ -259,7 +365,7 @@ export const CollisionSim = ({ simulation, activeTab, onUpdateScore }) => {
           ctx.stroke();
 
           // Arrowhead
-          ctx.fillStyle = '#2563eb';
+          ctx.fillStyle = ctx.strokeStyle;
           ctx.beginPath();
           const dir = Math.sign(vel);
           ctx.moveTo(arrowLen, -28);
@@ -268,8 +374,7 @@ export const CollisionSim = ({ simulation, activeTab, onUpdateScore }) => {
           ctx.closePath();
           ctx.fill();
 
-          ctx.font = '10px monospace';
-          ctx.fillStyle = '#1e3a8a';
+          ctx.font = 'bold 10px monospace';
           ctx.fillText(`v = ${vel.toFixed(1)} m/s`, arrowLen / 2, -36);
         }
 
@@ -277,8 +382,8 @@ export const CollisionSim = ({ simulation, activeTab, onUpdateScore }) => {
       };
 
       // Draw Car A (Blue) & Car B (Amber)
-      drawBumperCar(pA, trackY, '#2563eb', 'CAR A', massA, vA);
-      drawBumperCar(pB, trackY, '#f59e0b', 'CAR B', massB, vB);
+      drawBumperCar(pA, trackY, '#2563eb', 'CAR A', massA, vA, true);
+      drawBumperCar(pB, trackY, '#f59e0b', 'CAR B', massB, vB, false);
 
       animRef.current = requestAnimationFrame(render);
     };
@@ -288,13 +393,61 @@ export const CollisionSim = ({ simulation, activeTab, onUpdateScore }) => {
     return () => {
       if (animRef.current) cancelAnimationFrame(animRef.current);
     };
-  }, [activeTab, isPlaying, massA, massB, elasticity, isSlowMo]);
+  }, [activeTab, isPlaying, massA, massB, elasticity, isSlowMo, showCenterOfMass]);
+
+  // Handle direct Canvas dragging of Car A and Car B
+  const handleCanvasMouseDown = (e) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const clickX = (e.clientX - rect.left) * scaleX;
+
+    if (Math.abs(clickX - posA) < 40) {
+      draggingCarRef.current = 'A';
+      sounds.playTick();
+    } else if (Math.abs(clickX - posB) < 40) {
+      draggingCarRef.current = 'B';
+      sounds.playTick();
+    }
+  };
+
+  const handleCanvasMouseMove = (e) => {
+    if (!draggingCarRef.current) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const mouseX = (e.clientX - rect.left) * scaleX;
+
+    if (draggingCarRef.current === 'A') {
+      const newPos = Math.max(90, Math.min(posB - 70, mouseX));
+      setPosA(newPos);
+      setHasCollided(false);
+      sounds.playTick();
+    } else if (draggingCarRef.current === 'B') {
+      const newPos = Math.max(posA + 70, Math.min(670, mouseX));
+      setPosB(newPos);
+      setHasCollided(false);
+      sounds.playTick();
+    }
+  };
+
+  const handleCanvasMouseUp = () => {
+    if (draggingCarRef.current) {
+      sounds.playSnap();
+      draggingCarRef.current = null;
+    }
+  };
 
   const handleAnswerSubmit = (qId, idx, isCorrect) => {
     sounds.playClick();
     setSelectedAnswers(prev => ({ ...prev, [qId]: idx }));
     setChallengeFeedback(prev => ({ ...prev, [qId]: isCorrect ? 'correct' : 'incorrect' }));
-    if (isCorrect && onUpdateScore) onUpdateScore(25);
+    if (isCorrect && onUpdateScore) {
+      sounds.playSuccess();
+      onUpdateScore(25);
+    }
   };
 
   const currentTotalMomentum = massA * curVelA + massB * curVelB;
@@ -328,7 +481,8 @@ export const CollisionSim = ({ simulation, activeTab, onUpdateScore }) => {
                 p_total = m₁v₁ + m₂v₂ = m₁v₁' + m₂v₂'
               </div>
               <p>
-                However, <strong>Kinetic Energy is not always conserved</strong>. In a perfectly elastic collision (like billiard balls, e = 1.0), kinetic energy is 100% preserved. In an inelastic collision (like real cars with crumple zones, e &lt; 1.0), kinetic energy is converted into heat, sound, and material deformation.
+                Notice how the <strong>Center of Mass (C.M.)</strong> moves at the exact same constant speed before, during, and after impact! 
+                However, <strong>Kinetic Energy is not always conserved</strong>. In a perfectly elastic collision (e = 1.0), kinetic energy is 100% preserved. In an inelastic collision (e &lt; 1.0), kinetic energy is dissipated into heat and sound shockwaves.
               </p>
             </div>
           </div>
@@ -352,7 +506,16 @@ export const CollisionSim = ({ simulation, activeTab, onUpdateScore }) => {
 
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => setIsSlowMo(!isSlowMo)}
+                    onClick={() => { sounds.playTick(); setShowCenterOfMass(!showCenterOfMass); }}
+                    className={`px-2.5 py-1 rounded text-[11px] font-mono border transition-all ${
+                      showCenterOfMass ? 'bg-purple-50 text-purple-800 border-purple-300 font-bold' : 'bg-white text-slate-600 border-slate-200'
+                    }`}
+                  >
+                    Center of Mass
+                  </button>
+
+                  <button
+                    onClick={() => { sounds.playTick(); setIsSlowMo(!isSlowMo); }}
                     className={`px-2.5 py-1 rounded text-[11px] font-mono border transition-all ${
                       isSlowMo ? 'bg-amber-50 text-amber-800 border-amber-300 font-bold' : 'bg-white text-slate-600 border-slate-200'
                     }`}
@@ -378,13 +541,16 @@ export const CollisionSim = ({ simulation, activeTab, onUpdateScore }) => {
                 </div>
               </div>
 
-              {/* Interactive Canvas */}
-              <div className="relative w-full bg-slate-50">
+              {/* Interactive Canvas with Direct Car Dragging */}
+              <div className="relative w-full bg-slate-50 select-none">
                 <canvas
                   ref={canvasRef}
                   width={760}
                   height={340}
-                  className="w-full h-auto block"
+                  onMouseDown={handleCanvasMouseDown}
+                  onMouseMove={handleCanvasMouseMove}
+                  onMouseUp={handleCanvasMouseUp}
+                  className="w-full h-auto block cursor-ew-resize"
                 />
 
                 {hasCollided && (
@@ -392,6 +558,10 @@ export const CollisionSim = ({ simulation, activeTab, onUpdateScore }) => {
                     ⚡ COLLISION REGISTERED
                   </div>
                 )}
+
+                <div className="absolute bottom-2 left-3 px-2 py-1 rounded-md bg-white/80 backdrop-blur-sm border border-slate-200 text-[10px] font-mono text-slate-500 pointer-events-none">
+                  Drag Car A or Car B on canvas to reposition
+                </div>
               </div>
 
               {/* Real-time Telemetry Dashboard */}
@@ -448,8 +618,8 @@ export const CollisionSim = ({ simulation, activeTab, onUpdateScore }) => {
                   step={50}
                   value={massA}
                   onChange={(e) => {
+                    sounds.playTick();
                     setMassA(Number(e.target.value));
-                    handleReset();
                   }}
                   className="w-full accent-blue-600 cursor-pointer"
                 />
@@ -468,8 +638,8 @@ export const CollisionSim = ({ simulation, activeTab, onUpdateScore }) => {
                   step={50}
                   value={massB}
                   onChange={(e) => {
+                    sounds.playTick();
                     setMassB(Number(e.target.value));
-                    handleReset();
                   }}
                   className="w-full accent-amber-600 cursor-pointer"
                 />
@@ -488,6 +658,7 @@ export const CollisionSim = ({ simulation, activeTab, onUpdateScore }) => {
                   step={1}
                   value={velocityA}
                   onChange={(e) => {
+                    sounds.playTick();
                     setVelocityA(Number(e.target.value));
                     handleReset();
                   }}
@@ -508,6 +679,7 @@ export const CollisionSim = ({ simulation, activeTab, onUpdateScore }) => {
                   step={1}
                   value={velocityB}
                   onChange={(e) => {
+                    sounds.playTick();
                     setVelocityB(Number(e.target.value));
                     handleReset();
                   }}
@@ -528,6 +700,7 @@ export const CollisionSim = ({ simulation, activeTab, onUpdateScore }) => {
                   step={0.05}
                   value={elasticity}
                   onChange={(e) => {
+                    sounds.playTick();
                     setElasticity(Number(e.target.value));
                     handleReset();
                   }}
@@ -547,32 +720,34 @@ export const CollisionSim = ({ simulation, activeTab, onUpdateScore }) => {
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     onClick={() => {
+                      sounds.playSnap();
                       setMassA(2000);
-                      setMassB(500);
+                      setMassB(600);
                       setVelocityA(10);
-                      setVelocityB(0);
+                      setVelocityB(-2);
                       setElasticity(1.0);
                       handleReset();
                     }}
-                    className="p-2 rounded-lg bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-800 text-xs font-mono text-left"
+                    className="p-2 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-800 text-xs font-mono text-left active:scale-[0.98] transition-transform"
                   >
-                    <div className="font-bold">Heavy Truck</div>
-                    <div className="text-[10px]">2000kg vs 500kg</div>
+                    <div className="font-bold">Truck vs Mini</div>
+                    <div className="text-[10px] text-slate-500">Heavy A, Light B</div>
                   </button>
 
                   <button
                     onClick={() => {
+                      sounds.playSnap();
                       setMassA(1000);
                       setMassB(1000);
-                      setVelocityA(8);
-                      setVelocityB(-8);
+                      setVelocityA(6);
+                      setVelocityB(-6);
                       setElasticity(0.0);
                       handleReset();
                     }}
-                    className="p-2 rounded-lg bg-purple-50 hover:bg-purple-100 border border-purple-200 text-purple-800 text-xs font-mono text-left"
+                    className="p-2 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-800 text-xs font-mono text-left active:scale-[0.98] transition-transform"
                   >
-                    <div className="font-bold">Total Inelastic</div>
-                    <div className="text-[10px]">Lock & Stop</div>
+                    <div className="font-bold">Sticky Head-On</div>
+                    <div className="text-[10px] text-slate-500">e = 0.0 (Stick)</div>
                   </button>
                 </div>
               </div>
@@ -581,69 +756,93 @@ export const CollisionSim = ({ simulation, activeTab, onUpdateScore }) => {
         </div>
       )}
 
-      {/* TAB 3: CHALLENGE ME */}
-      {activeTab === 'challenge' && (
+      {/* TAB 3: CHALLENGES */}
+      {activeTab === 'challenges' && (
         <div className="max-w-3xl mx-auto space-y-5 text-left">
           <div className="p-4 rounded-xl bg-blue-50 border border-blue-200 text-blue-900 text-xs font-sans">
-            <strong>Momentum Challenges:</strong> Solve analytical collision problems and earn laboratory points!
+            <strong>Momentum Inquiry Laboratory:</strong> Test your understanding of momentum vectors, impulse, and energy conservation. Earn up to 75 laboratory score points!
           </div>
 
           {/* Question 1 */}
           <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-3">
             <div className="text-xs font-mono text-slate-400 font-bold uppercase">
-              Challenge 1 of 2 // Equal Mass Elastic Swap
+              Challenge 1 of 3 // Momentum Vector Sum
             </div>
-            <h3 className="text-sm font-bold font-sans text-slate-800">
-              When two identical cars of equal mass collide in a 100% elastic head-on collision, what happens to their velocities?
+            <h3 className="text-sm font-bold font-sans text-slate-900">
+              In a closed system with no external horizontal forces, is the total momentum ALWAYS conserved, even in a completely inelastic collision where both cars crush and stick together?
             </h3>
 
             <div className="space-y-2">
               {[
-                { text: "Both cars stick together and come to a dead stop", correct: false },
-                { text: "The cars completely swap their velocities (Car A gets Car B's velocity and vice versa)", correct: true },
-                { text: "Both cars bounce back with twice their original speeds", correct: false }
-              ].map((opt, i) => (
-                <button
-                  key={i}
-                  onClick={() => handleAnswerSubmit('q1', i, opt.correct)}
-                  className={`w-full p-3 rounded-xl text-xs font-mono text-left transition-all border ${
-                    selectedAnswers['q1'] === i
-                      ? opt.correct
-                        ? 'bg-emerald-50 border-emerald-400 text-emerald-800 font-bold'
-                        : 'bg-rose-50 border-rose-400 text-rose-800 font-bold'
-                      : 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700'
-                  }`}
-                >
-                  {opt.text}
-                </button>
-              ))}
+                { text: "No, inelastic collisions destroy momentum", correct: false },
+                { text: "Yes, total linear momentum is ALWAYS conserved regardless of collision elasticity", correct: true },
+                { text: "Only if the two cars have identical masses", correct: false },
+                { text: "Only if the cars are traveling at supersonic speeds", correct: false }
+              ].map((opt, idx) => {
+                const isSelected = selectedAnswers['q1'] === idx;
+                return (
+                  <button
+                    key={idx}
+                    onClick={() => handleAnswerSubmit('q1', idx, opt.correct)}
+                    className={`w-full p-3 rounded-xl border text-left text-xs font-sans transition-all flex items-center justify-between ${
+                      isSelected 
+                        ? opt.correct 
+                          ? 'bg-emerald-50 border-emerald-400 text-emerald-900 font-bold'
+                          : 'bg-rose-50 border-rose-400 text-rose-900'
+                        : 'bg-slate-50 border-slate-200 hover:bg-slate-100 text-slate-800'
+                    }`}
+                  >
+                    <span>{opt.text}</span>
+                    {isSelected && (
+                      opt.correct 
+                        ? <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                        : <Activity className="w-4 h-4 text-rose-600 flex-shrink-0" />
+                    )}
+                  </button>
+                );
+              })}
             </div>
-
-            {challengeFeedback['q1'] === 'correct' && (
-              <div className="p-3 rounded-xl bg-emerald-50 text-emerald-800 text-xs font-sans">
-                ✓ <strong>Correct! (+25 pts)</strong> For equal masses in a 1D elastic collision, conservation of both momentum and kinetic energy uniquely requires an exact exchange of velocities!
-              </div>
-            )}
           </div>
-        </div>
-      )}
 
-      {/* TAB 4: REAL-WORLD APPLICATIONS */}
-      {activeTab === 'applications' && (
-        <div className="max-w-4xl mx-auto space-y-6 text-left">
-          <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-4">
-            <h2 className="text-xl font-bold font-sans text-slate-900">
-              Real-World Engineering: Crumple Zones and Impulse Control
-            </h2>
-            <p className="text-xs text-slate-600 leading-relaxed font-sans">
-              Why aren't real passenger cars made out of rigid titanium? Because of the <strong>Impulse-Momentum Theorem</strong>:
-            </p>
-            <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-center font-mono text-xs font-bold text-slate-800">
-              J = F_avg · Δt = Δp
+          {/* Question 2 */}
+          <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-3">
+            <div className="text-xs font-mono text-slate-400 font-bold uppercase">
+              Challenge 2 of 3 // Kinetic Energy Transformation
             </div>
-            <p className="text-xs text-slate-600 font-sans leading-relaxed">
-              When a car crashes, the change in momentum (Δp) is fixed by vehicle speed and mass. If the car is completely rigid, the collision duration (Δt) is only a few milliseconds, making the average impact force (F_avg) catastrophic to human passengers. By deliberately engineering accordion crumple zones, the impact duration is lengthened by 5x to 10x, reducing peak deceleration forces on passengers to survivable levels.
-            </p>
+            <h3 className="text-sm font-bold font-sans text-slate-900">
+              When the elasticity coefficient e = 0.0 (completely inelastic), where does the "lost" kinetic energy go?
+            </h3>
+
+            <div className="space-y-2">
+              {[
+                { text: "It vanishes from the universe completely", correct: false },
+                { text: "It converts into internal thermal energy, permanent structural deformation, and acoustic sound waves", correct: true },
+                { text: "It turns into gravitational potential energy", correct: false },
+                { text: "It converts into electrostatic charge on the rubber bumper", correct: false }
+              ].map((opt, idx) => {
+                const isSelected = selectedAnswers['q2'] === idx;
+                return (
+                  <button
+                    key={idx}
+                    onClick={() => handleAnswerSubmit('q2', idx, opt.correct)}
+                    className={`w-full p-3 rounded-xl border text-left text-xs font-sans transition-all flex items-center justify-between ${
+                      isSelected 
+                        ? opt.correct 
+                          ? 'bg-emerald-50 border-emerald-400 text-emerald-900 font-bold'
+                          : 'bg-rose-50 border-rose-400 text-rose-900'
+                        : 'bg-slate-50 border-slate-200 hover:bg-slate-100 text-slate-800'
+                    }`}
+                  >
+                    <span>{opt.text}</span>
+                    {isSelected && (
+                      opt.correct 
+                        ? <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                        : <Activity className="w-4 h-4 text-rose-600 flex-shrink-0" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
       )}

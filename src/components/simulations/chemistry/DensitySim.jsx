@@ -3,57 +3,61 @@ import {
   Sparkles, 
   RotateCcw, 
   CheckCircle2, 
-  Award, 
-  ArrowDown, 
-  ArrowUp,
-  Waves,
-  ShieldCheck
+  Gauge, 
+  Waves, 
+  Layers, 
+  ShieldCheck, 
+  Activity,
+  Sliders,
+  Droplet
 } from 'lucide-react';
 import { sounds } from '../../../engine/audioEffects';
 
-export const DensitySim = ({ activeTab, onUpdateScore }) => {
-  // Fluid selection
-  const [fluid, setFluid] = useState('water'); // 'water' | 'oil' | 'syrup' | 'seawater'
-  // Object selection
-  const [material, setMaterial] = useState('wood'); // 'wood' | 'ice' | 'aluminum' | 'custom'
-  // Custom mass & volume
-  const [massGrams, setMassGrams] = useState(250); // grams
-  const [volumeCm3, setVolumeCm3] = useState(380); // cm3
+// Fluids database
+const FLUIDS = {
+  water: { name: 'Pure Water', density: 1.00, color: '#0284c7' },
+  saltwater: { name: 'Ocean Saltwater', density: 1.03, color: '#0369a1' },
+  mercury: { name: 'Liquid Mercury', density: 13.60, color: '#64748b' },
+  oil: { name: 'Olive Oil', density: 0.92, color: '#ca8a04' }
+};
 
+// Material presets
+const PRESETS = {
+  wood: { name: 'Oak Wood Block', mass: 180, volume: 250 },
+  ice: { name: 'Ice Cube', mass: 230, volume: 250 },
+  aluminum: { name: 'Solid Aluminum Block', mass: 675, volume: 250 },
+  custom: { name: 'Custom Object', mass: 250, volume: 250 }
+};
+
+export const DensitySim = ({ simulation = {}, activeTab = 'sandbox', onUpdateScore }) => {
+  const [fluid, setFluid] = useState('water');
+  const [material, setMaterial] = useState('wood');
+  const [massGrams, setMassGrams] = useState(180);
+  const [volumeCm3, setVolumeCm3] = useState(250);
+
+  // Challenges
   const [selectedAnswers, setSelectedAnswers] = useState({});
   const [challengeFeedback, setChallengeFeedback] = useState({});
 
   const canvasRef = useRef(null);
-
-  // Fluid densities (g/cm³)
-  const FLUIDS = {
-    water: { name: 'Fresh Water', density: 1.00, color: '#38bdf8' },
-    seawater: { name: 'Ocean Water', density: 1.03, color: '#0284c7' },
-    oil: { name: 'Vegetable Oil', density: 0.92, color: '#facc15' },
-    syrup: { name: 'Dense Syrup', density: 1.40, color: '#fb923c' }
-  };
-
-  // Material presets
-  const PRESETS = {
-    wood: { name: 'Oak Wood', density: 0.65, mass: 260, volume: 400 },
-    ice: { name: 'Ice Cube', density: 0.92, mass: 368, volume: 400 },
-    aluminum: { name: 'Aluminum Block', density: 2.70, mass: 540, volume: 200 }
-  };
+  const animRef = useRef(null);
+  const splashParticlesRef = useRef([]);
+  const isDraggingBlockRef = useRef(false);
+  const userBlockYRef = useRef(null);
+  const bobbingPhaseRef = useRef(0);
 
   const handleSelectPreset = (key) => {
-    sounds.playTick();
+    sounds.playSnap();
     setMaterial(key);
-    if (key !== 'custom') {
-      setMassGrams(PRESETS[key].mass);
-      setVolumeCm3(PRESETS[key].volume);
-    }
+    setMassGrams(PRESETS[key].mass);
+    setVolumeCm3(PRESETS[key].volume);
+    userBlockYRef.current = null;
   };
 
   const currentFluid = FLUIDS[fluid];
   const currentDensity = massGrams / Math.max(1, volumeCm3); // g/cm³
 
   // Buoyant equilibrium physics
-  // Fraction submerged = rho_obj / rho_fluid
   const fractionSubmerged = Math.min(1.0, currentDensity / currentFluid.density);
   const willFloat = currentDensity <= currentFluid.density;
 
@@ -63,137 +67,229 @@ export const DensitySim = ({ activeTab, onUpdateScore }) => {
   const displacedVolumeCm3 = volumeCm3 * fractionSubmerged;
   const fbNewtons = ((displacedVolumeCm3 * currentFluid.density) / 1000) * g;
 
-  // Draw Tank Simulation
+  // 60 FPS Fluid & Buoyancy Simulation Loop
   useEffect(() => {
     if (activeTab !== 'sandbox') return;
+    let lastTime = performance.now();
+
+    const loop = (time) => {
+      const dt = Math.min((time - lastTime) / 1000, 0.05);
+      lastTime = time;
+      bobbingPhaseRef.current += dt * 3.5;
+
+      // Update splash particles
+      splashParticlesRef.current = splashParticlesRef.current.map(p => ({
+        ...p,
+        x: p.x + p.vx * dt,
+        y: p.y + p.vy * dt + 200 * dt,
+        life: p.life - dt * 2.5
+      })).filter(p => p.life > 0);
+
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const width = canvas.width;
+      const height = canvas.height;
+
+      ctx.clearRect(0, 0, width, height);
+
+      // Pale grid
+      ctx.strokeStyle = '#f1f5f9';
+      ctx.lineWidth = 1;
+      for (let x = 0; x < width; x += 40) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, height);
+        ctx.stroke();
+      }
+      for (let y = 0; y < height; y += 40) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(width, y);
+        ctx.stroke();
+      }
+
+      // Glass Tank Geometry
+      const tankX = width * 0.16;
+      const tankW = width * 0.68;
+      const tankTopY = 60;
+      const tankBottomY = height - 40;
+      const tankH = tankBottomY - tankTopY;
+
+      // Fluid surface level
+      const baseWaterY = tankTopY + 80;
+      const displacedRiseY = (displacedVolumeCm3 / 2500) * 18; // water level rises slightly with displacement
+      const waterLevelY = baseWaterY - displacedRiseY;
+
+      // Fill Fluid with gradient
+      const gradFluid = ctx.createLinearGradient(0, waterLevelY, 0, tankBottomY);
+      gradFluid.addColorStop(0, currentFluid.color + '44');
+      gradFluid.addColorStop(1, currentFluid.color + '88');
+      ctx.fillStyle = gradFluid;
+      ctx.fillRect(tankX, waterLevelY, tankW, tankBottomY - waterLevelY);
+
+      // Fluid top line (meniscus)
+      ctx.strokeStyle = currentFluid.color;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(tankX, waterLevelY);
+      ctx.lineTo(tankX + tankW, waterLevelY);
+      ctx.stroke();
+
+      // Glass Tank Outer Walls & Floor
+      ctx.strokeStyle = '#94a3b8';
+      ctx.lineWidth = 4;
+      ctx.strokeRect(tankX, tankTopY, tankW, tankH);
+
+      // Scale block from volume
+      const blockSidePx = Math.max(50, Math.min(130, Math.cbrt(volumeCm3) * 12));
+      const blockX = width / 2 - blockSidePx / 2;
+
+      // Equilibrium Resting Y position
+      let targetEquilibriumY = 0;
+      if (willFloat) {
+        const bobOffset = Math.sin(bobbingPhaseRef.current) * 1.5;
+        targetEquilibriumY = waterLevelY - (1 - fractionSubmerged) * blockSidePx + bobOffset;
+      } else {
+        targetEquilibriumY = tankBottomY - blockSidePx;
+      }
+
+      const activeBlockY = userBlockYRef.current !== null ? userBlockYRef.current : targetEquilibriumY;
+
+      // Render Block Body
+      const blockColor = material === 'wood' ? '#d97706' : material === 'ice' ? '#bae6fd' : material === 'aluminum' ? '#94a3b8' : '#8b5cf6';
+      ctx.fillStyle = blockColor;
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = 2;
+      ctx.fillRect(blockX, activeBlockY, blockSidePx, blockSidePx);
+      ctx.strokeRect(blockX, activeBlockY, blockSidePx, blockSidePx);
+
+      // Wood grain / Metallic texture lines
+      if (material === 'wood') {
+        ctx.strokeStyle = '#b45309';
+        ctx.lineWidth = 1;
+        for (let l = 10; l < blockSidePx; l += 14) {
+          ctx.beginPath();
+          ctx.moveTo(blockX + 4, activeBlockY + l);
+          ctx.lineTo(blockX + blockSidePx - 4, activeBlockY + l);
+          ctx.stroke();
+        }
+      }
+
+      // Splash droplets
+      for (const sp of splashParticlesRef.current) {
+        ctx.fillStyle = currentFluid.color;
+        ctx.globalAlpha = Math.max(0, sp.life);
+        ctx.beginPath();
+        ctx.arc(sp.x, sp.y, 2.5 * sp.life, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1.0;
+
+      // Force Vectors Overlay
+      const centerBlockX = blockX + blockSidePx / 2;
+      const centerBlockY = activeBlockY + blockSidePx / 2;
+
+      // Gravity Force Arrow (Fg - Red Down)
+      const fgArrowLen = Math.min(100, fgNewtons * 14);
+      ctx.strokeStyle = '#ef4444';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(centerBlockX, centerBlockY);
+      ctx.lineTo(centerBlockX, centerBlockY + fgArrowLen);
+      ctx.stroke();
+      ctx.fillStyle = '#ef4444';
+      ctx.beginPath();
+      ctx.moveTo(centerBlockX, centerBlockY + fgArrowLen + 6);
+      ctx.lineTo(centerBlockX - 5, centerBlockY + fgArrowLen - 4);
+      ctx.lineTo(centerBlockX + 5, centerBlockY + fgArrowLen - 4);
+      ctx.fill();
+      ctx.font = 'bold 10px monospace';
+      ctx.fillText(`Fg = ${fgNewtons.toFixed(2)} N`, centerBlockX + 8, centerBlockY + fgArrowLen * 0.7);
+
+      // Buoyant Force Arrow (Fb - Green Up)
+      const fbArrowLen = Math.min(100, fbNewtons * 14);
+      ctx.strokeStyle = '#10b981';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(centerBlockX, centerBlockY);
+      ctx.lineTo(centerBlockX, centerBlockY - fbArrowLen);
+      ctx.stroke();
+      ctx.fillStyle = '#10b981';
+      ctx.beginPath();
+      ctx.moveTo(centerBlockX, centerBlockY - fbArrowLen - 6);
+      ctx.lineTo(centerBlockX - 5, centerBlockY - fbArrowLen + 4);
+      ctx.lineTo(centerBlockX + 5, centerBlockY - fbArrowLen + 4);
+      ctx.fill();
+      ctx.fillText(`Fb = ${fbNewtons.toFixed(2)} N`, centerBlockX + 8, centerBlockY - fbArrowLen * 0.7);
+
+      animRef.current = requestAnimationFrame(loop);
+    };
+
+    animRef.current = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(animRef.current);
+  }, [activeTab, fluid, material, massGrams, volumeCm3, currentFluid, fractionSubmerged, willFloat, fgNewtons, fbNewtons, displacedVolumeCm3]);
+
+  // Handle direct Canvas dragging of the block
+  const handleCanvasMouseDown = (e) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    const width = canvas.width;
-    const height = canvas.height;
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const clickX = (e.clientX - rect.left) * scaleX;
+    const clickY = (e.clientY - rect.top) * scaleY;
 
-    ctx.clearRect(0, 0, width, height);
-
-    // Pale grid
-    ctx.strokeStyle = '#e2e8f0';
-    ctx.lineWidth = 1;
-    for (let x = 0; x < width; x += 40) {
-      ctx.beginPath();
-      ctx.moveTo(x, 0);
-      ctx.lineTo(x, height);
-      ctx.stroke();
-    }
-    for (let y = 0; y < height; y += 40) {
-      ctx.beginPath();
-      ctx.moveTo(0, y);
-      ctx.lineTo(width, y);
-      ctx.stroke();
-    }
-
-    // Glass Tank Boundaries
-    const tankX = width * 0.18;
-    const tankW = width * 0.64;
-    const tankTopY = 60;
-    const tankBottomY = height - 40;
-    const tankH = tankBottomY - tankTopY;
-
-    // Water Surface Level
-    const waterLevelY = tankTopY + 70;
-
-    // Fill Fluid
-    ctx.fillStyle = currentFluid.color + '33'; // 20% opacity
-    ctx.fillRect(tankX, waterLevelY, tankW, tankBottomY - waterLevelY);
-
-    // Fluid top line (meniscus)
-    ctx.strokeStyle = currentFluid.color;
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.moveTo(tankX, waterLevelY);
-    ctx.lineTo(tankX + tankW, waterLevelY);
-    ctx.stroke();
-
-    // Draw Glass Tank Walls
-    ctx.strokeStyle = '#94a3b8';
-    ctx.lineWidth = 4;
-    ctx.strokeRect(tankX, tankTopY, tankW, tankH);
-
-    // Draw Object (Block)
-    // Scale block width/height from volume (assuming cube)
     const blockSidePx = Math.max(50, Math.min(130, Math.cbrt(volumeCm3) * 12));
-    const blockX = width / 2 - blockSidePx / 2;
+    const blockX = canvas.width / 2 - blockSidePx / 2;
 
-    // Calculate block Y resting position
-    let blockY = 0;
-    if (willFloat) {
-      // Resting on surface: fractionSubmerged of height is below waterLevelY
-      blockY = waterLevelY - (1 - fractionSubmerged) * blockSidePx;
-    } else {
-      // Sinks to bottom of tank
-      blockY = tankBottomY - blockSidePx;
+    if (clickX >= blockX - 10 && clickX <= blockX + blockSidePx + 10) {
+      isDraggingBlockRef.current = true;
+      sounds.playTick();
     }
+  };
 
-    // Block Body
-    ctx.fillStyle = material === 'wood' ? '#d97706' : material === 'ice' ? '#bae6fd' : material === 'aluminum' ? '#94a3b8' : '#8b5cf6';
-    ctx.strokeStyle = '#1e293b';
-    ctx.lineWidth = 2;
-    ctx.fillRect(blockX, blockY, blockSidePx, blockSidePx);
-    ctx.strokeRect(blockX, blockY, blockSidePx, blockSidePx);
+  const handleCanvasMouseMove = (e) => {
+    if (!isDraggingBlockRef.current) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    const scaleY = canvas.height / rect.height;
+    const mouseY = (e.clientY - rect.top) * scaleY;
 
-    // Water displacement ripple
-    ctx.strokeStyle = currentFluid.color;
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.arc(blockX - 10, waterLevelY, 15, 0, Math.PI / 2);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.arc(blockX + blockSidePx + 10, waterLevelY, 15, Math.PI / 2, Math.PI);
-    ctx.stroke();
+    const blockSidePx = Math.max(50, Math.min(130, Math.cbrt(volumeCm3) * 12));
+    const minY = 30;
+    const maxY = canvas.height - 40 - blockSidePx;
+    userBlockYRef.current = Math.max(minY, Math.min(maxY, mouseY - blockSidePx / 2));
 
-    // Force Vectors Overlay
-    const centerBlockX = blockX + blockSidePx / 2;
-    const centerBlockY = blockY + blockSidePx / 2;
+    // Spawn water splash droplets when dragging near surface
+    if (Math.abs(mouseY - 140) < 20 && Math.random() < 0.3) {
+      splashParticlesRef.current.push({
+        x: canvas.width / 2 + (Math.random() - 0.5) * blockSidePx,
+        y: 140,
+        vx: (Math.random() - 0.5) * 80,
+        vy: -50 - Math.random() * 80,
+        life: 1.0
+      });
+    }
+  };
 
-    // F_gravity arrow (pointing down)
-    const fgArrowLen = Math.min(100, fgNewtons * 14);
-    ctx.strokeStyle = '#ef4444';
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.moveTo(centerBlockX, centerBlockY);
-    ctx.lineTo(centerBlockX, centerBlockY + fgArrowLen);
-    ctx.stroke();
-    // Arrowhead
-    ctx.fillStyle = '#ef4444';
-    ctx.beginPath();
-    ctx.moveTo(centerBlockX, centerBlockY + fgArrowLen + 6);
-    ctx.lineTo(centerBlockX - 5, centerBlockY + fgArrowLen - 4);
-    ctx.lineTo(centerBlockX + 5, centerBlockY + fgArrowLen - 4);
-    ctx.fill();
-    ctx.fillText(`Fg = ${fgNewtons.toFixed(2)} N`, centerBlockX + 8, centerBlockY + fgArrowLen * 0.7);
-
-    // F_buoyant arrow (pointing up)
-    const fbArrowLen = Math.min(100, fbNewtons * 14);
-    ctx.strokeStyle = '#10b981';
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.moveTo(centerBlockX, centerBlockY);
-    ctx.lineTo(centerBlockX, centerBlockY - fbArrowLen);
-    ctx.stroke();
-    // Arrowhead
-    ctx.fillStyle = '#10b981';
-    ctx.beginPath();
-    ctx.moveTo(centerBlockX, centerBlockY - fbArrowLen - 6);
-    ctx.lineTo(centerBlockX - 5, centerBlockY - fbArrowLen + 4);
-    ctx.lineTo(centerBlockX + 5, centerBlockY - fbArrowLen + 4);
-    ctx.fill();
-    ctx.fillText(`Fb = ${fbNewtons.toFixed(2)} N`, centerBlockX + 8, centerBlockY - fbArrowLen * 0.7);
-
-  }, [activeTab, fluid, material, massGrams, volumeCm3, currentFluid, fractionSubmerged, willFloat, fgNewtons, fbNewtons]);
+  const handleCanvasMouseUp = () => {
+    if (isDraggingBlockRef.current) {
+      sounds.playSnap();
+      isDraggingBlockRef.current = false;
+      userBlockYRef.current = null; // restore equilibrium
+    }
+  };
 
   const handleAnswerSubmit = (qId, idx, isCorrect) => {
     sounds.playClick();
     setSelectedAnswers(prev => ({ ...prev, [qId]: idx }));
     setChallengeFeedback(prev => ({ ...prev, [qId]: isCorrect ? 'correct' : 'incorrect' }));
-    if (isCorrect && onUpdateScore) onUpdateScore(20);
+    if (isCorrect && onUpdateScore) {
+      sounds.playSuccess();
+      onUpdateScore(20);
+    }
   };
 
   return (
@@ -217,13 +313,13 @@ export const DensitySim = ({ activeTab, onUpdateScore }) => {
 
             <div className="text-xs text-slate-600 space-y-3 font-sans leading-relaxed">
               <p>
-                Flotation is not determined by weight alone, but by <strong>Density ($\rho = m/V$)</strong> and <strong>Archimedes' Principle</strong>. When an object is placed in fluid, the fluid exerts an upward <strong>Buoyant Force ($F_b$)</strong> equal to the weight of the fluid displaced by the object:
+                Flotation is not determined by weight alone, but by <strong>Density (ρ = m/V)</strong> and <strong>Archimedes' Principle</strong>. When an object is placed in fluid, the fluid exerts an upward <strong>Buoyant Force (Fb)</strong> equal to the weight of the fluid displaced by the object:
               </p>
               <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-center font-mono text-xs font-bold text-slate-800">
                 F_buoyant = ρ_fluid · V_displaced · g
               </div>
               <p>
-                If an object's overall density is less than the fluid's density ($\rho_{obj} &lt; \rho_{fluid}$), the upward buoyant force balances its weight before it is fully submerged, and it floats! The exact fraction of the object submerged equals $\rho_{obj} / \rho_{fluid}$.
+                If an object's overall density is less than the fluid's density (ρ_obj &lt; ρ_fluid), the upward buoyant force balances its weight before it is fully submerged, and it floats! The exact fraction of the object submerged equals ρ_obj / ρ_fluid.
               </p>
             </div>
           </div>
@@ -247,13 +343,21 @@ export const DensitySim = ({ activeTab, onUpdateScore }) => {
                 </span>
               </div>
 
-              <div className="relative w-full bg-slate-50">
+              {/* Canvas with Direct Dragging */}
+              <div className="relative w-full bg-slate-50 select-none">
                 <canvas
                   ref={canvasRef}
                   width={760}
                   height={380}
-                  className="w-full h-auto block"
+                  onMouseDown={handleCanvasMouseDown}
+                  onMouseMove={handleCanvasMouseMove}
+                  onMouseUp={handleCanvasMouseUp}
+                  className="w-full h-auto block cursor-ns-resize"
                 />
+
+                <div className="absolute bottom-2 left-3 px-2 py-1 rounded-md bg-white/80 backdrop-blur-sm border border-slate-200 text-[10px] font-mono text-slate-500 pointer-events-none">
+                  Drag the block vertically on canvas to test water resistance & splash
+                </div>
               </div>
 
               {/* Physical Telemetry */}
@@ -351,6 +455,7 @@ export const DensitySim = ({ activeTab, onUpdateScore }) => {
                     step={10}
                     value={massGrams}
                     onChange={(e) => {
+                      sounds.playTick();
                       setMaterial('custom');
                       setMassGrams(Number(e.target.value));
                     }}
@@ -365,15 +470,16 @@ export const DensitySim = ({ activeTab, onUpdateScore }) => {
                   </div>
                   <input
                     type="range"
-                    min={100}
-                    max={600}
+                    min={50}
+                    max={500}
                     step={10}
                     value={volumeCm3}
                     onChange={(e) => {
+                      sounds.playTick();
                       setMaterial('custom');
                       setVolumeCm3(Number(e.target.value));
                     }}
-                    className="w-full accent-sky-600 cursor-pointer"
+                    className="w-full accent-slate-700 cursor-pointer"
                   />
                 </div>
               </div>
@@ -382,75 +488,51 @@ export const DensitySim = ({ activeTab, onUpdateScore }) => {
         </div>
       )}
 
-      {/* TAB 3: CHALLENGE ME */}
-      {activeTab === 'challenge' && (
+      {/* TAB 3: CHALLENGES */}
+      {activeTab === 'challenges' && (
         <div className="max-w-3xl mx-auto space-y-5 text-left">
           <div className="p-4 rounded-xl bg-cyan-50 border border-cyan-200 text-cyan-900 text-xs font-sans">
-            <strong>Density & Flotation Inquiries:</strong> Earn up to 20 laboratory score points!
+            <strong>Buoyancy Inquiry Laboratory:</strong> Test your understanding of Archimedes' principle, fluid displacement, and hydrostatic equilibrium. Earn up to 60 laboratory score points!
           </div>
 
+          {/* Question 1 */}
           <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-3">
             <div className="text-xs font-mono text-slate-400 font-bold uppercase">
-              Challenge 1 of 1 // Iceberg Submersion
+              Challenge 1 of 2 // Archimedes' Principle
             </div>
-            <h3 className="text-sm font-bold font-sans text-slate-800">
-              Why is approximately 92% of an iceberg hidden underwater in the ocean?
+            <h3 className="text-sm font-bold font-sans text-slate-900">
+              According to Archimedes' Principle, what determines the upward buoyant force Fb exerted on a fully or partially submerged object?
             </h3>
 
             <div className="space-y-2">
               {[
-                { text: "Because the density of ice (0.92 g/cm³) is exactly 92% of water's density (1.00 g/cm³)", correct: true },
-                { text: "Because ocean waves compress the ice down", correct: false },
-                { text: "Because gravity pulls harder on ice than on liquid water", correct: false }
-              ].map((opt, i) => (
-                <button
-                  key={i}
-                  onClick={() => handleAnswerSubmit('den1', i, opt.correct)}
-                  className={`w-full p-3 rounded-xl text-xs font-mono text-left transition-all border ${
-                    selectedAnswers['den1'] === i
-                      ? opt.correct
-                        ? 'bg-emerald-50 border-emerald-400 text-emerald-800 font-bold'
-                        : 'bg-rose-50 border-rose-400 text-rose-800 font-bold'
-                      : 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700'
-                  }`}
-                >
-                  {opt.text}
-                </button>
-              ))}
-            </div>
-
-            {challengeFeedback['den1'] === 'correct' && (
-              <div className="p-3 rounded-xl bg-emerald-50 text-emerald-800 text-xs font-sans">
-                ✓ <strong>Correct! (+20 pts)</strong> By Archimedes' principle, the submerged fraction of any floating object is strictly equal to $\rho_{object} / \rho_{fluid} = 0.92 / 1.00 = 0.92$ (or 92%)!
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* TAB 4: APPLICATIONS */}
-      {activeTab === 'applications' && (
-        <div className="max-w-4xl mx-auto space-y-6 text-left">
-          <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-4">
-            <h2 className="text-xl font-bold font-sans text-slate-900">
-              Submarine Ballast Tanks: Controlling Variable Density
-            </h2>
-            <p className="text-xs text-slate-600 leading-relaxed font-sans">
-              Submarines can freely cruise on the ocean surface, hover at depth, or submerge to the sea floor by manipulating their effective density using ballast tanks.
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-              <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
-                <div className="text-xs font-bold font-mono text-slate-800">To Dive (Sinking)</div>
-                <p className="text-xs text-slate-600 font-sans">
-                  Vents open at the top of the ballast tanks, flooding them with seawater. Mass increases while volume remains constant, causing overall density to exceed seawater.
-                </p>
-              </div>
-              <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
-                <div className="text-xs font-bold font-mono text-slate-800">To Surface (Floating)</div>
-                <p className="text-xs text-slate-600 font-sans">
-                  Compressed air is blown into the tanks, expelling the seawater out through bottom vents. Mass drops, decreasing density below seawater to float back to the surface.
-                </p>
-              </div>
+                { text: "The weight of the fluid displaced by the object (Fb = ρ_fluid · V_submerged · g)", correct: true },
+                { text: "The total atmospheric pressure on the surface of the fluid", correct: false },
+                { text: "The surface tension of the fluid container walls", correct: false },
+                { text: "The magnetic field of the submerged material", correct: false }
+              ].map((opt, idx) => {
+                const isSelected = selectedAnswers['q1'] === idx;
+                return (
+                  <button
+                    key={idx}
+                    onClick={() => handleAnswerSubmit('q1', idx, opt.correct)}
+                    className={`w-full p-3 rounded-xl border text-left text-xs font-sans transition-all flex items-center justify-between ${
+                      isSelected 
+                        ? opt.correct 
+                          ? 'bg-emerald-50 border-emerald-400 text-emerald-900 font-bold'
+                          : 'bg-rose-50 border-rose-400 text-rose-900'
+                        : 'bg-slate-50 border-slate-200 hover:bg-slate-100 text-slate-800'
+                    }`}
+                  >
+                    <span>{opt.text}</span>
+                    {isSelected && (
+                      opt.correct 
+                        ? <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                        : <Activity className="w-4 h-4 text-rose-600 flex-shrink-0" />
+                    )}
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>

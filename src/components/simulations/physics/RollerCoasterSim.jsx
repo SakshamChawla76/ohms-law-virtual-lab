@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { 
   Play, 
   Pause, 
@@ -11,7 +11,11 @@ import {
   AlertTriangle,
   ArrowRight,
   ChevronRight,
-  ShieldCheck
+  ShieldCheck,
+  Compass,
+  Sliders,
+  Flame,
+  Wind
 } from 'lucide-react';
 import { sounds } from '../../../engine/audioEffects';
 
@@ -23,6 +27,7 @@ export const RollerCoasterSim = ({ activeTab = 'sandbox', onUpdateScore }) => {
   const [hasFriction, setHasFriction] = useState(false);
   const [isPlaying, setIsPlaying] = useState(true);
   const [showFBD, setShowFBD] = useState(true);
+  const [showSparks, setShowSparks] = useState(true);
 
   // --- Real-Time State (Updated throttled for DOM) ---
   const [telemetry, setTelemetry] = useState({
@@ -43,6 +48,8 @@ export const RollerCoasterSim = ({ activeTab = 'sandbox', onUpdateScore }) => {
   const animationRef = useRef(null);
   const progressRef = useRef(0);
   const frameCountRef = useRef(0);
+  const sparksRef = useRef([]);
+  const draggingHandleRef = useRef(null); // 'drop' | 'loop' | null
 
   // Gravity constant
   const g = 9.81;
@@ -54,8 +61,54 @@ export const RollerCoasterSim = ({ activeTab = 'sandbox', onUpdateScore }) => {
   const handleReset = () => {
     sounds.playSnap();
     progressRef.current = 0;
+    sparksRef.current = [];
     setIsPlaying(true);
   };
+
+  // Convert track progress (0 to 1) to (x, y, angle) coordinates
+  const getTrackPosition = useCallback((prog, width, height, currentH, currentR) => {
+    const startX = 60;
+    const groundY = height - 70;
+    const trackScale = (groundY - 60) / 50;
+
+    const startY = groundY - currentH * trackScale;
+    const loopCenterX = width * 0.52;
+    const loopR = currentR * trackScale;
+    const loopCenterY = groundY - loopR;
+    const endX = width - 60;
+
+    let x = startX;
+    let y = startY;
+    let angle = 0;
+
+    if (prog < 0.35) {
+      const t = Math.max(0, Math.min(1, prog / 0.35));
+      const p0x = startX, p0y = startY;
+      const p1x = startX + 80, p1y = groundY;
+      const p2x = loopCenterX, p2y = groundY;
+
+      x = Math.pow(1 - t, 2) * p0x + 2 * (1 - t) * t * p1x + Math.pow(t, 2) * p2x;
+      y = Math.pow(1 - t, 2) * p0y + 2 * (1 - t) * t * p1y + Math.pow(t, 2) * p2y;
+
+      const dx = 2 * (1 - t) * (p1x - p0x) + 2 * t * (p2x - p1x);
+      const dy = 2 * (1 - t) * (p1y - p0y) + 2 * t * (p2y - p1y);
+      angle = Math.atan2(dy, dx);
+    } else if (prog <= 0.75) {
+      const t = (prog - 0.35) / 0.4;
+      const theta = Math.PI / 2 - t * 2 * Math.PI;
+
+      x = loopCenterX + loopR * Math.cos(theta);
+      y = loopCenterY + loopR * Math.sin(theta);
+      angle = Math.atan2(-Math.cos(theta), Math.sin(theta));
+    } else {
+      const t = Math.max(0, Math.min(1, (prog - 0.75) / 0.25));
+      x = loopCenterX + t * (endX - loopCenterX);
+      y = groundY;
+      angle = 0;
+    }
+
+    return { x, y, angle, startX, startY, groundY, loopCenterX, loopCenterY, loopR, endX, trackScale };
+  }, []);
 
   // Main 60 FPS Animation & Physics Loop
   useEffect(() => {
@@ -77,16 +130,9 @@ export const RollerCoasterSim = ({ activeTab = 'sandbox', onUpdateScore }) => {
       const width = canvas.width;
       const height = canvas.height;
 
-      // Track layout coordinates
-      const startX = 60;
-      const groundY = height - 70;
-      const trackScale = (groundY - 60) / 50; // pixels per meter
-
-      const startY = groundY - initialHeight * trackScale;
-      const loopCenterX = width * 0.52;
-      const loopR = loopRadius * trackScale;
-      const loopCenterY = groundY - loopR;
-      const endX = width - 60;
+      const {
+        startX, startY, groundY, loopCenterX, loopCenterY, loopR, endX, trackScale
+      } = getTrackPosition(0, width, height, initialHeight, loopRadius);
 
       let currentProg = progressRef.current;
 
@@ -95,16 +141,12 @@ export const RollerCoasterSim = ({ activeTab = 'sandbox', onUpdateScore }) => {
       
       let simHeight = initialHeight;
       if (currentProg < 0.35) {
-        // Drop down (from startY to groundY)
         const t = currentProg / 0.35;
         simHeight = initialHeight * (1 - Math.pow(t, 1.6));
       } else if (currentProg <= 0.75) {
-        // Vertical Loop
         const t = (currentProg - 0.35) / 0.4;
-        // At t=0, bottom; t=0.5, apex (2*loopRadius); t=1.0, bottom
         simHeight = loopRadius * (1 - Math.cos(t * 2 * Math.PI));
       } else {
-        // Exit runout
         simHeight = 0;
       }
 
@@ -116,28 +158,53 @@ export const RollerCoasterSim = ({ activeTab = 'sandbox', onUpdateScore }) => {
       // Check apex detachment condition
       const fell = initialHeight < criticalHeight && currentProg > 0.48 && currentProg < 0.62;
 
-      // Normal force at current point
+      // Normal force (G-force)
       let normalG = 1;
       if (currentProg >= 0.35 && currentProg <= 0.75) {
         const t = (currentProg - 0.35) / 0.4;
         const an = (curVelocity * curVelocity) / Math.max(1, loopRadius);
-        // At bottom (t=0, t=1): an/g + 1; at apex (t=0.5): an/g - 1
         normalG = Math.max(0, (an + g * Math.cos(t * 2 * Math.PI)) / g);
       } else if (currentProg < 0.35) {
-        normalG = 1 + (curVelocity / 20);
+        normalG = 1 + (curVelocity / 22);
+      } else {
+        normalG = 1;
       }
 
       if (isPlaying) {
-        // Advance progress based on real velocity
         const speedFactor = Math.max(0.1, (curVelocity / 35) * 0.28);
         currentProg += speedFactor * dt;
         if (currentProg > 1) {
           currentProg = 0;
         }
         progressRef.current = currentProg;
+
+        // Emit sparks on high normal force or high speed rail contact
+        if (showSparks && (normalG > 2.8 || curVelocity > 22)) {
+          const mainCar = getTrackPosition(currentProg, width, height, initialHeight, loopRadius);
+          for (let i = 0; i < 2; i++) {
+            sparksRef.current.push({
+              x: mainCar.x + (Math.random() - 0.5) * 16,
+              y: mainCar.y + 6 + (Math.random() - 0.5) * 4,
+              vx: (Math.random() - 0.5) * 70 - Math.cos(mainCar.angle) * (curVelocity * 1.5),
+              vy: (Math.random() - 0.7) * 80,
+              life: 1.0,
+              color: Math.random() > 0.4 ? '#f59e0b' : '#ef4444'
+            });
+          }
+        }
       }
 
-      // Throttle telemetry state updates to ~15 Hz to keep UI smooth
+      // Update active sparks
+      sparksRef.current = sparksRef.current
+        .map(s => ({
+          ...s,
+          x: s.x + s.vx * dt,
+          y: s.y + s.vy * dt + 150 * dt, // gravity pull
+          life: s.life - dt * 2.8
+        }))
+        .filter(s => s.life > 0);
+
+      // Throttle telemetry update to DOM
       frameCountRef.current += 1;
       if (frameCountRef.current % 4 === 0) {
         setTelemetry({
@@ -154,25 +221,30 @@ export const RollerCoasterSim = ({ activeTab = 'sandbox', onUpdateScore }) => {
       // --- Draw Canvas Scene ---
       ctx.clearRect(0, 0, width, height);
 
-      // 1. Grid background
+      // 1. Subtle Engineering Grid
       ctx.strokeStyle = '#f1f5f9';
       ctx.lineWidth = 1;
-      for (let x = 0; x < width; x += 40) {
+      for (let x = 0; x < width; x += 30) {
         ctx.beginPath();
         ctx.moveTo(x, 0);
         ctx.lineTo(x, height);
         ctx.stroke();
       }
-      for (let y = 0; y < height; y += 40) {
+      for (let y = 0; y < height; y += 30) {
         ctx.beginPath();
         ctx.moveTo(0, y);
         ctx.lineTo(width, y);
         ctx.stroke();
       }
 
-      // Ground plane
-      ctx.fillStyle = '#e2e8f0';
+      // 2. Concrete Ground Base & Plinth
+      const gradGround = ctx.createLinearGradient(0, groundY, 0, height);
+      gradGround.addColorStop(0, '#e2e8f0');
+      gradGround.addColorStop(1, '#cbd5e1');
+      ctx.fillStyle = gradGround;
       ctx.fillRect(0, groundY, width, height - groundY);
+
+      // Safety curb
       ctx.strokeStyle = '#94a3b8';
       ctx.lineWidth = 2;
       ctx.beginPath();
@@ -180,25 +252,71 @@ export const RollerCoasterSim = ({ activeTab = 'sandbox', onUpdateScore }) => {
       ctx.lineTo(width, groundY);
       ctx.stroke();
 
-      // Track support trestles
-      ctx.strokeStyle = '#cbd5e1';
-      ctx.lineWidth = 1.5;
-      for (let x = startX + 40; x < loopCenterX; x += 55) {
-        const tDrop = (x - startX) / (loopCenterX - startX);
-        const trestleTop = startY + Math.pow(tDrop, 1.8) * (groundY - startY);
+      // Concrete measurement markers on floor
+      ctx.fillStyle = '#64748b';
+      ctx.font = '9px monospace';
+      for (let x = 60; x < width - 60; x += 100) {
         ctx.beginPath();
-        ctx.moveTo(x, trestleTop);
-        ctx.lineTo(x, groundY);
+        ctx.moveTo(x, groundY);
+        ctx.lineTo(x, groundY + 6);
         ctx.stroke();
+        ctx.fillText(`${Math.round((x - 60) / trackScale)}m`, x - 8, groundY + 18);
       }
 
-      // Critical height dashed line
+      // 3. Structural Steel Truss Towers (Latticework with cross braces)
+      ctx.strokeStyle = '#94a3b8';
+      ctx.lineWidth = 1.2;
+      for (let x = startX + 35; x < loopCenterX - 20; x += 55) {
+        const tDrop = (x - startX) / (loopCenterX - startX);
+        const trestleTop = startY + Math.pow(tDrop, 1.8) * (groundY - startY);
+        // Vertical legs
+        ctx.beginPath();
+        ctx.moveTo(x - 6, trestleTop);
+        ctx.lineTo(x - 9, groundY);
+        ctx.moveTo(x + 6, trestleTop);
+        ctx.lineTo(x + 9, groundY);
+        ctx.stroke();
+
+        // Cross bracing
+        const segments = Math.max(2, Math.floor((groundY - trestleTop) / 28));
+        const segH = (groundY - trestleTop) / segments;
+        for (let s = 0; s < segments; s++) {
+          const y1 = trestleTop + s * segH;
+          const y2 = y1 + segH;
+          ctx.beginPath();
+          ctx.moveTo(x - 7, y1);
+          ctx.lineTo(x + 7, y2);
+          ctx.moveTo(x + 7, y1);
+          ctx.lineTo(x - 7, y2);
+          ctx.stroke();
+        }
+
+        // Concrete footings
+        ctx.fillStyle = '#64748b';
+        ctx.fillRect(x - 12, groundY - 4, 24, 4);
+      }
+
+      // Drop Tower Main Pylon
+      ctx.fillStyle = '#64748b';
+      ctx.fillRect(startX - 14, startY, 14, groundY - startY);
+      ctx.fillStyle = '#475569';
+      ctx.fillRect(startX - 18, groundY - 6, 22, 6);
+
+      // Loop center pillar support
+      ctx.strokeStyle = '#94a3b8';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(loopCenterX, loopCenterY + loopR);
+      ctx.lineTo(loopCenterX, groundY);
+      ctx.stroke();
+
+      // 4. Critical Height and Apex Analytical Guidelines
       const critY = groundY - criticalHeight * trackScale;
       ctx.strokeStyle = '#f59e0b';
       ctx.lineWidth = 1.5;
       ctx.setLineDash([5, 5]);
       ctx.beginPath();
-      ctx.moveTo(startX - 20, critY);
+      ctx.moveTo(startX - 30, critY);
       ctx.lineTo(width - 40, critY);
       ctx.stroke();
       ctx.setLineDash([]);
@@ -213,125 +331,298 @@ export const RollerCoasterSim = ({ activeTab = 'sandbox', onUpdateScore }) => {
       ctx.font = 'bold 10px monospace';
       ctx.fillText(`Apex (2r = ${(2 * loopRadius).toFixed(1)}m)`, loopCenterX - 35, apexY - 8);
 
-      // --- Draw Track Curve ---
-      ctx.strokeStyle = '#475569';
-      ctx.lineWidth = 5;
+      // 5. Track Path Drawing (Twin Tubular Steel Rails + Cross Ties)
+      // Base sleeper crossties along the track
+      ctx.strokeStyle = '#64748b';
+      ctx.lineWidth = 2;
+      const numTies = 90;
+      for (let i = 0; i <= numTies; i++) {
+        const pTie = i / numTies;
+        const posTie = getTrackPosition(pTie, width, height, initialHeight, loopRadius);
+        const tieLen = 10;
+        const nx = -Math.sin(posTie.angle) * tieLen;
+        const ny = Math.cos(posTie.angle) * tieLen;
+        ctx.beginPath();
+        ctx.moveTo(posTie.x - nx * 0.5, posTie.y - ny * 0.5);
+        ctx.lineTo(posTie.x + nx * 0.5, posTie.y + ny * 0.5);
+        ctx.stroke();
+      }
+
+      // Main Steel Backbone Tube (Deep Slate)
+      ctx.strokeStyle = '#334155';
+      ctx.lineWidth = 6;
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
       ctx.beginPath();
-
-      // 1. Drop curve to loop bottom (loopCenterX, groundY)
       ctx.moveTo(startX, startY);
       ctx.quadraticCurveTo(startX + 80, groundY, loopCenterX, groundY);
-
-      // 2. Circular Loop (starts at bottom (loopCenterX, groundY), goes anticlockwise forward through circle)
       ctx.arc(loopCenterX, loopCenterY, loopR, Math.PI / 2, -1.5 * Math.PI, true);
-
-      // 3. Exit flat to end
       ctx.lineTo(endX, groundY);
       ctx.stroke();
 
-      // Rails highlight line
+      // Top Specular Steel Rail (Metallic Teal Luster)
+      ctx.strokeStyle = '#0d9488';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(startX, startY - 3);
+      ctx.quadraticCurveTo(startX + 80, groundY - 3, loopCenterX, groundY - 3);
+      ctx.arc(loopCenterX, loopCenterY, loopR - 3, Math.PI / 2, -1.5 * Math.PI, true);
+      ctx.lineTo(endX, groundY - 3);
+      ctx.stroke();
+
+      // Lower guide rail
       ctx.strokeStyle = '#94a3b8';
       ctx.lineWidth = 1.5;
       ctx.beginPath();
-      ctx.moveTo(startX, startY - 2);
-      ctx.quadraticCurveTo(startX + 80, groundY - 2, loopCenterX, groundY - 2);
-      ctx.arc(loopCenterX, loopCenterY, loopR - 2, Math.PI / 2, -1.5 * Math.PI, true);
-      ctx.lineTo(endX, groundY - 2);
+      ctx.moveTo(startX, startY + 3);
+      ctx.quadraticCurveTo(startX + 80, groundY + 3, loopCenterX, groundY + 3);
+      ctx.arc(loopCenterX, loopCenterY, loopR + 3, Math.PI / 2, -1.5 * Math.PI, true);
+      ctx.lineTo(endX, groundY + 3);
       ctx.stroke();
 
-      // --- Compute Car Position & Rotation smoothly along track ---
-      let carX = startX;
-      let carY = startY;
-      let carAngle = 0;
+      // 6. Interactive Drop Tower Grabber Handle (Draggable directly on canvas)
+      ctx.save();
+      ctx.fillStyle = '#0f766e';
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(startX, startY, 7, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      // Drop height tooltip tag
+      ctx.fillStyle = '#0f766e';
+      ctx.roundRect(startX - 52, startY - 26, 46, 18, 4);
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 10px monospace';
+      ctx.fillText(`${initialHeight}m`, startX - 44, startY - 14);
+      ctx.restore();
 
-      if (currentProg < 0.35) {
-        const t = currentProg / 0.35;
-        // Bezier points matching drop curve: P0 = (startX, startY), P1 = (startX + 80, groundY), P2 = (loopCenterX, groundY)
-        const p0x = startX, p0y = startY;
-        const p1x = startX + 80, p1y = groundY;
-        const p2x = loopCenterX, p2y = groundY;
+      // 7. Interactive Loop Radius Grabber Handle
+      ctx.save();
+      ctx.fillStyle = '#f59e0b';
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(loopCenterX, apexY, 6, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
 
-        carX = Math.pow(1 - t, 2) * p0x + 2 * (1 - t) * t * p1x + Math.pow(t, 2) * p2x;
-        carY = Math.pow(1 - t, 2) * p0y + 2 * (1 - t) * t * p1y + Math.pow(t, 2) * p2y;
-
-        // Tangent
-        const dx = 2 * (1 - t) * (p1x - p0x) + 2 * t * (p2x - p1x);
-        const dy = 2 * (1 - t) * (p1y - p0y) + 2 * t * (p2y - p1y);
-        carAngle = Math.atan2(dy, dx);
-      } else if (currentProg <= 0.75) {
-        const t = (currentProg - 0.35) / 0.4;
-        const theta = Math.PI / 2 - t * 2 * Math.PI;
-
-        carX = loopCenterX + loopR * Math.cos(theta);
-        carY = loopCenterY + loopR * Math.sin(theta);
-        carAngle = Math.atan2(-Math.cos(theta), Math.sin(theta));
-      } else {
-        const t = (currentProg - 0.75) / 0.25;
-        carX = loopCenterX + t * (endX - loopCenterX);
-        carY = groundY;
-        carAngle = 0;
+      // 8. Render Spark Particles
+      for (const sp of sparksRef.current) {
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, sp.life);
+        ctx.fillStyle = sp.color;
+        ctx.beginPath();
+        ctx.arc(sp.x, sp.y, 2.5 * sp.life, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
       }
 
-      // Draw Coaster Car
-      ctx.save();
-      ctx.translate(carX, carY);
-      ctx.rotate(carAngle);
+      // 9. Articulated 3-Car Coaster Train
+      const trainOffsets = [0, -0.024, -0.048]; // Front, Middle, Rear car offsets
+      const carCount = trainOffsets.length;
 
-      // Car body
-      ctx.fillStyle = fell ? '#ef4444' : '#0f766e';
-      ctx.strokeStyle = '#042f2c';
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.roundRect(-14, -10, 28, 14, 3);
-      ctx.fill();
-      ctx.stroke();
+      for (let cIdx = carCount - 1; cIdx >= 0; cIdx--) {
+        const cProg = currentProg + trainOffsets[cIdx];
+        if (cProg < 0) continue;
 
-      // Front bumper
-      ctx.fillStyle = '#f59e0b';
-      ctx.fillRect(10, -8, 3, 10);
+        const carPos = getTrackPosition(cProg, width, height, initialHeight, loopRadius);
 
-      // Wheels
-      ctx.fillStyle = '#334155';
-      ctx.beginPath();
-      ctx.arc(-8, 4, 3.5, 0, Math.PI * 2);
-      ctx.arc(8, 4, 3.5, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
-
-      // Free Body Diagram Vectors
-      if (showFBD) {
-        ctx.restore();
         ctx.save();
-        ctx.translate(carX, carY);
+        ctx.translate(carPos.x, carPos.y);
+        ctx.rotate(carPos.angle);
 
-        // F_gravity (always downwards)
+        // Wind speed streaks behind train
+        if (curVelocity > 16 && isPlaying) {
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+          ctx.lineWidth = 1;
+          for (let w = 0; w < 3; w++) {
+            ctx.beginPath();
+            ctx.moveTo(-18 - w * 6, -6 + w * 5);
+            ctx.lineTo(-32 - w * 12, -6 + w * 5);
+            ctx.stroke();
+          }
+        }
+
+        // Car chassis body
+        const isLeadCar = (cIdx === 0);
+        const carColor = fell ? '#ef4444' : isLeadCar ? '#0f766e' : '#0d9488';
+        const carStroke = fell ? '#991b1b' : '#042f2c';
+
+        // Soft ground shadow under car
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.12)';
+        ctx.beginPath();
+        ctx.ellipse(0, 6, 14, 3, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Body shape (Aerodynamic nose cone for lead car)
+        ctx.fillStyle = carColor;
+        ctx.strokeStyle = carStroke;
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        if (isLeadCar) {
+          ctx.moveTo(-12, -8);
+          ctx.lineTo(10, -8);
+          ctx.quadraticCurveTo(15, -4, 15, 0);
+          ctx.quadraticCurveTo(15, 4, 10, 4);
+          ctx.lineTo(-12, 4);
+          ctx.closePath();
+        } else {
+          ctx.roundRect(-12, -8, 24, 12, 3);
+        }
+        ctx.fill();
+        ctx.stroke();
+
+        // Chrome bumper / lap bar
+        ctx.fillStyle = '#cbd5e1';
+        ctx.fillRect(-6, -11, 10, 3);
+
+        // Passenger Silhouette with Hands in the Air!
+        ctx.fillStyle = isLeadCar ? '#f59e0b' : '#38bdf8';
+        ctx.beginPath();
+        ctx.arc(-2, -12, 3.5, 0, Math.PI * 2); // Head
+        ctx.fill();
+        // Arms up in excitement when dropping fast!
+        if (curVelocity > 10 && !fell) {
+          ctx.strokeStyle = ctx.fillStyle;
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.moveTo(-2, -10);
+          ctx.lineTo(3, -17);
+          ctx.moveTo(-2, -10);
+          ctx.lineTo(-7, -17);
+          ctx.stroke();
+        }
+
+        // Lead Car Headlights with Volumetric Beam
+        if (isLeadCar) {
+          // Glow cone forward
+          const gradBeam = ctx.createLinearGradient(12, -2, 55, -2);
+          gradBeam.addColorStop(0, 'rgba(254, 240, 138, 0.6)');
+          gradBeam.addColorStop(1, 'rgba(254, 240, 138, 0)');
+          ctx.fillStyle = gradBeam;
+          ctx.beginPath();
+          ctx.moveTo(14, -4);
+          ctx.lineTo(55, -12);
+          ctx.lineTo(55, 4);
+          ctx.lineTo(14, 0);
+          ctx.closePath();
+          ctx.fill();
+
+          // Small headlight bulb
+          ctx.fillStyle = '#fef08a';
+          ctx.beginPath();
+          ctx.arc(13, -2, 2.5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // Metal Wheels & Bogie Assembly
+        ctx.fillStyle = '#1e293b';
+        ctx.strokeStyle = '#94a3b8';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(-7, 4, 3, 0, Math.PI * 2);
+        ctx.arc(7, 4, 3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.restore();
+      }
+
+      // 10. Free Body Diagram Vectors (On lead car)
+      const leadCar = getTrackPosition(currentProg, width, height, initialHeight, loopRadius);
+      if (showFBD) {
+        ctx.save();
+        ctx.translate(leadCar.x, leadCar.y);
+
+        // F_gravity (always downward red vector)
         ctx.strokeStyle = '#ef4444';
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 2.5;
         ctx.beginPath();
         ctx.moveTo(0, 0);
-        ctx.lineTo(0, 32);
+        ctx.lineTo(0, 34);
         ctx.stroke();
+        // Arrowhead
         ctx.fillStyle = '#ef4444';
-        ctx.font = 'bold 10px sans-serif';
-        ctx.fillText('Fg', 5, 26);
+        ctx.beginPath();
+        ctx.moveTo(0, 36);
+        ctx.lineTo(-4, 28);
+        ctx.lineTo(4, 28);
+        ctx.fill();
+        ctx.font = 'bold 10px monospace';
+        ctx.fillText('Fg (mg)', 6, 28);
 
-        // Normal force vector (points towards loop center when inside loop)
+        // Normal Force Vector N (green vector perpendicular to track)
         if (currentProg >= 0.35 && currentProg <= 0.75) {
-          const normLength = Math.max(0, normalG * 20);
-          const nx = ((loopCenterX - carX) / loopR) * normLength;
-          const ny = ((loopCenterY - carY) / loopR) * normLength;
+          const normLength = Math.max(0, normalG * 18);
+          const nx = ((loopCenterX - leadCar.x) / loopR) * normLength;
+          const ny = ((loopCenterY - leadCar.y) / loopR) * normLength;
           ctx.strokeStyle = '#10b981';
-          ctx.lineWidth = 2;
+          ctx.lineWidth = 2.5;
           ctx.beginPath();
           ctx.moveTo(0, 0);
           ctx.lineTo(nx, ny);
           ctx.stroke();
+          // Arrowhead
           ctx.fillStyle = '#10b981';
-          ctx.fillText('N', nx + 4, ny);
+          ctx.beginPath();
+          ctx.arc(nx, ny, 3, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillText(`N (${normalG.toFixed(1)}G)`, nx + 6, ny);
         }
+        ctx.restore();
       }
+
+      // 11. Embedded Cockpit G-Meter Arc Gauge (Canvas Top-Right)
+      ctx.save();
+      const gaugeX = width - 85;
+      const gaugeY = 65;
+      const gaugeR = 38;
+
+      // Gauge background pod
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+      ctx.strokeStyle = '#cbd5e1';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(gaugeX, gaugeY, gaugeR + 12, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      // Gauge arc track
+      ctx.strokeStyle = '#e2e8f0';
+      ctx.lineWidth = 6;
+      ctx.beginPath();
+      ctx.arc(gaugeX, gaugeY, gaugeR, Math.PI * 0.8, Math.PI * 2.2);
+      ctx.stroke();
+
+      // Active G-force arc
+      const maxG = 6.0;
+      const gRatio = Math.min(1.0, Math.max(0, normalG / maxG));
+      const gAngle = Math.PI * 0.8 + gRatio * (Math.PI * 1.4);
+      const gColor = normalG > 4.5 ? '#ef4444' : normalG > 2.8 ? '#f59e0b' : normalG < 0.2 ? '#06b6d4' : '#10b981';
+
+      ctx.strokeStyle = gColor;
+      ctx.lineWidth = 6;
+      ctx.beginPath();
+      ctx.arc(gaugeX, gaugeY, gaugeR, Math.PI * 0.8, gAngle);
+      ctx.stroke();
+
+      // Needle pin
+      ctx.fillStyle = '#1e293b';
+      ctx.beginPath();
+      ctx.arc(gaugeX, gaugeY, 4, 0, Math.PI * 2);
+      ctx.fill();
+
+      // G-force text readout
+      ctx.fillStyle = gColor;
+      ctx.font = 'bold 13px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(`${normalG.toFixed(1)} G`, gaugeX, gaugeY + 16);
+      ctx.font = 'bold 8px monospace';
+      ctx.fillStyle = '#64748b';
+      ctx.fillText('ACCELEROMETER', gaugeX, gaugeY + 26);
       ctx.restore();
 
       animationRef.current = requestAnimationFrame(render);
@@ -342,7 +633,71 @@ export const RollerCoasterSim = ({ activeTab = 'sandbox', onUpdateScore }) => {
     return () => {
       if (animationRef.current) cancelAnimationFrame(animationRef.current);
     };
-  }, [activeTab, initialHeight, loopRadius, mass, hasFriction, isPlaying, showFBD]);
+  }, [activeTab, initialHeight, loopRadius, mass, hasFriction, isPlaying, showFBD, showSparks, getTrackPosition]);
+
+  // Handle direct Canvas dragging of Drop Height or Loop Radius
+  const handleCanvasMouseDown = (e) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const clickX = (e.clientX - rect.left) * scaleX;
+    const clickY = (e.clientY - rect.top) * scaleY;
+
+    const { startX, startY, trackScale, loopCenterX, groundY } = getTrackPosition(0, canvas.width, canvas.height, initialHeight, loopRadius);
+    const apexY = groundY - 2 * loopRadius * trackScale;
+
+    // Check click near Drop Tower handle
+    const distDrop = Math.hypot(clickX - startX, clickY - startY);
+    if (distDrop < 25) {
+      draggingHandleRef.current = 'drop';
+      sounds.playTick();
+      return;
+    }
+
+    // Check click near Loop Apex handle
+    const distLoop = Math.hypot(clickX - loopCenterX, clickY - apexY);
+    if (distLoop < 25) {
+      draggingHandleRef.current = 'loop';
+      sounds.playTick();
+      return;
+    }
+  };
+
+  const handleCanvasMouseMove = (e) => {
+    if (!draggingHandleRef.current) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    const scaleY = canvas.height / rect.height;
+    const mouseY = (e.clientY - rect.top) * scaleY;
+
+    const groundY = canvas.height - 70;
+    const trackScale = (groundY - 60) / 50;
+
+    if (draggingHandleRef.current === 'drop') {
+      const newH = Math.max(10, Math.min(50, Math.round((groundY - mouseY) / trackScale)));
+      if (newH !== initialHeight) {
+        setInitialHeight(newH);
+        sounds.playTick();
+      }
+    } else if (draggingHandleRef.current === 'loop') {
+      const newApexH = (groundY - mouseY) / trackScale;
+      const newR = Math.max(5, Math.min(18, Math.round(newApexH / 2)));
+      if (newR !== loopRadius) {
+        setLoopRadius(newR);
+        sounds.playTick();
+      }
+    }
+  };
+
+  const handleCanvasMouseUp = () => {
+    if (draggingHandleRef.current) {
+      sounds.playSnap();
+      draggingHandleRef.current = null;
+    }
+  };
 
   // Quiz submission handler
   const handleAnswerSubmit = (questionId, optionIndex, isCorrect) => {
@@ -354,29 +709,30 @@ export const RollerCoasterSim = ({ activeTab = 'sandbox', onUpdateScore }) => {
     }));
 
     if (isCorrect && onUpdateScore) {
+      sounds.playSuccess();
       onUpdateScore(20);
     }
   };
 
   return (
     <div className="space-y-6">
-      {/* TAB 1: CURIOSITY & REAL-WORLD FRAMING */}
-      {activeTab === 'curiosity' && (
+      {/* TAB 1: THEORY / HISTORICAL FLIP-FLAP COASATER CASE STUDY */}
+      {activeTab === 'theory' && (
         <div className="max-w-4xl mx-auto space-y-6 text-left">
-          {/* Hero Framing Card */}
-          <div className="p-6 md:p-8 rounded-2xl bg-surface-container-lowest border border-outline-variant/30 shadow-sm space-y-4">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-bold bg-teal-50 text-teal-800 border border-teal-200">
-              <Sparkles className="w-3.5 h-3.5 text-teal-600" />
-              THE ROLLER COASTER PARADOX
+          <div className="p-6 rounded-2xl bg-surface-container-lowest border border-outline-variant/30 shadow-sm space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-teal-50 text-teal-700">
+                <Gauge className="w-5 h-5" />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold font-sans text-on-surface">
+                  Why Circular Loops Nearly Snapped Passengers' Necks
+                </h2>
+                <p className="text-xs font-mono text-on-surface-variant">
+                  CASE STUDY: THE 1895 FLIP FLAP RAILWAY & CENTRIPETAL ACCELERATION
+                </p>
+              </div>
             </div>
-
-            <h2 className="text-2xl md:text-3xl font-bold font-display text-on-surface tracking-tight">
-              Why don't passengers plunge to the ground at the top of a loop?
-            </h2>
-
-            <p className="text-sm font-semibold text-teal-800 italic bg-teal-50/50 p-3 rounded-xl border border-teal-100">
-              "At the apex of a vertical loop-the-loop, you are completely upside down. Gravity is pulling you straight toward the Earth at 9.8 m/s². Yet, you remain firmly planted against your seat."
-            </p>
 
             <div className="text-xs text-on-surface-variant space-y-3 font-sans leading-relaxed">
               <p>
@@ -424,7 +780,7 @@ export const RollerCoasterSim = ({ activeTab = 'sandbox', onUpdateScore }) => {
 
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => setShowFBD(!showFBD)}
+                    onClick={() => { sounds.playTick(); setShowFBD(!showFBD); }}
                     className={`px-2.5 py-1 rounded text-[11px] font-mono transition-all border ${
                       showFBD 
                         ? 'bg-teal-50 text-teal-700 border-teal-300 font-bold' 
@@ -432,6 +788,17 @@ export const RollerCoasterSim = ({ activeTab = 'sandbox', onUpdateScore }) => {
                     }`}
                   >
                     Force Vectors (FBD)
+                  </button>
+
+                  <button
+                    onClick={() => { sounds.playTick(); setShowSparks(!showSparks); }}
+                    className={`px-2.5 py-1 rounded text-[11px] font-mono transition-all border ${
+                      showSparks 
+                        ? 'bg-amber-50 text-amber-700 border-amber-300 font-bold' 
+                        : 'bg-white text-on-surface-variant border-outline-variant/30'
+                    }`}
+                  >
+                    Wheel Sparks
                   </button>
 
                   <button
@@ -452,13 +819,16 @@ export const RollerCoasterSim = ({ activeTab = 'sandbox', onUpdateScore }) => {
                 </div>
               </div>
 
-              {/* HTML5 Canvas */}
-              <div className="relative w-full bg-surface-container-low">
+              {/* HTML5 Canvas with On-Canvas Interactive Dragging */}
+              <div className="relative w-full bg-surface-container-low select-none">
                 <canvas 
                   ref={canvasRef}
                   width={760}
                   height={420}
-                  className="w-full h-auto block"
+                  onMouseDown={handleCanvasMouseDown}
+                  onMouseMove={handleCanvasMouseMove}
+                  onMouseUp={handleCanvasMouseUp}
+                  className="w-full h-auto block cursor-crosshair"
                 />
 
                 {/* Over-the-canvas Status Banner if Car Falls */}
@@ -468,12 +838,18 @@ export const RollerCoasterSim = ({ activeTab = 'sandbox', onUpdateScore }) => {
                     <span>INSUFFICIENT VELOCITY! COASTER DETACHED AT APEX (h &lt; 2.5r)</span>
                   </div>
                 )}
+
+                {/* Interactive Drag Hint Badge */}
+                <div className="absolute bottom-2 left-3 px-2 py-1 rounded-md bg-white/80 backdrop-blur-sm border border-outline-variant/20 text-[10px] font-mono text-on-surface-variant flex items-center gap-1.5 pointer-events-none">
+                  <Sliders className="w-3 h-3 text-teal-600" />
+                  <span>Click & Drag drop tower handle or apex directly on canvas</span>
+                </div>
               </div>
 
               {/* Real-Time Telemetry Readout Deck */}
               <div className="p-4 bg-surface-container-lowest border-t border-outline-variant/20 grid grid-cols-2 sm:grid-cols-4 gap-3 text-center font-mono">
                 <div className="p-2.5 rounded-xl bg-surface-container border border-outline-variant/20">
-                  <div className="text-[10px] text-on-surface-variant uppercase">Velocity</div>
+                  <div className="text-[10px] text-on-surface-variant uppercase">VELOCITY</div>
                   <div className="text-base font-bold text-on-surface">
                     {telemetry.velocity.toFixed(1)} <span className="text-xs font-normal">m/s</span>
                   </div>
@@ -483,7 +859,7 @@ export const RollerCoasterSim = ({ activeTab = 'sandbox', onUpdateScore }) => {
                 </div>
 
                 <div className="p-2.5 rounded-xl bg-surface-container border border-outline-variant/20">
-                  <div className="text-[10px] text-on-surface-variant uppercase">Track Height</div>
+                  <div className="text-[10px] text-on-surface-variant uppercase">ELEVATION (h)</div>
                   <div className="text-base font-bold text-on-surface">
                     {telemetry.height.toFixed(1)} <span className="text-xs font-normal">m</span>
                   </div>
@@ -493,170 +869,135 @@ export const RollerCoasterSim = ({ activeTab = 'sandbox', onUpdateScore }) => {
                 </div>
 
                 <div className="p-2.5 rounded-xl bg-surface-container border border-outline-variant/20">
-                  <div className="text-[10px] text-on-surface-variant uppercase">Normal G-Force</div>
+                  <div className="text-[10px] text-on-surface-variant uppercase">G-LOAD (NORMAL)</div>
                   <div className={`text-base font-bold ${
-                    telemetry.gForce < 0 ? 'text-rose-600' : telemetry.gForce > 4 ? 'text-amber-600' : 'text-emerald-700'
+                    telemetry.gForce > 4.5 ? 'text-rose-600' : telemetry.gForce > 2.8 ? 'text-amber-600' : 'text-teal-700'
                   }`}>
-                    {telemetry.gForce.toFixed(2)} <span className="text-xs font-normal">G</span>
+                    {telemetry.gForce.toFixed(2)} G
                   </div>
                   <div className="text-[10px] text-on-surface-variant">
-                    N / (mg)
+                    {telemetry.gForce < 0.2 ? 'Airtime Floating' : telemetry.gForce > 4 ? 'High G Compression' : 'Safe Passenger Range'}
                   </div>
                 </div>
 
                 <div className="p-2.5 rounded-xl bg-surface-container border border-outline-variant/20">
-                  <div className="text-[10px] text-on-surface-variant uppercase">Condition at Top</div>
-                  <div className={`text-xs font-bold mt-1 ${
-                    initialHeight >= criticalHeight ? 'text-emerald-700' : 'text-rose-600'
-                  }`}>
-                    {initialHeight >= criticalHeight ? 'SAFE TO LOOP' : 'WILL DETACH'}
+                  <div className="text-[10px] text-on-surface-variant uppercase">KINETIC ENERGY</div>
+                  <div className="text-base font-bold text-on-surface">
+                    {(telemetry.ke / 1000).toFixed(0)} <span className="text-xs font-normal">kJ</span>
                   </div>
                   <div className="text-[10px] text-on-surface-variant">
-                    Req: {criticalHeight.toFixed(1)} m
+                    PE: {(telemetry.pe / 1000).toFixed(0)} kJ
                   </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Energy Distribution Bar Chart */}
-            <div className="bg-surface-container-lowest p-4 rounded-xl border border-outline-variant/30 shadow-sm space-y-2">
-              <div className="flex items-center justify-between text-xs font-mono font-bold text-on-surface">
-                <span>MECHANICAL ENERGY BREAKDOWN (JOULES)</span>
-                <span className="text-on-surface-variant">Total: {(telemetry.totalE / 1000).toFixed(1)} kJ</span>
-              </div>
-
-              <div className="h-4 w-full bg-surface-container rounded-full overflow-hidden flex">
-                <div 
-                  className="bg-teal-600 transition-all duration-75"
-                  style={{ width: `${Math.min(100, (telemetry.ke / Math.max(1, telemetry.totalE)) * 100)}%` }}
-                  title="Kinetic Energy (K)"
-                />
-                <div 
-                  className="bg-amber-500 transition-all duration-75"
-                  style={{ width: `${Math.min(100, (telemetry.pe / Math.max(1, telemetry.totalE)) * 100)}%` }}
-                  title="Gravitational Potential Energy (U)"
-                />
-              </div>
-
-              <div className="flex items-center justify-between text-[11px] font-mono">
-                <div className="flex items-center gap-1.5 text-teal-700">
-                  <span className="w-2.5 h-2.5 rounded-full bg-teal-600 inline-block" />
-                  <span>Kinetic: {(telemetry.ke / 1000).toFixed(1)} kJ</span>
-                </div>
-                <div className="flex items-center gap-1.5 text-amber-700">
-                  <span className="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block" />
-                  <span>Potential: {(telemetry.pe / 1000).toFixed(1)} kJ</span>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Right Precision Control Deck (4 cols) */}
+          {/* Right / Parameter Tuning Controls & Presets (4 cols) */}
           <div className="lg:col-span-4 space-y-4">
-            <div className="bg-surface-container-lowest p-5 rounded-2xl border border-outline-variant/30 shadow-sm space-y-5">
-              <div className="border-b border-outline-variant/20 pb-3">
-                <h3 className="text-sm font-bold font-mono text-on-surface uppercase tracking-wide">
-                  Laboratory Control Deck
+            <div className="p-5 rounded-2xl bg-surface-container-lowest border border-outline-variant/30 shadow-sm space-y-5">
+              <div className="flex items-center gap-2 pb-2 border-b border-outline-variant/20">
+                <Sliders className="w-4 h-4 text-teal-700" />
+                <h3 className="text-sm font-bold font-sans text-on-surface">
+                  Track Engineering Controls
                 </h3>
-                <p className="text-xs text-on-surface-variant font-sans">
-                  Adjust track geometry and physical parameters to test loop threshold.
-                </p>
               </div>
 
-              {/* Slider: Initial Drop Height */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-xs font-mono">
-                  <span className="text-on-surface-variant font-bold">DROP HEIGHT (h₀):</span>
-                  <span className="px-2 py-0.5 rounded bg-teal-50 text-teal-700 font-bold border border-teal-200">
-                    {initialHeight} meters
-                  </span>
+              {/* Slider 1: Initial Drop Height */}
+              <div className="space-y-1.5">
+                <div className="flex justify-between text-xs font-mono">
+                  <span className="text-on-surface-variant">Initial Drop Height (h)</span>
+                  <span className="font-bold text-on-surface">{initialHeight} meters</span>
                 </div>
-                <input
+                <input 
                   type="range"
-                  min={10}
-                  max={50}
-                  step={1}
+                  min="10"
+                  max="50"
+                  step="1"
                   value={initialHeight}
                   onChange={(e) => {
+                    sounds.playTick();
                     setInitialHeight(Number(e.target.value));
-                    handleReset();
                   }}
-                  className="w-full accent-teal-600 cursor-pointer"
+                  className="w-full accent-teal-600"
                 />
-                <div className="flex justify-between text-[10px] font-mono text-on-surface-variant">
+                <div className="flex justify-between text-[10px] text-on-surface-variant font-mono">
                   <span>10m</span>
-                  <span>Critical: {criticalHeight.toFixed(1)}m</span>
+                  <span className="text-amber-700 font-bold">Req: ≥ {criticalHeight.toFixed(1)}m</span>
                   <span>50m</span>
                 </div>
               </div>
 
-              {/* Slider: Loop Radius */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-xs font-mono">
-                  <span className="text-on-surface-variant font-bold">LOOP RADIUS (r):</span>
-                  <span className="px-2 py-0.5 rounded bg-amber-50 text-amber-700 font-bold border border-amber-200">
-                    {loopRadius} meters
-                  </span>
+              {/* Slider 2: Loop Radius */}
+              <div className="space-y-1.5">
+                <div className="flex justify-between text-xs font-mono">
+                  <span className="text-on-surface-variant">Loop Radius (r)</span>
+                  <span className="font-bold text-on-surface">{loopRadius} meters</span>
                 </div>
-                <input
+                <input 
                   type="range"
-                  min={5}
-                  max={18}
-                  step={1}
+                  min="5"
+                  max="18"
+                  step="1"
                   value={loopRadius}
                   onChange={(e) => {
+                    sounds.playTick();
                     setLoopRadius(Number(e.target.value));
-                    handleReset();
                   }}
-                  className="w-full accent-amber-600 cursor-pointer"
+                  className="w-full accent-teal-600"
                 />
-                <div className="flex justify-between text-[10px] font-mono text-on-surface-variant">
+                <div className="flex justify-between text-[10px] text-on-surface-variant font-mono">
                   <span>5m (Tight)</span>
+                  <span>Apex: {(2 * loopRadius).toFixed(0)}m</span>
                   <span>18m (Broad)</span>
                 </div>
               </div>
 
-              {/* Slider: Coaster Mass */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-xs font-mono">
-                  <span className="text-on-surface-variant font-bold">COASTER MASS (m):</span>
-                  <span className="px-2 py-0.5 rounded bg-surface-container text-on-surface font-bold border border-outline-variant/20">
-                    {mass} kg
-                  </span>
+              {/* Slider 3: Coaster Train Mass */}
+              <div className="space-y-1.5">
+                <div className="flex justify-between text-xs font-mono">
+                  <span className="text-on-surface-variant">Train Mass (m)</span>
+                  <span className="font-bold text-on-surface">{mass} kg</span>
                 </div>
-                <input
+                <input 
                   type="range"
-                  min={400}
-                  max={2500}
-                  step={100}
+                  min="400"
+                  max="2500"
+                  step="100"
                   value={mass}
-                  onChange={(e) => setMass(Number(e.target.value))}
-                  className="w-full accent-teal-600 cursor-pointer"
+                  onChange={(e) => {
+                    sounds.playTick();
+                    setMass(Number(e.target.value));
+                  }}
+                  className="w-full accent-teal-600"
                 />
               </div>
 
-              {/* Toggle: Friction */}
-              <div className="pt-2 border-t border-outline-variant/20">
-                <label className="flex items-center justify-between cursor-pointer">
-                  <span className="text-xs font-mono text-on-surface font-bold">
-                    TRACK FRICTION & AIR RESISTANCE
-                  </span>
-                  <input
-                    type="checkbox"
-                    checked={hasFriction}
-                    onChange={(e) => setHasFriction(e.target.checked)}
-                    className="w-4 h-4 accent-teal-600 rounded"
-                  />
-                </label>
-                <p className="text-[11px] text-on-surface-variant font-sans mt-1">
-                  When enabled, non-conservative mechanical work converts into thermal energy along the track.
-                </p>
+              {/* Friction Toggle */}
+              <div className="pt-2 border-t border-outline-variant/20 flex items-center justify-between">
+                <div>
+                  <div className="text-xs font-bold text-on-surface">Mechanical Friction</div>
+                  <div className="text-[10px] text-on-surface-variant font-mono">Track bearing rolling resistance</div>
+                </div>
+                <button
+                  onClick={() => {
+                    sounds.playTick();
+                    setHasFriction(!hasFriction);
+                  }}
+                  className={`w-11 h-6 rounded-full transition-colors relative ${
+                    hasFriction ? 'bg-teal-600' : 'bg-slate-300'
+                  }`}
+                >
+                  <span className={`block w-4 h-4 rounded-full bg-white transition-transform ${
+                    hasFriction ? 'translate-x-6' : 'translate-x-1'
+                  }`} />
+                </button>
               </div>
 
-              {/* Quick Testing Presets */}
-              <div className="pt-2 border-t border-outline-variant/20 space-y-2">
-                <div className="text-[10px] font-mono text-on-surface-variant uppercase font-bold">
-                  Quick Testing Presets:
+              {/* One-Click Presets */}
+              <div className="pt-3 border-t border-outline-variant/20 space-y-2">
+                <div className="text-xs font-mono text-on-surface-variant font-bold uppercase">
+                  Analytical Scenario Presets
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <button
@@ -665,7 +1006,7 @@ export const RollerCoasterSim = ({ activeTab = 'sandbox', onUpdateScore }) => {
                       setLoopRadius(12);
                       handleReset();
                     }}
-                    className="p-2 rounded-lg bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 text-xs font-mono text-left"
+                    className="p-2 rounded-lg bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 text-xs font-mono text-left active:scale-[0.98] transition-transform"
                   >
                     <div className="font-bold">Fail Preset</div>
                     <div className="text-[10px] text-rose-600">h = 20m &lt; 2.5r</div>
@@ -677,7 +1018,7 @@ export const RollerCoasterSim = ({ activeTab = 'sandbox', onUpdateScore }) => {
                       setLoopRadius(10);
                       handleReset();
                     }}
-                    className="p-2 rounded-lg bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 text-xs font-mono text-left"
+                    className="p-2 rounded-lg bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 text-xs font-mono text-left active:scale-[0.98] transition-transform"
                   >
                     <div className="font-bold">Safe Pass</div>
                     <div className="text-[10px] text-emerald-600">h = 35m &gt; 2.5r</div>
@@ -709,97 +1050,114 @@ export const RollerCoasterSim = ({ activeTab = 'sandbox', onUpdateScore }) => {
               {[
                 { text: "h = 1.0 r (same as apex height)", correct: false },
                 { text: "h = 2.0 r (twice the radius)", correct: false },
-                { text: "h = 2.5 r (deriving from v_top = √(gr) and conservation of energy)", correct: true },
-                { text: "h = 4.0 r (four times the radius)", correct: false }
-              ].map((opt, i) => (
-                <button
-                  key={i}
-                  onClick={() => handleAnswerSubmit('q1', i, opt.correct)}
-                  className={`w-full p-3 rounded-xl text-xs font-mono text-left transition-all border ${
-                    selectedAnswers['q1'] === i
-                      ? opt.correct
-                        ? 'bg-emerald-50 border-emerald-400 text-emerald-800 font-bold'
-                        : 'bg-rose-50 border-rose-400 text-rose-800 font-bold'
-                      : 'bg-surface-container hover:bg-teal-50 border-outline-variant/20 text-on-surface'
-                  }`}
-                >
-                  {opt.text}
-                </button>
-              ))}
+                { text: "h = 2.5 r (derivation from v_top = √(gr) and conservation of energy)", correct: true },
+                { text: "h = 4.0 r", correct: false }
+              ].map((opt, idx) => {
+                const isSelected = selectedAnswers['q1'] === idx;
+                const feedback = challengeFeedback['q1'];
+                return (
+                  <button
+                    key={idx}
+                    onClick={() => handleAnswerSubmit('q1', idx, opt.correct)}
+                    className={`w-full p-3 rounded-xl border text-left text-xs font-sans transition-all flex items-center justify-between ${
+                      isSelected 
+                        ? opt.correct 
+                          ? 'bg-emerald-50 border-emerald-400 text-emerald-900 font-bold'
+                          : 'bg-rose-50 border-rose-400 text-rose-900'
+                        : 'bg-surface-container-low border-outline-variant/20 hover:bg-surface-container text-on-surface'
+                    }`}
+                  >
+                    <span>{opt.text}</span>
+                    {isSelected && (
+                      opt.correct 
+                        ? <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                        : <XCircle className="w-4 h-4 text-rose-600 flex-shrink-0" />
+                    )}
+                  </button>
+                );
+              })}
             </div>
-
-            {challengeFeedback['q1'] === 'correct' && (
-              <div className="p-3 rounded-xl bg-emerald-50 text-emerald-800 text-xs font-sans">
-                ✓ <strong>Correct! (+20 pts)</strong> At the apex, N = 0 gives mg = mv²/r, so v² = gr. By conservation of energy, mgh = mg(2r) + ½mv² = 2mgr + ½mgr = 2.5mgr. Hence, h_min = 2.5r!
-              </div>
-            )}
           </div>
 
           {/* Question 2 */}
           <div className="p-5 rounded-2xl bg-surface-container-lowest border border-outline-variant/30 shadow-sm space-y-3">
             <div className="text-xs font-mono text-on-surface-variant font-bold uppercase">
-              Challenge 2 of 3 // Inertial G-Forces
+              Challenge 2 of 3 // G-Force Analysis
             </div>
             <h3 className="text-sm font-bold font-sans text-on-surface">
-              Where on the vertical loop do riders experience the highest normal force (maximum G-force)?
+              If the starting drop height h is exactly the minimum critical value (2.5r), what will be the apparent G-force (normal force / mg) experienced by riders at the apex of the loop?
             </h3>
 
             <div className="space-y-2">
               {[
-                { text: "At the very top (apex) of the loop", correct: false },
-                { text: "At the very bottom upon entering the loop (where speed is maximum and gravity points against normal force)", correct: true },
-                { text: "Halfway through the loop at 90 degrees", correct: false }
-              ].map((opt, i) => (
-                <button
-                  key={i}
-                  onClick={() => handleAnswerSubmit('q2', i, opt.correct)}
-                  className={`w-full p-3 rounded-xl text-xs font-mono text-left transition-all border ${
-                    selectedAnswers['q2'] === i
-                      ? opt.correct
-                        ? 'bg-emerald-50 border-emerald-400 text-emerald-800 font-bold'
-                        : 'bg-rose-50 border-rose-400 text-rose-800 font-bold'
-                      : 'bg-surface-container hover:bg-teal-50 border-outline-variant/20 text-on-surface'
-                  }`}
-                >
-                  {opt.text}
-                </button>
-              ))}
+                { text: "0 G (Weightlessness / zero normal force against the track)", correct: true },
+                { text: "1.0 G (Normal Earth gravity)", correct: false },
+                { text: "2.5 G", correct: false },
+                { text: "-1.0 G (Falling inward)", correct: false }
+              ].map((opt, idx) => {
+                const isSelected = selectedAnswers['q2'] === idx;
+                return (
+                  <button
+                    key={idx}
+                    onClick={() => handleAnswerSubmit('q2', idx, opt.correct)}
+                    className={`w-full p-3 rounded-xl border text-left text-xs font-sans transition-all flex items-center justify-between ${
+                      isSelected 
+                        ? opt.correct 
+                          ? 'bg-emerald-50 border-emerald-400 text-emerald-900 font-bold'
+                          : 'bg-rose-50 border-rose-400 text-rose-900'
+                        : 'bg-surface-container-low border-outline-variant/20 hover:bg-surface-container text-on-surface'
+                    }`}
+                  >
+                    <span>{opt.text}</span>
+                    {isSelected && (
+                      opt.correct 
+                        ? <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                        : <XCircle className="w-4 h-4 text-rose-600 flex-shrink-0" />
+                    )}
+                  </button>
+                );
+              })}
             </div>
-
-            {challengeFeedback['q2'] === 'correct' && (
-              <div className="p-3 rounded-xl bg-emerald-50 text-emerald-800 text-xs font-sans">
-                ✓ <strong>Correct! (+20 pts)</strong> At the bottom, N - mg = mv²/r, giving N = mg + mv²/r. Because velocity v is highest at the bottom, the normal force peaks at upwards of 5 to 6 Gs!
-              </div>
-            )}
           </div>
-        </div>
-      )}
 
-      {/* TAB 4: REAL-WORLD APPLICATIONS */}
-      {activeTab === 'applications' && (
-        <div className="max-w-4xl mx-auto space-y-6 text-left">
-          <div className="p-6 rounded-2xl bg-surface-container-lowest border border-outline-variant/30 shadow-sm space-y-4">
-            <h2 className="text-xl font-bold font-display text-on-surface">
-              Real-World Engineering: Why Modern Coasters Use Teardrop Loops
-            </h2>
-            <p className="text-xs text-on-surface-variant leading-relaxed font-sans">
-              Notice in our sandbox how a pure circular loop creates punishing G-forces at the bottom to ensure safety at the top. To solve this, roller coaster legend Werner Stengel introduced the <strong>Clothoid Loop (Euler Spiral)</strong> in 1976 with <em>The New Revolution</em> at Six Flags Magic Mountain.
-            </p>
+          {/* Question 3 */}
+          <div className="p-5 rounded-2xl bg-surface-container-lowest border border-outline-variant/30 shadow-sm space-y-3">
+            <div className="text-xs font-mono text-on-surface-variant font-bold uppercase">
+              Challenge 3 of 3 // Clothoid Loop Engineering
+            </div>
+            <h3 className="text-sm font-bold font-sans text-on-surface">
+              Why do modern roller coaster loops use a teardrop shape (Clothoid / Euler spiral) instead of a pure circle?
+            </h3>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-              <div className="p-4 rounded-xl bg-surface-container border border-outline-variant/20 space-y-1.5">
-                <div className="text-xs font-bold font-mono text-on-surface">1. Clothoid Teardrop Curvature</div>
-                <p className="text-xs text-on-surface-variant font-sans">
-                  The radius of curvature varies continuously (r ∝ 1/L). At the bottom where speed is highest, the radius is large (r ≈ 25 m), capping G-force at a comfortable 3.5 Gs. At the apex where speed is low, the radius tightens (r ≈ 8 m), satisfying v²/r ≥ g.
-                </p>
-              </div>
-
-              <div className="p-4 rounded-xl bg-surface-container border border-outline-variant/20 space-y-1.5">
-                <div className="text-xs font-bold font-mono text-on-surface">2. Eddy Current Magnetic Brakes</div>
-                <p className="text-xs text-on-surface-variant font-sans">
-                  Permanent rare-earth neodymium magnets induce opposing eddy currents in copper fins on the train (Lenz's Law), providing completely frictionless, fail-safe deceleration without wear or tear.
-                </p>
-              </div>
+            <div className="space-y-2">
+              {[
+                { text: "Circles are too expensive to fabricate out of tubular steel", correct: false },
+                { text: "Clothoids gradually decrease the radius of curvature, preventing lethal instant G-force spikes upon entry", correct: true },
+                { text: "Circles cause the coaster train wheels to slip off horizontally", correct: false },
+                { text: "Clothoids make the coaster car run at constant linear velocity", correct: false }
+              ].map((opt, idx) => {
+                const isSelected = selectedAnswers['q3'] === idx;
+                return (
+                  <button
+                    key={idx}
+                    onClick={() => handleAnswerSubmit('q3', idx, opt.correct)}
+                    className={`w-full p-3 rounded-xl border text-left text-xs font-sans transition-all flex items-center justify-between ${
+                      isSelected 
+                        ? opt.correct 
+                          ? 'bg-emerald-50 border-emerald-400 text-emerald-900 font-bold'
+                          : 'bg-rose-50 border-rose-400 text-rose-900'
+                        : 'bg-surface-container-low border-outline-variant/20 hover:bg-surface-container text-on-surface'
+                    }`}
+                  >
+                    <span>{opt.text}</span>
+                    {isSelected && (
+                      opt.correct 
+                        ? <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                        : <XCircle className="w-4 h-4 text-rose-600 flex-shrink-0" />
+                    )}
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>

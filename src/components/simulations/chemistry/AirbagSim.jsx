@@ -9,7 +9,8 @@ import {
   Gauge,
   Flame,
   Clock,
-  Layers
+  Layers,
+  Sliders
 } from 'lucide-react';
 import { sounds } from '../../../engine/audioEffects';
 
@@ -28,32 +29,25 @@ export const AirbagSim = ({ activeTab, onUpdateScore }) => {
 
   const canvasRef = useRef(null);
   const animRef = useRef(null);
+  const igniterParticlesRef = useRef([]);
 
   // --- Physical & Chemical Constants ---
-  // Molar mass of NaN3 = 22.99 + 3*14.01 = 65.02 g/mol
   const molarMassNaN3 = 65.02;
-  // Stoichiometry: 2 mol NaN3 yields 3 mol N2 gas (1.5 mol N2 per mol NaN3)
   const molesNaN3 = nan3Mass / molarMassNaN3;
   const molesN2 = molesNaN3 * 1.5;
 
-  // Gas Constant R = 0.0821 L·atm / (mol·K)
   const R = 0.08206;
   const tempKelvin = tempCelsius + 273.15;
   const atmosphericPressureAtm = 1.0;
 
-  // Final Equilibrium Volume at 1.0 atm: V = nRT / P
   const targetVolumeLiters = (molesN2 * R * tempKelvin) / atmosphericPressureAtm;
-
-  // Final internal pressure in the bag (assuming fixed bag volume = bagCapacityLiters)
-  // If gas exceeds bag capacity, pressure spikes!
   const finalPressureAtm = (molesN2 * R * tempKelvin) / bagCapacityLiters;
 
-  // Determine outcome
   let outcome = 'optimal';
   if (finalPressureAtm < 0.9) {
-    outcome = 'underinflated'; // Dummy hits steering wheel
+    outcome = 'underinflated';
   } else if (finalPressureAtm > 1.6) {
-    outcome = 'rupture'; // Bag ruptures from excessive overpressure
+    outcome = 'rupture';
   }
 
   // Crash Trigger
@@ -61,12 +55,14 @@ export const AirbagSim = ({ activeTab, onUpdateScore }) => {
     sounds.playZap();
     setIsCrashed(true);
     setElapsedMs(0);
+    igniterParticlesRef.current = [];
   };
 
   const handleReset = () => {
     sounds.playSnap();
     setIsCrashed(false);
     setElapsedMs(0);
+    igniterParticlesRef.current = [];
   };
 
   // High-Speed Millisecond Animation Loop
@@ -81,11 +77,32 @@ export const AirbagSim = ({ activeTab, onUpdateScore }) => {
       lastTime = now;
 
       if (isCrashed && curMs < 60) {
-        // Slow-motion factor: 1 real second = 15 ms in sim if slow-mo
         const timeScale = isSlowMo ? 0.015 : 0.06;
         curMs = Math.min(60, curMs + dtReal * timeScale);
         setElapsedMs(curMs);
+
+        // Spawn igniter flame particles during initial combustion (0 to 18 ms)
+        if (curMs < 20) {
+          for (let i = 0; i < 3; i++) {
+            igniterParticlesRef.current.push({
+              x: 220,
+              y: 210,
+              vx: (Math.random() - 0.5) * 80,
+              vy: (Math.random() - 0.5) * 80,
+              life: 1.0,
+              color: Math.random() > 0.4 ? '#f59e0b' : '#ef4444'
+            });
+          }
+        }
       }
+
+      // Update combustion particles
+      igniterParticlesRef.current = igniterParticlesRef.current.map(p => ({
+        ...p,
+        x: p.x + p.vx * 0.04,
+        y: p.y + p.vy * 0.04,
+        life: p.life - 0.05
+      })).filter(p => p.life > 0);
 
       const canvas = canvasRef.current;
       if (!canvas) return;
@@ -95,8 +112,8 @@ export const AirbagSim = ({ activeTab, onUpdateScore }) => {
 
       ctx.clearRect(0, 0, width, height);
 
-      // 1. Pale grid background
-      ctx.strokeStyle = '#e2e8f0';
+      // 1. Grid
+      ctx.strokeStyle = '#f1f5f9';
       ctx.lineWidth = 1;
       for (let x = 0; x < width; x += 40) {
         ctx.beginPath();
@@ -111,11 +128,11 @@ export const AirbagSim = ({ activeTab, onUpdateScore }) => {
         ctx.stroke();
       }
 
-      // 2. Car Interior Schematic (Dashboard & Steering Wheel)
+      // 2. Car Interior Dashboard & Steering Wheel
       const wheelX = 220;
       const wheelY = height * 0.55;
 
-      // Steering column
+      // Dashboard
       ctx.fillStyle = '#475569';
       ctx.fillRect(wheelX - 90, wheelY - 20, 80, 40);
 
@@ -126,14 +143,30 @@ export const AirbagSim = ({ activeTab, onUpdateScore }) => {
       ctx.ellipse(wheelX, wheelY, 40, 90, 0, 0, Math.PI * 2);
       ctx.stroke();
 
-      // Steering hub canister
+      // Steering canister hub
       ctx.fillStyle = '#334155';
       ctx.beginPath();
       ctx.ellipse(wheelX, wheelY, 20, 40, 0, 0, Math.PI * 2);
       ctx.fill();
 
-      // 3. Airbag Cushion Dynamics
-      // Inflation takes place mostly between 10 ms and 40 ms
+      // 3. Igniter Spark Flash (0 to 15 ms)
+      if (curMs > 0 && curMs < 18) {
+        ctx.save();
+        ctx.fillStyle = 'rgba(254, 240, 138, 0.4)';
+        ctx.beginPath();
+        ctx.arc(wheelX, wheelY, 35, 0, Math.PI * 2);
+        ctx.fill();
+
+        for (const p of igniterParticlesRef.current) {
+          ctx.fillStyle = p.color;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, 3 * p.life, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+
+      // 4. Airbag Cushion Dynamics
       const inflationT = Math.max(0, Math.min(1, (curMs - 8) / 32));
       const currentLit = targetVolumeLiters * inflationT;
       const maxRadiusX = Math.min(160, 20 + currentLit * 1.8);
@@ -144,7 +177,7 @@ export const AirbagSim = ({ activeTab, onUpdateScore }) => {
         ctx.translate(wheelX, wheelY);
 
         if (outcome === 'rupture' && curMs > 35) {
-          // Ruptured bag
+          // Ruptured bag with tear lines
           ctx.strokeStyle = '#ef4444';
           ctx.fillStyle = 'rgba(254, 226, 226, 0.8)';
           ctx.lineWidth = 3;
@@ -155,14 +188,16 @@ export const AirbagSim = ({ activeTab, onUpdateScore }) => {
           ctx.stroke();
           ctx.setLineDash([]);
 
-          // Gas escape streaks
           ctx.fillStyle = '#ef4444';
-          ctx.font = '12px monospace';
-          ctx.fillText('⚡ GAS RUPTURE!', maxRadiusX * 0.8, -40);
+          ctx.font = 'bold 12px monospace';
+          ctx.fillText('⚡ GAS OVERPRESSURE RUPTURE!', maxRadiusX * 0.8, -40);
         } else {
-          // Normal / inflating nylon cushion
-          const bagColor = outcome === 'optimal' ? 'rgba(251, 191, 36, 0.85)' : 'rgba(226, 232, 240, 0.85)';
-          ctx.fillStyle = bagColor;
+          // Normal inflating nylon cushion with volumetric gradient
+          const gradBag = ctx.createRadialGradient(maxRadiusX * 0.3, -10, 10, maxRadiusX * 0.5, 0, maxRadiusX);
+          gradBag.addColorStop(0, outcome === 'optimal' ? '#fde68a' : '#f1f5f9');
+          gradBag.addColorStop(1, outcome === 'optimal' ? '#f59e0b' : '#cbd5e1');
+
+          ctx.fillStyle = gradBag;
           ctx.strokeStyle = outcome === 'optimal' ? '#b45309' : '#94a3b8';
           ctx.lineWidth = 3;
 
@@ -184,18 +219,16 @@ export const AirbagSim = ({ activeTab, onUpdateScore }) => {
             ctx.fill();
           }
         }
-
         ctx.restore();
       }
 
-      // 4. Passenger / Crash Test Dummy Head
-      // Dummy moves forward due to inertia (t = 0 -> 60 ms)
+      // 5. Crash Test Dummy Head
       const dummyStartX = width - 120;
       const dummyForwardDist = isCrashed ? Math.min(220, Math.pow(curMs / 60, 2) * 220) : 0;
       const dummyX = dummyStartX - dummyForwardDist;
       const dummyY = wheelY;
 
-      // Draw Dummy Head
+      // Dummy Head
       ctx.fillStyle = '#e2e8f0';
       ctx.strokeStyle = '#475569';
       ctx.lineWidth = 3;
@@ -204,7 +237,7 @@ export const AirbagSim = ({ activeTab, onUpdateScore }) => {
       ctx.fill();
       ctx.stroke();
 
-      // Crash test target marker on dummy
+      // Crash test target marker
       ctx.fillStyle = '#f59e0b';
       ctx.beginPath();
       ctx.moveTo(dummyX, dummyY);
@@ -220,21 +253,27 @@ export const AirbagSim = ({ activeTab, onUpdateScore }) => {
       ctx.font = 'bold 16px monospace';
       ctx.fillText(`T = ${curMs.toFixed(1)} ms`, 30, 40);
 
+      // Deceleration G-meter badge
+      const decelG = isCrashed ? (curMs > 40 && outcome === 'optimal' ? 12 : curMs > 45 && outcome === 'underinflated' ? 55 : 4) : 0;
+      ctx.fillStyle = decelG > 35 ? '#ef4444' : '#10b981';
+      ctx.font = 'bold 12px monospace';
+      ctx.fillText(`DECEL: ${decelG} G`, 30, 62);
+
       animRef.current = requestAnimationFrame(render);
     };
 
     animRef.current = requestAnimationFrame(render);
-
-    return () => {
-      if (animRef.current) cancelAnimationFrame(animRef.current);
-    };
+    return () => cancelAnimationFrame(animRef.current);
   }, [activeTab, isCrashed, elapsedMs, isSlowMo, targetVolumeLiters, molesN2, outcome]);
 
   const handleAnswerSubmit = (qId, idx, isCorrect) => {
     sounds.playClick();
     setSelectedAnswers(prev => ({ ...prev, [qId]: idx }));
     setChallengeFeedback(prev => ({ ...prev, [qId]: isCorrect ? 'correct' : 'incorrect' }));
-    if (isCorrect && onUpdateScore) onUpdateScore(20);
+    if (isCorrect && onUpdateScore) {
+      sounds.playSuccess();
+      onUpdateScore(20);
+    }
   };
 
   return (
@@ -258,13 +297,13 @@ export const AirbagSim = ({ activeTab, onUpdateScore }) => {
 
             <div className="text-xs text-slate-600 space-y-3 font-sans leading-relaxed">
               <p>
-                Inside the steering wheel sits an electronic deceleration sensor and a pellet canister containing solid <strong>Sodium Azide (NaN₃)</strong>. Upon impact, an electric igniter sparks, triggering a violent thermal decomposition:
+                Inside the steering wheel hub is solid <strong>Sodium Azide (NaN₃)</strong>. Upon electric sensor trigger:
               </p>
               <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-center font-mono text-xs font-bold text-slate-800">
-                2 NaN₃(s) —[Electric Spark]→ 2 Na(s) + 3 N₂(g) + Heat
+                2 NaN₃(s) ───[Electric Spark]───► 2 Na(s) + 3 N₂(g)
               </div>
               <p>
-                Solid sodium azide occupies almost no volume. But when decomposed, it liberates enormous quantities of pure nitrogen gas (N₂). Using the <strong>Ideal Gas Law (PV = nRT)</strong>, automotive chemical engineers must calculate the exact gram mass of NaN₃ to generate roughly 65 Liters of nitrogen at ~1.2 atmospheres of cushioning pressure.
+                In under 40 milliseconds, this produces pure, inert Nitrogen gas that expands into a 65-liter nylon cushion, absorbing passenger momentum before gently deflating through side exhaust ports.
               </p>
             </div>
           </div>
@@ -274,38 +313,49 @@ export const AirbagSim = ({ activeTab, onUpdateScore }) => {
       {/* TAB 2: SANDBOX */}
       {activeTab === 'sandbox' && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 text-left">
-          {/* Main Simulation Viewport (8 cols) */}
+          {/* Main 60 FPS Viewport (8 Cols) */}
           <div className="lg:col-span-8 space-y-4">
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+              {/* Header */}
               <div className="px-4 py-2.5 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                   <span className="text-xs font-mono font-bold text-slate-700">
-                    AIRBAG DECOMPOSITION & KINETICS SIMULATOR
+                    HIGH-SPEED MILLISECOND BALLISTICS // CRASH IMPACT
                   </span>
                 </div>
 
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => setIsSlowMo(!isSlowMo)}
+                    onClick={() => { sounds.playTick(); setIsSlowMo(!isSlowMo); }}
                     className={`px-2.5 py-1 rounded text-[11px] font-mono border transition-all ${
                       isSlowMo ? 'bg-amber-50 text-amber-800 border-amber-300 font-bold' : 'bg-white text-slate-600 border-slate-200'
                     }`}
                   >
-                    {isSlowMo ? 'Slow-Mo (15x)' : 'Real-Time'}
+                    {isSlowMo ? 'Slow-Mo (0.02x)' : 'High Speed'}
+                  </button>
+
+                  <button
+                    onClick={handleTriggerCrash}
+                    disabled={isCrashed && elapsedMs < 60}
+                    className="px-3 py-1 rounded text-xs font-mono font-bold bg-rose-600 hover:bg-rose-700 text-white shadow-sm flex items-center gap-1.5 disabled:opacity-50 active:scale-[0.98] transition-transform"
+                  >
+                    <Flame className="w-3.5 h-3.5" />
+                    <span>TRIGGER CRASH</span>
                   </button>
 
                   <button
                     onClick={handleReset}
                     className="p-1.5 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 text-slate-700"
-                    title="Reset Simulator"
+                    title="Reset crash sequence"
                   >
                     <RotateCcw className="w-3.5 h-3.5" />
                   </button>
                 </div>
               </div>
 
-              <div className="relative w-full bg-slate-50">
+              {/* Canvas */}
+              <div className="relative w-full bg-slate-50 select-none">
                 <canvas
                   ref={canvasRef}
                   width={760}
@@ -313,74 +363,71 @@ export const AirbagSim = ({ activeTab, onUpdateScore }) => {
                   className="w-full h-auto block"
                 />
 
-                {/* Outcome Indicator Callout */}
-                {isCrashed && elapsedMs >= 40 && (
-                  <div className={`absolute top-4 right-4 px-3.5 py-2 rounded-xl text-xs font-mono font-bold shadow-md border ${
+                {isCrashed && elapsedMs >= 50 && (
+                  <div className={`absolute top-4 left-1/2 -translate-x-1/2 px-4 py-2 rounded-xl text-xs font-mono font-bold border shadow-md flex items-center gap-2 ${
                     outcome === 'optimal' 
-                      ? 'bg-emerald-50 border-emerald-300 text-emerald-800' 
+                      ? 'bg-emerald-50 border-emerald-300 text-emerald-800'
                       : outcome === 'underinflated'
-                      ? 'bg-amber-50 border-amber-300 text-amber-800'
-                      : 'bg-rose-50 border-rose-300 text-rose-800'
+                      ? 'bg-rose-50 border-rose-300 text-rose-800'
+                      : 'bg-amber-50 border-amber-300 text-amber-800'
                   }`}>
-                    {outcome === 'optimal' && '✓ OPTIMAL CUSHION: DRIVER PROTECTED'}
-                    {outcome === 'underinflated' && '⚠ UNDER-INFLATED: IMPACT WITH WHEEL'}
-                    {outcome === 'rupture' && '⚡ BAG RUPTURED: EXCESSIVE PRESSURE'}
+                    {outcome === 'optimal' && '🛡️ PERFECT INFLATION! PASSENGER PROTECTED (1.0 ATM)'}
+                    {outcome === 'underinflated' && '❌ UNDERINFLATED! PASSENGER HEAD HITS STEERING WHEEL'}
+                    {outcome === 'rupture' && '⚠️ OVERPRESSURE RUPTURE! EXCESS GAS BURST NYLON SEAMS'}
                   </div>
                 )}
               </div>
 
-              {/* Chemical Telemetry Readouts */}
+              {/* Telemetry Dashboard */}
               <div className="p-4 bg-white border-t border-slate-200 grid grid-cols-2 sm:grid-cols-4 gap-3 text-center font-mono">
                 <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
-                  <div className="text-[10px] text-slate-500 uppercase">Reactant Mass</div>
-                  <div className="text-base font-bold text-slate-800">{nan3Mass} g NaN₃</div>
+                  <div className="text-[10px] text-slate-500 uppercase">Reactant NaN3</div>
+                  <div className="text-base font-bold text-slate-800">{nan3Mass} g</div>
                   <div className="text-[10px] text-slate-400">{molesNaN3.toFixed(2)} moles</div>
                 </div>
 
                 <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
-                  <div className="text-[10px] text-slate-500 uppercase">Gas Produced</div>
-                  <div className="text-base font-bold text-blue-700">{molesN2.toFixed(2)} mol N₂</div>
-                  <div className="text-[10px] text-slate-400">{(molesN2 * 28.01).toFixed(1)} g N₂</div>
-                </div>
-
-                <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
-                  <div className="text-[10px] text-slate-500 uppercase">Expanded Volume</div>
-                  <div className="text-base font-bold text-amber-700">{targetVolumeLiters.toFixed(1)} L</div>
-                  <div className="text-[10px] text-slate-400">Cap: {bagCapacityLiters} L</div>
+                  <div className="text-[10px] text-slate-500 uppercase">N2 Gas Yield</div>
+                  <div className="text-base font-bold text-emerald-700">{targetVolumeLiters.toFixed(1)} L</div>
+                  <div className="text-[10px] text-slate-400">{molesN2.toFixed(2)} mol N2</div>
                 </div>
 
                 <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
                   <div className="text-[10px] text-slate-500 uppercase">Internal Pressure</div>
                   <div className={`text-base font-bold ${
-                    finalPressureAtm < 0.9 ? 'text-amber-600' : finalPressureAtm > 1.6 ? 'text-rose-600' : 'text-emerald-700'
+                    outcome === 'optimal' ? 'text-emerald-700' : 'text-rose-600'
                   }`}>
                     {finalPressureAtm.toFixed(2)} atm
                   </div>
-                  <div className="text-[10px] text-slate-400">{outcome.toUpperCase()}</div>
+                  <div className="text-[10px] text-slate-400">Target: ~1.0 - 1.4 atm</div>
+                </div>
+
+                <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+                  <div className="text-[10px] text-slate-500 uppercase">Deployment Time</div>
+                  <div className="text-base font-bold text-blue-700">{elapsedMs.toFixed(1)} ms</div>
+                  <div className="text-[10px] text-slate-400">Crash duration: 60 ms</div>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Right Control Deck (4 cols) */}
+          {/* Right Controls (4 Cols) */}
           <div className="lg:col-span-4 space-y-4">
-            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-5">
+            <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-4">
               <div>
                 <h3 className="text-sm font-bold font-mono text-slate-900 uppercase">
-                  Airbag Stoichiometry Deck
+                  Stoichiometric Controls
                 </h3>
                 <p className="text-xs text-slate-500 font-sans">
-                  Calculate the mass of NaN₃ needed to produce the ideal gas volume.
+                  Calculate reactant mass to achieve perfect equilibrium pressure.
                 </p>
               </div>
 
               {/* Slider: NaN3 Mass */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-xs font-mono">
-                  <span className="text-slate-600 font-bold">MASS OF NaN₃:</span>
-                  <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 font-bold border border-emerald-200">
-                    {nan3Mass} grams
-                  </span>
+              <div className="space-y-1.5">
+                <div className="flex justify-between text-xs font-mono">
+                  <span className="text-slate-700 font-bold">SOLID NaN3 MASS:</span>
+                  <span className="font-bold text-emerald-700">{nan3Mass} g</span>
                 </div>
                 <input
                   type="range"
@@ -389,25 +436,23 @@ export const AirbagSim = ({ activeTab, onUpdateScore }) => {
                   step={5}
                   value={nan3Mass}
                   onChange={(e) => {
+                    sounds.playTick();
                     setNan3Mass(Number(e.target.value));
-                    handleReset();
                   }}
                   className="w-full accent-emerald-600 cursor-pointer"
                 />
                 <div className="flex justify-between text-[10px] font-mono text-slate-400">
-                  <span>60g (Low)</span>
-                  <span>Optimal: ~130g</span>
-                  <span>220g (High)</span>
+                  <span>60g (Under)</span>
+                  <span className="text-emerald-700 font-bold">~130g (Optimal)</span>
+                  <span>220g (Rupture)</span>
                 </div>
               </div>
 
-              {/* Slider: Temperature */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-xs font-mono">
-                  <span className="text-slate-600 font-bold">TEMPERATURE (T):</span>
-                  <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-bold border border-slate-200">
-                    {tempCelsius}°C ({tempKelvin.toFixed(1)} K)
-                  </span>
+              {/* Slider: Ambient Temperature */}
+              <div className="space-y-1.5">
+                <div className="flex justify-between text-xs font-mono">
+                  <span className="text-slate-700 font-bold">AMBIENT TEMPERATURE:</span>
+                  <span className="font-bold text-slate-800">{tempCelsius}°C ({tempKelvin.toFixed(0)} K)</span>
                 </div>
                 <input
                   type="range"
@@ -416,131 +461,82 @@ export const AirbagSim = ({ activeTab, onUpdateScore }) => {
                   step={5}
                   value={tempCelsius}
                   onChange={(e) => {
+                    sounds.playTick();
                     setTempCelsius(Number(e.target.value));
-                    handleReset();
                   }}
                   className="w-full accent-slate-700 cursor-pointer"
                 />
               </div>
 
-              {/* Trigger Crash Button */}
-              <div className="pt-2">
-                <button
-                  onClick={handleTriggerCrash}
-                  disabled={isCrashed && elapsedMs >= 60}
-                  className="w-full py-3 rounded-xl bg-amber-500 hover:bg-amber-600 disabled:bg-slate-200 disabled:text-slate-400 text-white font-mono font-bold text-sm shadow-sm transition-all flex items-center justify-center gap-2"
-                >
-                  <Flame className="w-4 h-4" />
-                  <span>TRIGGER CRASH SENSOR</span>
-                </button>
-              </div>
-
-              {/* Quick Presets */}
-              <div className="pt-3 border-t border-slate-100 space-y-2">
-                <div className="text-[11px] font-mono text-slate-500 uppercase font-bold">
-                  Preset Experiments:
+              {/* Slider: Bag Capacity */}
+              <div className="space-y-1.5">
+                <div className="flex justify-between text-xs font-mono">
+                  <span className="text-slate-700 font-bold">BAG VOLUME CAPACITY:</span>
+                  <span className="font-bold text-slate-800">{bagCapacityLiters} Liters</span>
                 </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    onClick={() => {
-                      setNan3Mass(70);
-                      handleReset();
-                    }}
-                    className="p-2 rounded-lg bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 text-xs font-mono text-left"
-                  >
-                    <div className="font-bold">Underfill</div>
-                    <div className="text-[10px]">70g NaN₃</div>
-                  </button>
-
-                  <button
-                    onClick={() => {
-                      setNan3Mass(130);
-                      handleReset();
-                    }}
-                    className="p-2 rounded-lg bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-800 text-xs font-mono text-left"
-                  >
-                    <div className="font-bold">Balanced</div>
-                    <div className="text-[10px]">130g NaN₃</div>
-                  </button>
-                </div>
+                <input
+                  type="range"
+                  min={40}
+                  max={90}
+                  step={5}
+                  value={bagCapacityLiters}
+                  onChange={(e) => {
+                    sounds.playTick();
+                    setBagCapacityLiters(Number(e.target.value));
+                  }}
+                  className="w-full accent-slate-700 cursor-pointer"
+                />
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* TAB 3: CHALLENGE ME */}
-      {activeTab === 'challenge' && (
+      {/* TAB 3: CHALLENGES */}
+      {activeTab === 'challenges' && (
         <div className="max-w-3xl mx-auto space-y-5 text-left">
           <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-sans">
-            <strong>Stoichiometry & Gas Law Challenges:</strong> Apply $PV=nRT$ and molar ratios to verify the design parameters. Earn up to 40 laboratory points!
+            <strong>Gas Stoichiometry Laboratory:</strong> Test your understanding of ideal gas laws and reaction kinetics. Earn up to 60 laboratory score points!
           </div>
 
+          {/* Question 1 */}
           <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-3">
             <div className="text-xs font-mono text-slate-400 font-bold uppercase">
-              Challenge 1 of 2 // Molar Stoichiometry
+              Challenge 1 of 2 // Stoichiometric Mole Ratio
             </div>
-            <h3 className="text-sm font-bold font-sans text-slate-800">
-              According to the balanced equation 2 NaN₃ → 2 Na + 3 N₂, how many moles of nitrogen gas are produced from 2.0 moles of solid sodium azide?
+            <h3 className="text-sm font-bold font-sans text-slate-900">
+              According to the reaction 2 NaN₃(s) → 2 Na(s) + 3 N₂(g), how many moles of Nitrogen gas are generated per mole of Sodium Azide consumed?
             </h3>
 
             <div className="space-y-2">
               {[
-                { text: "1.5 moles of N₂", correct: false },
-                { text: "2.0 moles of N₂", correct: false },
-                { text: "3.0 moles of N₂ (due to 3:2 molar ratio)", correct: true },
-                { text: "6.0 moles of N₂", correct: false }
-              ].map((opt, i) => (
-                <button
-                  key={i}
-                  onClick={() => handleAnswerSubmit('ac1', i, opt.correct)}
-                  className={`w-full p-3 rounded-xl text-xs font-mono text-left transition-all border ${
-                    selectedAnswers['ac1'] === i
-                      ? opt.correct
-                        ? 'bg-emerald-50 border-emerald-400 text-emerald-800 font-bold'
-                        : 'bg-rose-50 border-rose-400 text-rose-800 font-bold'
-                      : 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700'
-                  }`}
-                >
-                  {opt.text}
-                </button>
-              ))}
-            </div>
-
-            {challengeFeedback['ac1'] === 'correct' && (
-              <div className="p-3 rounded-xl bg-emerald-50 text-emerald-800 text-xs font-sans">
-                ✓ <strong>Correct! (+20 pts)</strong> The molar ratio is 3 mol N₂ / 2 mol NaN₃ = 1.5. Thus, 2.0 mol NaN₃ × 1.5 = 3.0 mol N₂ gas!
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* TAB 4: APPLICATIONS */}
-      {activeTab === 'applications' && (
-        <div className="max-w-4xl mx-auto space-y-6 text-left">
-          <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-4">
-            <h2 className="text-xl font-bold font-sans text-slate-900">
-              The Secondary Reactions: Why Pure Sodium Must Be Neutralized
-            </h2>
-            <p className="text-xs text-slate-600 leading-relaxed font-sans">
-              Notice in the primary reaction that pure metallic sodium (Na) is produced alongside nitrogen gas. Sodium metal is dangerously reactive: it ignites spontaneously with moisture on human skin or in air!
-            </p>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-              <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
-                <div className="text-xs font-bold font-mono text-slate-800">Neutralizing Potassium Nitrate</div>
-                <p className="text-xs text-slate-600 font-sans">
-                  Engineers mix KNO₃ and SiO₂ into the pellet. Sodium reacts with KNO₃ to produce harmless alkaline silicate glass: 10 Na + 2 KNO₃ → K₂O + 5 Na₂O + N₂.
-                </p>
-              </div>
-
-              <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
-                <div className="text-xs font-bold font-mono text-slate-800">Inert Sand Glass Reaction</div>
-                <p className="text-xs text-slate-600 font-sans">
-                  The metal oxides then react with silicon dioxide (sand) to form non-hazardous, stable alkaline silicate glass powder, preventing chemical burns to passengers.
-                </p>
-              </div>
+                { text: "1.5 moles of N₂ gas (3 / 2 ratio)", correct: true },
+                { text: "1.0 mole of N₂ gas", correct: false },
+                { text: "2.0 moles of N₂ gas", correct: false },
+                { text: "3.0 moles of N₂ gas", correct: false }
+              ].map((opt, idx) => {
+                const isSelected = selectedAnswers['q1'] === idx;
+                return (
+                  <button
+                    key={idx}
+                    onClick={() => handleAnswerSubmit('q1', idx, opt.correct)}
+                    className={`w-full p-3 rounded-xl border text-left text-xs font-sans transition-all flex items-center justify-between ${
+                      isSelected 
+                        ? opt.correct 
+                          ? 'bg-emerald-50 border-emerald-400 text-emerald-900 font-bold'
+                          : 'bg-rose-50 border-rose-400 text-rose-900'
+                        : 'bg-slate-50 border-slate-200 hover:bg-slate-100 text-slate-800'
+                    }`}
+                  >
+                    <span>{opt.text}</span>
+                    {isSelected && (
+                      opt.correct 
+                        ? <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                        : <Flame className="w-4 h-4 text-rose-600 flex-shrink-0" />
+                    )}
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>

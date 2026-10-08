@@ -8,23 +8,28 @@ import {
   Compass, 
   Award, 
   Crosshair, 
-  Layers
+  Layers,
+  Sliders,
+  Wind
 } from 'lucide-react';
 import { sounds } from '../../../engine/audioEffects';
 
-export const ProjectileSim = ({ simulation, activeTab, onUpdateScore }) => {
+export const ProjectileSim = ({ simulation = {}, activeTab = 'sandbox', onUpdateScore }) => {
   // --- Launch Parameters ---
   const [angleDeg, setAngleDeg] = useState(45); // degrees (10 to 80)
   const [launchSpeed, setLaunchSpeed] = useState(25); // m/s (5 to 45)
   const [initialHeight, setInitialHeight] = useState(0); // meters (0 to 25)
   const [gravityPreset, setGravityPreset] = useState('earth'); // earth=9.81, moon=1.62, mars=3.71
   const [targetDist, setTargetDist] = useState(55); // meters
+  const [showVectors, setShowVectors] = useState(true);
 
   // --- Flight Animation State ---
   const [isFlying, setIsFlying] = useState(false);
   const [flightTime, setFlightTime] = useState(0);
   const [trajectoryPoints, setTrajectoryPoints] = useState([]);
+  const [pastTrajectories, setPastTrajectories] = useState([]);
   const [hitResult, setHitResult] = useState(null); // 'bullseye', 'hit', 'miss'
+  const [impactParticles, setImpactParticles] = useState([]);
 
   // --- Challenge Quiz State ---
   const [selectedAnswers, setSelectedAnswers] = useState({});
@@ -32,6 +37,8 @@ export const ProjectileSim = ({ simulation, activeTab, onUpdateScore }) => {
 
   const canvasRef = useRef(null);
   const animRef = useRef(null);
+  const isDraggingCannonRef = useRef(false);
+  const isDraggingTargetRef = useRef(false);
 
   const g = gravityPreset === 'moon' ? 1.62 : gravityPreset === 'mars' ? 3.71 : 9.81;
 
@@ -40,7 +47,6 @@ export const ProjectileSim = ({ simulation, activeTab, onUpdateScore }) => {
   const v0x = launchSpeed * Math.cos(thetaRad);
   const v0y = launchSpeed * Math.sin(thetaRad);
 
-  // Time of flight: y(t) = h0 + v0y*t - 0.5*g*t^2 = 0
   const maxFlightTime = (v0y + Math.sqrt(Math.pow(v0y, 2) + 2 * g * initialHeight)) / g;
   const theoreticalRange = v0x * maxFlightTime;
   const maxApexHeight = initialHeight + Math.pow(v0y, 2) / (2 * g);
@@ -52,6 +58,7 @@ export const ProjectileSim = ({ simulation, activeTab, onUpdateScore }) => {
     setFlightTime(0);
     setTrajectoryPoints([]);
     setHitResult(null);
+    setImpactParticles([]);
   };
 
   const handleReset = () => {
@@ -59,7 +66,9 @@ export const ProjectileSim = ({ simulation, activeTab, onUpdateScore }) => {
     setIsFlying(false);
     setFlightTime(0);
     setTrajectoryPoints([]);
+    setPastTrajectories([]);
     setHitResult(null);
+    setImpactParticles([]);
   };
 
   // 60 FPS Flight Animation Loop
@@ -68,7 +77,13 @@ export const ProjectileSim = ({ simulation, activeTab, onUpdateScore }) => {
 
     let t = flightTime;
     let points = [...trajectoryPoints];
+    let particles = [...impactParticles];
     let lastTime = performance.now();
+
+    const scaleX = (760 - 120) / 75; // 75 meters max range
+    const scaleY = (380 - 80) / 40;  // 40 meters max height
+    const originX = 60;
+    const groundY = 380 - 50;
 
     const render = (now) => {
       const dt = Math.min((now - lastTime) / 1000, 0.05);
@@ -78,7 +93,6 @@ export const ProjectileSim = ({ simulation, activeTab, onUpdateScore }) => {
         t = Math.min(maxFlightTime, t + dt * 1.5);
         setFlightTime(t);
 
-        // Coordinates in meters
         const curX = v0x * t;
         const curY = Math.max(0, initialHeight + v0y * t - 0.5 * g * Math.pow(t, 2));
         points.push({ x: curX, y: curY });
@@ -99,8 +113,38 @@ export const ProjectileSim = ({ simulation, activeTab, onUpdateScore }) => {
           } else {
             setHitResult('miss');
           }
+
+          // Spawn ground impact dust/sparks
+          const landingPx = originX + curX * scaleX;
+          for (let i = 0; i < 24; i++) {
+            const angle = Math.PI + Math.random() * Math.PI; // upward burst
+            const speed = 40 + Math.random() * 120;
+            particles.push({
+              x: landingPx,
+              y: groundY,
+              vx: Math.cos(angle) * speed,
+              vy: Math.sin(angle) * speed,
+              life: 1.0,
+              color: Math.random() > 0.5 ? '#f59e0b' : '#94a3b8'
+            });
+          }
+
+          // Save to past ghost trajectories (keep up to 4)
+          setPastTrajectories(prev => [
+            ...prev.slice(-3),
+            { points: [...points], angle: angleDeg, speed: launchSpeed }
+          ]);
         }
       }
+
+      // Update particles
+      particles = particles.map(p => ({
+        ...p,
+        x: p.x + p.vx * dt,
+        y: p.y + p.vy * dt + 180 * dt,
+        life: p.life - dt * 2.5
+      })).filter(p => p.life > 0);
+      setImpactParticles(particles);
 
       // Draw onto canvas
       const canvas = canvasRef.current;
@@ -110,12 +154,6 @@ export const ProjectileSim = ({ simulation, activeTab, onUpdateScore }) => {
       const height = canvas.height;
 
       ctx.clearRect(0, 0, width, height);
-
-      // Scale factors: 1 meter = X pixels
-      const scaleX = (width - 120) / 75; // 75 meters max range
-      const scaleY = (height - 80) / 40;  // 40 meters max height
-      const originX = 60;
-      const groundY = height - 50;
 
       // 1. Pale coordinate grid
       ctx.strokeStyle = '#f1f5f9';
@@ -155,7 +193,7 @@ export const ProjectileSim = ({ simulation, activeTab, onUpdateScore }) => {
       ctx.lineTo(width, groundY);
       ctx.stroke();
 
-      // 3. Launch Stand Platform (if elevated)
+      // 3. Launch Stand Platform
       const launchY = groundY - initialHeight * scaleY;
       if (initialHeight > 0) {
         ctx.fillStyle = '#cbd5e1';
@@ -164,7 +202,7 @@ export const ProjectileSim = ({ simulation, activeTab, onUpdateScore }) => {
         ctx.strokeRect(originX - 18, launchY, 36, initialHeight * scaleY);
       }
 
-      // 4. Target Bullseye on Ground
+      // 4. Target Bullseye on Ground (Draggable)
       const targetPx = originX + targetDist * scaleX;
       ctx.fillStyle = '#ef4444';
       ctx.beginPath();
@@ -194,19 +232,26 @@ export const ProjectileSim = ({ simulation, activeTab, onUpdateScore }) => {
       ctx.textAlign = 'center';
       ctx.fillText(`TARGET: ${targetDist}m`, targetPx, groundY - 36);
 
-      // 5. Cannon / Bow Aiming Barrel
-      ctx.save();
-      ctx.translate(originX, launchY);
-      ctx.rotate(-thetaRad);
-      ctx.fillStyle = '#1e293b';
-      ctx.roundRect(-4, -6, 32, 12, 4);
-      ctx.fill();
-      ctx.restore();
+      // 5. Historical Ghost Trajectories (Comparisons)
+      pastTrajectories.forEach((traj, idx) => {
+        if (traj.points.length > 1) {
+          ctx.strokeStyle = 'rgba(148, 163, 184, 0.45)';
+          ctx.lineWidth = 1.5;
+          ctx.setLineDash([4, 4]);
+          ctx.beginPath();
+          ctx.moveTo(originX + traj.points[0].x * scaleX, groundY - traj.points[0].y * scaleY);
+          for (let p = 1; p < traj.points.length; p++) {
+            ctx.lineTo(originX + traj.points[p].x * scaleX, groundY - traj.points[p].y * scaleY);
+          }
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
+      });
 
-      // 6. Draw Trajectory Path (Past Points)
+      // 6. Active Trajectory Path
       if (points.length > 1) {
         ctx.strokeStyle = '#2563eb';
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 2.5;
         ctx.beginPath();
         ctx.moveTo(originX + points[0].x * scaleX, groundY - points[0].y * scaleY);
         for (let i = 1; i < points.length; i++) {
@@ -215,12 +260,51 @@ export const ProjectileSim = ({ simulation, activeTab, onUpdateScore }) => {
         ctx.stroke();
       }
 
-      // 7. Draw Current Projectile
+      // 7. Impact Dust Particles
+      for (const p of particles) {
+        ctx.fillStyle = p.color;
+        ctx.globalAlpha = Math.max(0, p.life);
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 3 * p.life, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1.0;
+
+      // 8. Cannon Turret & Barrel (Draggable Angle)
+      ctx.save();
+      ctx.translate(originX, launchY);
+
+      // Turret base pivot
+      ctx.fillStyle = '#334155';
+      ctx.beginPath();
+      ctx.arc(0, 0, 10, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Barrel
+      ctx.rotate(-thetaRad);
+      ctx.fillStyle = '#1e293b';
+      ctx.beginPath();
+      ctx.roundRect(-4, -6, 36, 12, 4);
+      ctx.fill();
+      ctx.strokeStyle = '#64748b';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      // Aiming handle at barrel tip
+      ctx.fillStyle = '#38bdf8';
+      ctx.beginPath();
+      ctx.arc(36, 0, 4, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.restore();
+
+      // 9. Current Projectile & Live Velocity Decomposition Vectors
       if (points.length > 0) {
         const lastPt = points[points.length - 1];
         const projPx = originX + lastPt.x * scaleX;
         const projPy = groundY - lastPt.y * scaleY;
 
+        // Projectile sphere
         ctx.fillStyle = '#f59e0b';
         ctx.beginPath();
         ctx.arc(projPx, projPy, 6, 0, Math.PI * 2);
@@ -228,6 +312,28 @@ export const ProjectileSim = ({ simulation, activeTab, onUpdateScore }) => {
         ctx.strokeStyle = '#b45309';
         ctx.lineWidth = 1.5;
         ctx.stroke();
+
+        // Vector decomposition: vx (horizontal cyan) and vy (vertical emerald/rose)
+        if (showVectors && isFlying) {
+          const curVy = v0y - g * t;
+          const vxLen = v0x * 1.5;
+          const vyLen = -curVy * 1.5;
+
+          // Vx (Horizontal - constant)
+          ctx.strokeStyle = '#0284c7';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(projPx, projPy);
+          ctx.lineTo(projPx + vxLen, projPy);
+          ctx.stroke();
+
+          // Vy (Vertical - changes with gravity)
+          ctx.strokeStyle = curVy >= 0 ? '#10b981' : '#ef4444';
+          ctx.beginPath();
+          ctx.moveTo(projPx, projPy);
+          ctx.lineTo(projPx, projPy + vyLen);
+          ctx.stroke();
+        }
       }
 
       animRef.current = requestAnimationFrame(render);
@@ -238,13 +344,84 @@ export const ProjectileSim = ({ simulation, activeTab, onUpdateScore }) => {
     return () => {
       if (animRef.current) cancelAnimationFrame(animRef.current);
     };
-  }, [activeTab, isFlying, flightTime, trajectoryPoints, angleDeg, launchSpeed, initialHeight, gravityPreset, targetDist]);
+  }, [activeTab, isFlying, flightTime, trajectoryPoints, pastTrajectories, impactParticles, angleDeg, launchSpeed, initialHeight, gravityPreset, targetDist, showVectors, g, v0x, v0y, maxFlightTime]);
+
+  // Handle direct Canvas dragging of Cannon Angle or Target
+  const handleCanvasMouseDown = (e) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const clickX = (e.clientX - rect.left) * scaleX;
+    const clickY = (e.clientY - rect.top) * scaleY;
+
+    const scaleXCoord = (canvas.width - 120) / 75;
+    const originX = 60;
+    const targetPx = originX + targetDist * scaleXCoord;
+
+    // Check cannon drag
+    if (Math.hypot(clickX - 60, clickY - (canvas.height - 50 - initialHeight * 7.5)) < 45) {
+      isDraggingCannonRef.current = true;
+      sounds.playTick();
+      return;
+    }
+
+    // Check target flag drag
+    if (Math.abs(clickX - targetPx) < 25) {
+      isDraggingTargetRef.current = true;
+      sounds.playTick();
+      return;
+    }
+  };
+
+  const handleCanvasMouseMove = (e) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const mouseX = (e.clientX - rect.left) * scaleX;
+    const mouseY = (e.clientY - rect.top) * scaleY;
+
+    if (isDraggingCannonRef.current) {
+      const launchY = canvas.height - 50 - initialHeight * ((canvas.height - 80) / 40);
+      const dx = mouseX - 60;
+      const dy = launchY - mouseY;
+      if (dx > 0) {
+        const rad = Math.atan2(dy, dx);
+        const deg = Math.max(10, Math.min(80, Math.round((rad * 180) / Math.PI)));
+        if (deg !== angleDeg) {
+          setAngleDeg(deg);
+          sounds.playTick();
+        }
+      }
+    } else if (isDraggingTargetRef.current) {
+      const scaleXCoord = (canvas.width - 120) / 75;
+      const newDist = Math.max(20, Math.min(70, Math.round((mouseX - 60) / scaleXCoord)));
+      if (newDist !== targetDist) {
+        setTargetDist(newDist);
+        sounds.playTick();
+      }
+    }
+  };
+
+  const handleCanvasMouseUp = () => {
+    if (isDraggingCannonRef.current || isDraggingTargetRef.current) {
+      sounds.playSnap();
+      isDraggingCannonRef.current = false;
+      isDraggingTargetRef.current = false;
+    }
+  };
 
   const handleAnswerSubmit = (qId, idx, isCorrect) => {
     sounds.playClick();
     setSelectedAnswers(prev => ({ ...prev, [qId]: idx }));
     setChallengeFeedback(prev => ({ ...prev, [qId]: isCorrect ? 'correct' : 'incorrect' }));
-    if (isCorrect && onUpdateScore) onUpdateScore(25);
+    if (isCorrect && onUpdateScore) {
+      sounds.playSuccess();
+      onUpdateScore(25);
+    }
   };
 
   return (
@@ -259,32 +436,29 @@ export const ProjectileSim = ({ simulation, activeTab, onUpdateScore }) => {
             </div>
 
             <h2 className="text-2xl md:text-3xl font-bold font-sans text-slate-900 tracking-tight">
-              {simulation.name || "Bow and Arrow: Projectile Motion"}
+              {simulation.name || "Projectile Motion: Target Range & Apex"}
             </h2>
 
             <p className="text-sm font-semibold text-amber-800 italic">
-              "{simulation.curiosityQuestion || "Why does a 45-degree launch angle yield the maximum horizontal distance?"}"
+              "{simulation.curiosityQuestion || "Why does a 45-degree angle maximize horizontal distance?"}"
             </p>
 
             <div className="text-xs text-slate-600 space-y-3 font-sans leading-relaxed">
               <p>
-                When an object moves through the air under gravity alone, its horizontal and vertical motions are <strong>completely independent</strong>:
+                In ideal 2-dimensional projectile motion without air drag, the horizontal and vertical motions are <strong>completely independent</strong>:
               </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 font-mono text-xs">
-                  <div className="font-bold text-slate-800">Horizontal (Constant Velocity):</div>
-                  <div>x(t) = v₀ · cos(θ) · t</div>
-                  <div>v_x = v₀ · cos(θ) [Constant]</div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 font-mono text-xs">
+                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-center">
+                  <div className="text-slate-500 uppercase text-[10px]">Horizontal (Constant Velocity)</div>
+                  <div className="font-bold text-slate-800">x(t) = v₀·cos(θ) · t</div>
                 </div>
-
-                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 font-mono text-xs">
-                  <div className="font-bold text-slate-800">Vertical (Accelerated by Gravity):</div>
-                  <div>y(t) = h₀ + v₀ · sin(θ) · t - ½gt²</div>
-                  <div>v_y(t) = v₀ · sin(θ) - gt</div>
+                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-center">
+                  <div className="text-slate-500 uppercase text-[10px]">Vertical (Constant Gravity)</div>
+                  <div className="font-bold text-slate-800">y(t) = h₀ + v₀·sin(θ)·t - ½gt²</div>
                 </div>
               </div>
               <p>
-                On flat ground (h₀ = 0), the range formula R = [v₀² · sin(2θ)] / g achieves its absolute maximum when sin(2θ) = 1, meaning 2θ = 90° and θ = 45°!
+                The horizontal range formula is <strong>R = (v₀²·sin(2θ)) / g</strong>. Since the maximum value of sin(2θ) is 1 (occurring at 2θ = 90°), the angle that produces the farthest landing point on flat ground is always <strong>45°</strong>!
               </p>
             </div>
           </div>
@@ -294,24 +468,34 @@ export const ProjectileSim = ({ simulation, activeTab, onUpdateScore }) => {
       {/* TAB 2: SANDBOX */}
       {activeTab === 'sandbox' && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 text-left">
-          {/* Main Viewport (8 Cols) */}
+          {/* Main 60 FPS Viewport (8 Cols) */}
           <div className="lg:col-span-8 space-y-4">
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+              {/* Header */}
               <div className="px-4 py-2.5 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
                   <span className="text-xs font-mono font-bold text-slate-700">
-                    60 FPS 2D BALLISTIC TRAJECTORY ENGINE
+                    60 FPS 2D BALLISTICS ARENA
                   </span>
                 </div>
 
                 <div className="flex items-center gap-2">
                   <button
+                    onClick={() => { sounds.playTick(); setShowVectors(!showVectors); }}
+                    className={`px-2.5 py-1 rounded text-[11px] font-mono border transition-all ${
+                      showVectors ? 'bg-sky-50 text-sky-800 border-sky-300 font-bold' : 'bg-white text-slate-600 border-slate-200'
+                    }`}
+                  >
+                    Velocity Vectors (Vx, Vy)
+                  </button>
+
+                  <button
                     onClick={handleFire}
                     disabled={isFlying}
-                    className="px-3.5 py-1 rounded-lg bg-amber-500 hover:bg-amber-600 disabled:bg-slate-200 disabled:text-slate-400 text-white font-mono font-bold text-xs shadow-sm transition-all flex items-center gap-1.5"
+                    className="px-3 py-1 rounded text-xs font-mono font-bold bg-amber-500 hover:bg-amber-600 text-white shadow-sm flex items-center gap-1.5 disabled:opacity-50 active:scale-[0.98] transition-transform"
                   >
-                    <Play className="w-3 h-3 fill-white" />
+                    <Play className="w-3.5 h-3.5" />
                     <span>LAUNCH</span>
                   </button>
 
@@ -325,115 +509,127 @@ export const ProjectileSim = ({ simulation, activeTab, onUpdateScore }) => {
                 </div>
               </div>
 
-              <div className="relative w-full bg-slate-50">
+              {/* Canvas with Direct Aiming Drag */}
+              <div className="relative w-full bg-slate-50 select-none">
                 <canvas
                   ref={canvasRef}
                   width={760}
-                  height={350}
-                  className="w-full h-auto block"
+                  height={380}
+                  onMouseDown={handleCanvasMouseDown}
+                  onMouseMove={handleCanvasMouseMove}
+                  onMouseUp={handleCanvasMouseUp}
+                  className="w-full h-auto block cursor-crosshair"
                 />
 
-                {/* Target Result Callout */}
                 {hitResult && (
-                  <div className={`absolute top-4 right-4 px-3.5 py-2 rounded-xl text-xs font-mono font-bold shadow-md border ${
+                  <div className={`absolute top-4 left-1/2 -translate-x-1/2 px-4 py-2 rounded-xl text-xs font-mono font-bold border shadow-md flex items-center gap-2 ${
                     hitResult === 'bullseye' 
-                      ? 'bg-emerald-50 border-emerald-300 text-emerald-800' 
+                      ? 'bg-emerald-50 border-emerald-300 text-emerald-800'
                       : hitResult === 'hit'
-                      ? 'bg-blue-50 border-blue-300 text-blue-800'
+                      ? 'bg-amber-50 border-amber-300 text-amber-800'
                       : 'bg-rose-50 border-rose-300 text-rose-800'
                   }`}>
                     {hitResult === 'bullseye' && '🎯 DIRECT BULLSEYE HIT! (+25 PTS)'}
-                    {hitResult === 'hit' && '✓ CLOSE TARGET HIT (Within 6m)'}
-                    {hitResult === 'miss' && '✗ TARGET MISSED (Adjust angle or velocity)'}
+                    {hitResult === 'hit' && '⚠️ CLOSE HIT ON TARGET PERIMETER!'}
+                    {hitResult === 'miss' && '❌ TARGET MISSED! ADJUST ANGLE OR VELOCITY.'}
                   </div>
                 )}
+
+                <div className="absolute bottom-2 left-3 px-2 py-1 rounded-md bg-white/80 backdrop-blur-sm border border-slate-200 text-[10px] font-mono text-slate-500 pointer-events-none">
+                  Drag cannon barrel to aim angle // Drag red flag to move target
+                </div>
               </div>
 
-              {/* Real-time Telemetry Dashboard */}
+              {/* Telemetry Readouts */}
               <div className="p-4 bg-white border-t border-slate-200 grid grid-cols-2 sm:grid-cols-4 gap-3 text-center font-mono">
                 <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
-                  <div className="text-[10px] text-slate-500 uppercase">Max Range (R)</div>
-                  <div className="text-base font-bold text-slate-800">{theoreticalRange.toFixed(1)} m</div>
-                  <div className="text-[10px] text-slate-400">Target: {targetDist}m</div>
+                  <div className="text-[10px] text-slate-500 uppercase">Theoretical Range</div>
+                  <div className="text-base font-bold text-amber-700">{theoreticalRange.toFixed(1)} m</div>
+                  <div className="text-[10px] text-slate-400">Target: {targetDist} m</div>
                 </div>
 
                 <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
-                  <div className="text-[10px] text-slate-500 uppercase">Apex Height</div>
-                  <div className="text-base font-bold text-amber-700">{maxApexHeight.toFixed(1)} m</div>
-                  <div className="text-[10px] text-slate-400">v_y = 0 m/s</div>
+                  <div className="text-[10px] text-slate-500 uppercase">Apex Peak Height</div>
+                  <div className="text-base font-bold text-slate-800">{maxApexHeight.toFixed(1)} m</div>
+                  <div className="text-[10px] text-slate-400">y_max above ground</div>
                 </div>
 
                 <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
-                  <div className="text-[10px] text-slate-500 uppercase">Flight Time</div>
+                  <div className="text-[10px] text-slate-500 uppercase">Flight Duration</div>
                   <div className="text-base font-bold text-blue-700">{maxFlightTime.toFixed(2)} s</div>
-                  <div className="text-[10px] text-slate-400">g = {g} m/s²</div>
+                  <div className="text-[10px] text-slate-400">At g = {g.toFixed(2)} m/s²</div>
                 </div>
 
                 <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
-                  <div className="text-[10px] text-slate-500 uppercase">Launch Angle</div>
-                  <div className="text-base font-bold text-purple-700">{angleDeg}°</div>
-                  <div className="text-[10px] text-slate-400">v₀ = {launchSpeed} m/s</div>
+                  <div className="text-[10px] text-slate-500 uppercase">Horizontal Speed</div>
+                  <div className="text-base font-bold text-sky-700">{v0x.toFixed(1)} m/s</div>
+                  <div className="text-[10px] text-slate-400">Vx (Constant)</div>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Controls Deck (4 Cols) */}
+          {/* Right Controls (4 Cols) */}
           <div className="lg:col-span-4 space-y-4">
             <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-4">
               <div>
                 <h3 className="text-sm font-bold font-mono text-slate-900 uppercase">
-                  Launch Controls Deck
+                  Ballistics Controls
                 </h3>
                 <p className="text-xs text-slate-500 font-sans">
-                  Adjust elevation angle, muzzle speed, platform height, and celestial gravity.
+                  Adjust launch angle, muzzle velocity, and planetary gravity.
                 </p>
               </div>
 
               {/* Slider: Launch Angle */}
               <div className="space-y-1.5">
                 <div className="flex justify-between text-xs font-mono">
-                  <span className="text-slate-700 font-bold">ELEVATION ANGLE (θ):</span>
-                  <span className="font-bold text-purple-700">{angleDeg}°</span>
+                  <span className="text-slate-700 font-bold">LAUNCH ANGLE (θ):</span>
+                  <span className="font-bold text-amber-700">{angleDeg}°</span>
                 </div>
                 <input
                   type="range"
                   min={10}
-                  max={85}
+                  max={80}
                   step={1}
                   value={angleDeg}
                   onChange={(e) => {
+                    sounds.playTick();
                     setAngleDeg(Number(e.target.value));
-                    handleReset();
                   }}
-                  className="w-full accent-purple-600 cursor-pointer"
+                  className="w-full accent-amber-600 cursor-pointer"
                 />
+                <div className="flex justify-between text-[10px] font-mono text-slate-400">
+                  <span>10° (Flat)</span>
+                  <span className="text-amber-700 font-bold">45° (Max Range)</span>
+                  <span>80° (High Arc)</span>
+                </div>
               </div>
 
-              {/* Slider: Launch Velocity */}
+              {/* Slider: Launch Speed */}
               <div className="space-y-1.5">
                 <div className="flex justify-between text-xs font-mono">
-                  <span className="text-slate-700 font-bold">LAUNCH SPEED (v₀):</span>
-                  <span className="font-bold text-blue-700">{launchSpeed} m/s</span>
+                  <span className="text-slate-700 font-bold">MUZZLE VELOCITY (v₀):</span>
+                  <span className="font-bold text-slate-800">{launchSpeed} m/s</span>
                 </div>
                 <input
                   type="range"
-                  min={10}
+                  min={5}
                   max={45}
                   step={1}
                   value={launchSpeed}
                   onChange={(e) => {
+                    sounds.playTick();
                     setLaunchSpeed(Number(e.target.value));
-                    handleReset();
                   }}
-                  className="w-full accent-blue-600 cursor-pointer"
+                  className="w-full accent-slate-700 cursor-pointer"
                 />
               </div>
 
               {/* Slider: Initial Height */}
               <div className="space-y-1.5">
                 <div className="flex justify-between text-xs font-mono">
-                  <span className="text-slate-700 font-bold">PLATFORM HEIGHT (h₀):</span>
+                  <span className="text-slate-700 font-bold">LAUNCH PLATFORM HEIGHT:</span>
                   <span className="font-bold text-slate-800">{initialHeight} m</span>
                 </div>
                 <input
@@ -443,123 +639,163 @@ export const ProjectileSim = ({ simulation, activeTab, onUpdateScore }) => {
                   step={1}
                   value={initialHeight}
                   onChange={(e) => {
+                    sounds.playTick();
                     setInitialHeight(Number(e.target.value));
-                    handleReset();
                   }}
                   className="w-full accent-slate-700 cursor-pointer"
                 />
               </div>
 
-              {/* Celestial Gravity Selector */}
+              {/* Planetary Gravity Presets */}
               <div className="space-y-1.5 pt-2 border-t border-slate-100">
-                <div className="text-[11px] font-mono text-slate-500 uppercase font-bold">
-                  Gravitational Field:
-                </div>
+                <div className="text-xs font-mono font-bold text-slate-700">GRAVITATIONAL ACCELERATION:</div>
                 <div className="grid grid-cols-3 gap-1.5">
                   {[
-                    { id: 'earth', name: 'Earth', g: '9.8' },
-                    { id: 'moon', name: 'Moon', g: '1.6' },
-                    { id: 'mars', name: 'Mars', g: '3.7' }
-                  ].map((p) => (
+                    { id: 'earth', label: 'Earth (9.8m/s²)' },
+                    { id: 'moon', label: 'Moon (1.6m/s²)' },
+                    { id: 'mars', label: 'Mars (3.7m/s²)' }
+                  ].map(p => (
                     <button
                       key={p.id}
                       onClick={() => {
+                        sounds.playTick();
                         setGravityPreset(p.id);
-                        handleReset();
                       }}
-                      className={`p-2 rounded-lg text-xs font-mono text-center border transition-all ${
-                        gravityPreset === p.id
-                          ? 'bg-amber-50 border-amber-400 text-amber-900 font-bold shadow-sm'
-                          : 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-600'
+                      className={`py-1.5 px-2 rounded-lg text-[10px] font-mono border transition-all ${
+                        gravityPreset === p.id 
+                          ? 'bg-amber-500 border-amber-600 text-white font-bold'
+                          : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
                       }`}
                     >
-                      <div>{p.name}</div>
-                      <div className="text-[10px] text-slate-400">{p.g} m/s²</div>
+                      {p.label}
                     </button>
                   ))}
                 </div>
               </div>
 
-              {/* Target Distance Slider */}
-              <div className="space-y-1.5 pt-2 border-t border-slate-100">
-                <div className="flex justify-between text-xs font-mono">
-                  <span className="text-slate-700 font-bold">TARGET DISTANCE:</span>
-                  <span className="font-bold text-amber-700">{targetDist} m</span>
+              {/* One-click comparison presets */}
+              <div className="pt-2 border-t border-slate-100 space-y-2">
+                <div className="text-[11px] font-mono text-slate-500 uppercase font-bold">
+                  Angle Comparison Presets:
                 </div>
-                <input
-                  type="range"
-                  min={25}
-                  max={70}
-                  step={5}
-                  value={targetDist}
-                  onChange={(e) => {
-                    setTargetDist(Number(e.target.value));
-                    handleReset();
-                  }}
-                  className="w-full accent-amber-600 cursor-pointer"
-                />
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={() => {
+                      sounds.playSnap();
+                      setAngleDeg(30);
+                      setLaunchSpeed(24);
+                    }}
+                    className="p-2 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-800 text-xs font-mono text-left active:scale-[0.98] transition-transform"
+                  >
+                    <div className="font-bold">30° Low Arc</div>
+                    <div className="text-[10px] text-slate-500">Fast flight time</div>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      sounds.playSnap();
+                      setAngleDeg(60);
+                      setLaunchSpeed(24);
+                    }}
+                    className="p-2 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-800 text-xs font-mono text-left active:scale-[0.98] transition-transform"
+                  >
+                    <div className="font-bold">60° High Arc</div>
+                    <div className="text-[10px] text-slate-500">Same range as 30°!</div>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* TAB 3: CHALLENGE ME */}
-      {activeTab === 'challenge' && (
+      {/* TAB 3: CHALLENGES */}
+      {activeTab === 'challenges' && (
         <div className="max-w-3xl mx-auto space-y-5 text-left">
           <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-sans">
-            <strong>Trajectory Inquiry Challenges:</strong> Apply kinematic equations to predict flight paths.
+            <strong>Ballistics Inquiry Laboratory:</strong> Test your understanding of parabolic trajectories and projectile physics. Earn up to 75 laboratory score points!
           </div>
 
+          {/* Question 1 */}
           <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-3">
             <div className="text-xs font-mono text-slate-400 font-bold uppercase">
-              Challenge 1 of 2 // Complementary Angles
+              Challenge 1 of 3 // Complementary Angles
             </div>
-            <h3 className="text-sm font-bold font-sans text-slate-800">
-              Neglecting air resistance, which pair of launch angles produces the exact same horizontal range R on flat ground?
+            <h3 className="text-sm font-bold font-sans text-slate-900">
+              Why do two launch angles that add up to 90 degrees (such as 30° and 60°, or 20° and 70°) yield the exact same horizontal range on flat ground?
             </h3>
 
             <div className="space-y-2">
               {[
-                { text: "30 degrees and 60 degrees (Complementary angles summing to 90 degrees)", correct: true },
-                { text: "30 degrees and 45 degrees", correct: false },
-                { text: "45 degrees and 90 degrees", correct: false }
-              ].map((opt, i) => (
-                <button
-                  key={i}
-                  onClick={() => handleAnswerSubmit('q1', i, opt.correct)}
-                  className={`w-full p-3 rounded-xl text-xs font-mono text-left transition-all border ${
-                    selectedAnswers['q1'] === i
-                      ? opt.correct
-                        ? 'bg-emerald-50 border-emerald-400 text-emerald-800 font-bold'
-                        : 'bg-rose-50 border-rose-400 text-rose-800 font-bold'
-                      : 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700'
-                  }`}
-                >
-                  {opt.text}
-                </button>
-              ))}
+                { text: "Because sin(2θ) gives the exact same value for complementary angles: sin(2·30°) = sin(60°) = sin(120°) = sin(2·60°)", correct: true },
+                { text: "Because Earth's gravity only affects projectiles launched above 45 degrees", correct: false },
+                { text: "Because the horizontal velocity is identical in both cases", correct: false },
+                { text: "Because the flight times are identical in both cases", correct: false }
+              ].map((opt, idx) => {
+                const isSelected = selectedAnswers['q1'] === idx;
+                return (
+                  <button
+                    key={idx}
+                    onClick={() => handleAnswerSubmit('q1', idx, opt.correct)}
+                    className={`w-full p-3 rounded-xl border text-left text-xs font-sans transition-all flex items-center justify-between ${
+                      isSelected 
+                        ? opt.correct 
+                          ? 'bg-emerald-50 border-emerald-400 text-emerald-900 font-bold'
+                          : 'bg-rose-50 border-rose-400 text-rose-900'
+                        : 'bg-slate-50 border-slate-200 hover:bg-slate-100 text-slate-800'
+                    }`}
+                  >
+                    <span>{opt.text}</span>
+                    {isSelected && (
+                      opt.correct 
+                        ? <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                        : <Crosshair className="w-4 h-4 text-rose-600 flex-shrink-0" />
+                    )}
+                  </button>
+                );
+              })}
             </div>
-
-            {challengeFeedback['q1'] === 'correct' && (
-              <div className="p-3 rounded-xl bg-emerald-50 text-emerald-800 text-xs font-sans">
-                ✓ <strong>Correct! (+25 pts)</strong> Because sin(2(90°-θ)) = sin(180°-2θ) = sin(2θ), any two launch angles that add up to 90° land at the exact same spot!
-              </div>
-            )}
           </div>
-        </div>
-      )}
 
-      {/* TAB 4: REAL-WORLD APPLICATIONS */}
-      {activeTab === 'applications' && (
-        <div className="max-w-4xl mx-auto space-y-6 text-left">
-          <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-4">
-            <h2 className="text-xl font-bold font-sans text-slate-900">
-              Real-World Engineering: Orbital Mechanics and ICBM Trajectories
-            </h2>
-            <p className="text-xs text-slate-600 leading-relaxed font-sans">
-              On Earth, we treat the ground as a flat plane and gravity as a uniform downward vector. But at high orbital speeds (v₀ &gt; 7.9 km/s), the curvature of the Earth drops away at the exact rate the projectile falls: the projectile enters a permanent free-fall called <strong>Orbit</strong>!
-            </p>
+          {/* Question 2 */}
+          <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-3">
+            <div className="text-xs font-mono text-slate-400 font-bold uppercase">
+              Challenge 2 of 3 // Apex Vertical Velocity
+            </div>
+            <h3 className="text-sm font-bold font-sans text-slate-900">
+              At the exact highest point (apex) of a projectile's flight, what is its vertical velocity Vy?
+            </h3>
+
+            <div className="space-y-2">
+              {[
+                { text: "Exactly 0 m/s (instantaneous vertical turning point, while Vx remains unchanged)", correct: true },
+                { text: "Equal to the initial launch velocity v₀", correct: false },
+                { text: "9.81 m/s downwards", correct: false },
+                { text: "Infinity", correct: false }
+              ].map((opt, idx) => {
+                const isSelected = selectedAnswers['q2'] === idx;
+                return (
+                  <button
+                    key={idx}
+                    onClick={() => handleAnswerSubmit('q2', idx, opt.correct)}
+                    className={`w-full p-3 rounded-xl border text-left text-xs font-sans transition-all flex items-center justify-between ${
+                      isSelected 
+                        ? opt.correct 
+                          ? 'bg-emerald-50 border-emerald-400 text-emerald-900 font-bold'
+                          : 'bg-rose-50 border-rose-400 text-rose-900'
+                        : 'bg-slate-50 border-slate-200 hover:bg-slate-100 text-slate-800'
+                    }`}
+                  >
+                    <span>{opt.text}</span>
+                    {isSelected && (
+                      opt.correct 
+                        ? <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                        : <Crosshair className="w-4 h-4 text-rose-600 flex-shrink-0" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
       )}

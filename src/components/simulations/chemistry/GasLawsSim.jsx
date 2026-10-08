@@ -11,16 +11,18 @@ import {
   Maximize2, 
   ShieldCheck, 
   Layers,
-  Thermometer
+  Thermometer,
+  Sliders,
+  Activity
 } from 'lucide-react';
 import { sounds } from '../../../engine/audioEffects';
 
-export const GasLawsSim = ({ simulation, activeTab, onUpdateScore }) => {
+export const GasLawsSim = ({ simulation = {}, activeTab = 'sandbox', onUpdateScore }) => {
   // Gas state parameters
   const [temperatureK, setTemperatureK] = useState(300); // 150 K to 600 K
   const [volumeL, setVolumeL] = useState(5.0); // 2.0 L to 10.0 L
   const [particleCount, setParticleCount] = useState(40); // 15 to 80 molecules
-  const [gasType, setGasType] = useState('helium'); // 'helium' (light), 'nitrogen' (medium), 'xenon' (heavy)
+  const [gasType, setGasType] = useState('helium'); // 'helium', 'nitrogen', 'xenon'
   const [isPlaying, setIsPlaying] = useState(true);
 
   // Challenge Quiz State
@@ -30,25 +32,22 @@ export const GasLawsSim = ({ simulation, activeTab, onUpdateScore }) => {
   const canvasRef = useRef(null);
   const animRef = useRef(null);
   const particlesRef = useRef([]);
+  const isDraggingPistonRef = useRef(false);
 
   // Ideal Gas Law calculations: P = (n * R * T) / V
-  // R = 0.08206 L·atm/(mol·K). We scale n for student clarity:
-  const nMoles = particleCount * 0.05; // effective moles
+  const nMoles = particleCount * 0.05;
   const R_CONST = 0.0821;
   const calculatedPressureAtm = Number(((nMoles * R_CONST * temperatureK) / volumeL).toFixed(2));
   const calculatedPressureKpa = Number((calculatedPressureAtm * 101.325).toFixed(1));
 
-  // Average molecular kinetic energy: KE = 3/2 k_B T
+  // Molecular speed factor
   const molecularSpeedFactor = Math.sqrt(temperatureK / 300) * (gasType === 'helium' ? 1.4 : gasType === 'xenon' ? 0.7 : 1.0);
 
   // Initialize or re-spawn particles inside cylinder bounds
   const initParticles = (count, vol) => {
-    // Chamber dimensions in canvas pixels
     const chamberLeft = 140;
     const chamberBottom = 310;
     const chamberWidth = 360;
-    // Piston height depends on volume (2.0L = high piston y, 10.0L = low piston y)
-    // Range: 2.0L => top y = 220; 10.0L => top y = 50
     const pistonY = 310 - ((vol / 10.0) * 260);
 
     const newParticles = [];
@@ -83,6 +82,8 @@ export const GasLawsSim = ({ simulation, activeTab, onUpdateScore }) => {
 
   // 60 FPS Kinetic Molecular simulation loop
   useEffect(() => {
+    if (activeTab !== 'sandbox') return;
+
     let lastTime = performance.now();
 
     const loop = (currentTime) => {
@@ -98,7 +99,6 @@ export const GasLawsSim = ({ simulation, activeTab, onUpdateScore }) => {
 
       if (isPlaying) {
         particlesRef.current.forEach(p => {
-          // Normalize speed with temperature
           const currentSpeed = Math.hypot(p.vx, p.vy);
           const targetSpeed = 3.5 * speedMult;
           if (currentSpeed > 0.01) {
@@ -136,9 +136,21 @@ export const GasLawsSim = ({ simulation, activeTab, onUpdateScore }) => {
         const width = canvas.width;
         const height = canvas.height;
 
+        ctx.clearRect(0, 0, width, height);
+
         // Background
         ctx.fillStyle = '#f8fafc';
         ctx.fillRect(0, 0, width, height);
+
+        // Grid
+        ctx.strokeStyle = '#f1f5f9';
+        ctx.lineWidth = 1;
+        for (let x = 0; x < width; x += 30) {
+          ctx.beginPath();
+          ctx.moveTo(x, 0);
+          ctx.lineTo(x, height);
+          ctx.stroke();
+        }
 
         // Stand / Workbench
         ctx.fillStyle = '#e2e8f0';
@@ -147,16 +159,14 @@ export const GasLawsSim = ({ simulation, activeTab, onUpdateScore }) => {
         ctx.lineWidth = 2;
         ctx.strokeRect(100, 315, 440, 20);
 
-        // Bunsen Flame or Ice bath underneath
+        // Bunsen Flame or Cryogenic bath underneath
         if (temperatureK > 350) {
-          // Flame glow
           const flameIntensity = (temperatureK - 350) / 250;
           ctx.fillStyle = `rgba(249, 115, 22, ${0.4 + flameIntensity * 0.5})`;
           ctx.beginPath();
           ctx.ellipse(320, 328, 40 + flameIntensity * 20, 10, 0, 0, Math.PI * 2);
           ctx.fill();
 
-          // Flames
           ctx.fillStyle = '#ea580c';
           ctx.beginPath();
           ctx.moveTo(290, 335);
@@ -169,35 +179,31 @@ export const GasLawsSim = ({ simulation, activeTab, onUpdateScore }) => {
           ctx.quadraticCurveTo(320, 312 - flameIntensity * 12, 335, 335);
           ctx.fill();
         } else if (temperatureK < 250) {
-          // Ice bath frosty mat
           ctx.fillStyle = 'rgba(56, 189, 248, 0.35)';
           ctx.fillRect(260, 322, 120, 14);
           ctx.strokeStyle = '#0284c7';
           ctx.lineWidth = 1;
           ctx.strokeRect(260, 322, 120, 14);
           ctx.fillStyle = '#0284c7';
-          ctx.font = '10px monospace';
+          ctx.font = 'bold 9px monospace';
           ctx.fillText('❄ CRYOGENIC BATH', 270, 333);
         }
 
         // Cylinder Glass Body
-        ctx.fillStyle = 'rgba(241, 245, 249, 0.6)';
+        ctx.fillStyle = 'rgba(241, 245, 249, 0.7)';
         ctx.fillRect(chamberLeft, 50, chamberRight - chamberLeft, 260);
 
         // Cylinder thick glass walls
         ctx.strokeStyle = '#64748b';
-        ctx.lineWidth = 6;
+        ctx.lineWidth = 5;
         ctx.beginPath();
-        // Left wall
         ctx.moveTo(chamberLeft, 40);
         ctx.lineTo(chamberLeft, chamberBottom);
-        // Base
         ctx.lineTo(chamberRight, chamberBottom);
-        // Right wall
         ctx.lineTo(chamberRight, 40);
         ctx.stroke();
 
-        // Volume calibration ruler marks on right wall
+        // Volume calibration marks on right wall
         ctx.lineWidth = 1;
         ctx.strokeStyle = '#94a3b8';
         ctx.fillStyle = '#64748b';
@@ -211,14 +217,14 @@ export const GasLawsSim = ({ simulation, activeTab, onUpdateScore }) => {
           ctx.fillText(`${v}L`, chamberRight + 16, markY + 3);
         }
 
-        // Draw Bouncing Gas Particles
+        // Draw Bouncing Gas Molecules
         particlesRef.current.forEach(p => {
           ctx.fillStyle = p.color;
           ctx.beginPath();
           ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
           ctx.fill();
 
-          // Particle velocity trail
+          // Speed vector tail
           ctx.strokeStyle = p.color;
           ctx.lineWidth = 1.2;
           ctx.beginPath();
@@ -227,7 +233,7 @@ export const GasLawsSim = ({ simulation, activeTab, onUpdateScore }) => {
           ctx.stroke();
         });
 
-        // Movable Heavy Piston Lid
+        // Movable Heavy Piston Lid (Draggable)
         ctx.fillStyle = '#334155';
         ctx.fillRect(chamberLeft + 3, pistonY - 14, (chamberRight - chamberLeft) - 6, 16);
         ctx.strokeStyle = '#1e293b';
@@ -237,11 +243,16 @@ export const GasLawsSim = ({ simulation, activeTab, onUpdateScore }) => {
         // Piston Rod handle
         ctx.fillStyle = '#94a3b8';
         ctx.fillRect(315, 10, 10, Math.max(10, pistonY - 14));
-        ctx.fillStyle = '#475569';
-        ctx.fillRect(300, 10, 40, 10);
+        ctx.fillStyle = '#0284c7';
+        ctx.roundRect(295, 8, 50, 14, 4);
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 9px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('HANDLE', 320, 18);
 
         // Analog Bourdon Pressure Gauge mounted on top right
-        const gaugeX = 610;
+        const gaugeX = 620;
         const gaugeY = 160;
         const gaugeRadius = 55;
 
@@ -250,54 +261,52 @@ export const GasLawsSim = ({ simulation, activeTab, onUpdateScore }) => {
         ctx.beginPath();
         ctx.arc(gaugeX, gaugeY, gaugeRadius, 0, Math.PI * 2);
         ctx.fill();
-        ctx.strokeStyle = '#334155';
-        ctx.lineWidth = 4;
+        ctx.strokeStyle = '#cbd5e1';
+        ctx.lineWidth = 3;
         ctx.stroke();
 
-        // Dial ticks
-        ctx.strokeStyle = '#64748b';
-        ctx.lineWidth = 1.5;
-        for (let a = 0; a <= 10; a++) {
-          const angle = Math.PI * 0.75 + (a / 10) * (Math.PI * 1.5);
-          const x1 = gaugeX + Math.cos(angle) * (gaugeRadius - 10);
-          const y1 = gaugeY + Math.sin(angle) * (gaugeRadius - 10);
-          const x2 = gaugeX + Math.cos(angle) * (gaugeRadius - 3);
-          const y2 = gaugeY + Math.sin(angle) * (gaugeRadius - 3);
+        // Brass bezel
+        ctx.strokeStyle = '#f59e0b';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Graduations
+        for (let a = -140; a <= 140; a += 28) {
+          const rad = (a * Math.PI) / 180;
+          const x1 = gaugeX + Math.sin(rad) * (gaugeRadius - 10);
+          const y1 = gaugeY - Math.cos(rad) * (gaugeRadius - 10);
+          const x2 = gaugeX + Math.sin(rad) * (gaugeRadius - 4);
+          const y2 = gaugeY - Math.cos(rad) * (gaugeRadius - 4);
           ctx.beginPath();
           ctx.moveTo(x1, y1);
           ctx.lineTo(x2, y2);
           ctx.stroke();
         }
 
-        // Dial needle pointing according to pressure (0 to 15 atm)
-        const needleAngle = Math.PI * 0.75 + Math.min(calculatedPressureAtm / 15, 1.0) * (Math.PI * 1.5);
-        ctx.strokeStyle = calculatedPressureAtm > 10 ? '#dc2626' : '#2563eb';
+        // Needle
+        const maxP = 6.0;
+        const pRatio = Math.min(1.0, calculatedPressureAtm / maxP);
+        const needleAngle = (-140 + pRatio * 280) * (Math.PI / 180);
+
+        ctx.strokeStyle = calculatedPressureAtm > 4.5 ? '#ef4444' : '#1e293b';
         ctx.lineWidth = 2.5;
         ctx.beginPath();
         ctx.moveTo(gaugeX, gaugeY);
-        ctx.lineTo(gaugeX + Math.cos(needleAngle) * (gaugeRadius - 14), gaugeY + Math.sin(needleAngle) * (gaugeRadius - 14));
+        ctx.lineTo(gaugeX + Math.sin(needleAngle) * 42, gaugeY - Math.cos(needleAngle) * 42);
         ctx.stroke();
 
-        ctx.fillStyle = '#0f172a';
+        ctx.fillStyle = '#ef4444';
         ctx.beginPath();
-        ctx.arc(gaugeX, gaugeY, 5, 0, Math.PI * 2);
+        ctx.arc(gaugeX, gaugeY, 4, 0, Math.PI * 2);
         ctx.fill();
 
-        // Gauge Text labels
-        ctx.fillStyle = '#0f172a';
-        ctx.font = 'bold 11px Inter, sans-serif';
-        ctx.fillText('PRESSURE', gaugeX - 28, gaugeY + 28);
+        ctx.fillStyle = '#1e293b';
         ctx.font = 'bold 12px monospace';
-        ctx.fillStyle = calculatedPressureAtm > 10 ? '#dc2626' : '#2563eb';
-        ctx.fillText(`${calculatedPressureAtm} atm`, gaugeX - 25, gaugeY + 44);
-
-        // Pipe connecting chamber to gauge
-        ctx.strokeStyle = '#64748b';
-        ctx.lineWidth = 4;
-        ctx.beginPath();
-        ctx.moveTo(chamberRight, 160);
-        ctx.lineTo(gaugeX - gaugeRadius, gaugeY);
-        ctx.stroke();
+        ctx.textAlign = 'center';
+        ctx.fillText(`${calculatedPressureAtm} atm`, gaugeX, gaugeY + 28);
+        ctx.font = '9px monospace';
+        ctx.fillStyle = '#64748b';
+        ctx.fillText(`${calculatedPressureKpa} kPa`, gaugeX, gaugeY + 40);
       }
 
       animRef.current = requestAnimationFrame(loop);
@@ -305,13 +314,54 @@ export const GasLawsSim = ({ simulation, activeTab, onUpdateScore }) => {
 
     animRef.current = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(animRef.current);
-  }, [isPlaying, temperatureK, volumeL, particleCount, gasType, calculatedPressureAtm, molecularSpeedFactor]);
+  }, [activeTab, isPlaying, volumeL, temperatureK, gasType, calculatedPressureAtm, calculatedPressureKpa]);
+
+  // Handle direct Canvas dragging of Piston Handle
+  const handleCanvasMouseDown = (e) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    const scaleY = canvas.height / rect.height;
+    const clickY = (e.clientY - rect.top) * scaleY;
+
+    const pistonY = 310 - ((volumeL / 10.0) * 260);
+    if (Math.abs(clickY - pistonY) < 30 || clickY < 40) {
+      isDraggingPistonRef.current = true;
+      sounds.playTick();
+    }
+  };
+
+  const handleCanvasMouseMove = (e) => {
+    if (!isDraggingPistonRef.current) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    const scaleY = canvas.height / rect.height;
+    const mouseY = (e.clientY - rect.top) * scaleY;
+
+    // Convert mouseY to volume L (2.0 to 10.0)
+    const newVol = Math.max(2.0, Math.min(10.0, Number(((310 - mouseY) / 260 * 10).toFixed(1))));
+    if (newVol !== volumeL) {
+      setVolumeL(newVol);
+      sounds.playTick();
+    }
+  };
+
+  const handleCanvasMouseUp = () => {
+    if (isDraggingPistonRef.current) {
+      sounds.playSnap();
+      isDraggingPistonRef.current = false;
+    }
+  };
 
   const handleAnswerSubmit = (qId, idx, isCorrect) => {
     sounds.playClick();
     setSelectedAnswers(prev => ({ ...prev, [qId]: idx }));
     setChallengeFeedback(prev => ({ ...prev, [qId]: isCorrect ? 'correct' : 'incorrect' }));
-    if (isCorrect && onUpdateScore) onUpdateScore(25);
+    if (isCorrect && onUpdateScore) {
+      sounds.playSuccess();
+      onUpdateScore(25);
+    }
   };
 
   return (
@@ -320,361 +370,266 @@ export const GasLawsSim = ({ simulation, activeTab, onUpdateScore }) => {
       {activeTab === 'curiosity' && (
         <div className="max-w-4xl mx-auto space-y-6 text-left">
           <div className="p-6 md:p-8 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-4">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-bold bg-amber-50 text-amber-800 border border-amber-200">
-              <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-bold bg-indigo-50 text-indigo-800 border border-indigo-200">
+              <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
               KINETIC MOLECULAR THEORY & THERMODYNAMICS
             </div>
 
             <h2 className="text-2xl md:text-3xl font-bold font-sans text-slate-900 tracking-tight">
-              {simulation.name}
+              {simulation.name || "Gas Laws: PV = nRT & Molecular Kinetics"}
             </h2>
 
-            <p className="text-sm font-semibold text-amber-800 italic">
-              "{simulation.curiosityQuestion}"
+            <p className="text-sm font-semibold text-indigo-800 italic">
+              "{simulation.curiosityQuestion || "What happens to gas pressure when you compress volume or heat molecules?"}"
             </p>
 
-            <p className="text-xs text-slate-600 leading-relaxed font-sans">
-              Gas pressure is the physical cumulative force per unit area exerted by trillions of microscopic molecules colliding elastically with the container walls. When gas is heated, molecules absorb thermal energy, increasing their root-mean-square speed (v_rms ∝ √T) and striking the walls more frequently and with greater momentum. Compressing the volume forces these molecules into closer quarters, dramatically escalating the frequency of impacts.
-            </p>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2">
-              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
-                <div className="text-[11px] font-mono text-slate-500 uppercase">Boyle's Law (P ∝ 1/V)</div>
-                <div className="text-sm font-bold text-slate-800 mt-1">Pressure vs. Volume</div>
-                <p className="text-[11px] text-slate-600 mt-1">Halving chamber volume doubles wall collision frequency, doubling pressure.</p>
+            <div className="text-xs text-slate-600 space-y-3 font-sans leading-relaxed">
+              <p>
+                Gas pressure is not an invisible static property. It is the cumulative microscopic impact force of billions of gas molecules violently colliding against container walls!
+              </p>
+              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-center font-mono text-xs font-bold text-slate-800">
+                P · V = n · R · T
               </div>
-
-              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
-                <div className="text-[11px] font-mono text-slate-500 uppercase">Charles's Law (V ∝ T)</div>
-                <div className="text-sm font-bold text-slate-800 mt-1">Volume vs. Temperature</div>
-                <p className="text-[11px] text-slate-600 mt-1">Heating gas particles increases velocity; at constant pressure, the gas expands.</p>
-              </div>
-
-              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
-                <div className="text-[11px] font-mono text-slate-500 uppercase">Gay-Lussac's Law (P ∝ T)</div>
-                <div className="text-sm font-bold text-slate-800 mt-1">Pressure vs. Temperature</div>
-                <p className="text-[11px] text-slate-600 mt-1">In a rigid container, raising temperature linearly escalates internal pressure.</p>
-              </div>
+              <p>
+                When you halve the container volume (Boyle's Law, P ∝ 1/V), molecules strike the walls twice as frequently, doubling the pressure. When you raise the temperature (Gay-Lussac's Law, P ∝ T), molecules move with higher root-mean-square kinetic energy, striking the walls with greater impulse!
+              </p>
             </div>
           </div>
         </div>
       )}
 
-      {/* TAB 2: INTERACTIVE SANDBOX */}
+      {/* TAB 2: SANDBOX */}
       {activeTab === 'sandbox' && (
-        <div className="space-y-5 text-left">
-          {/* Header Bar */}
-          <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-xl bg-white border border-slate-200 shadow-sm">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-mono font-bold text-slate-600 uppercase">Gas Species:</span>
-              <button
-                onClick={() => setGasType('helium')}
-                className={`px-3 py-1 rounded-lg text-xs font-mono font-bold border transition-colors ${
-                  gasType === 'helium' ? 'bg-sky-100 text-sky-900 border-sky-300' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
-                }`}
-              >
-                Helium (He, 4 g/mol)
-              </button>
-              <button
-                onClick={() => setGasType('nitrogen')}
-                className={`px-3 py-1 rounded-lg text-xs font-mono font-bold border transition-colors ${
-                  gasType === 'nitrogen' ? 'bg-emerald-100 text-emerald-900 border-emerald-300' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
-                }`}
-              >
-                Nitrogen (N₂, 28 g/mol)
-              </button>
-              <button
-                onClick={() => setGasType('xenon')}
-                className={`px-3 py-1 rounded-lg text-xs font-mono font-bold border transition-colors ${
-                  gasType === 'xenon' ? 'bg-purple-100 text-purple-900 border-purple-300' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
-                }`}
-              >
-                Xenon (Xe, 131 g/mol)
-              </button>
-            </div>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 text-left">
+          {/* Main 60 FPS Viewport (8 Cols) */}
+          <div className="lg:col-span-8 space-y-4">
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+              {/* Header */}
+              <div className="px-4 py-2.5 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="text-xs font-mono font-bold text-slate-700">
+                    KINETIC MOLECULAR CHAMBER // IDEAL GAS ENGINE
+                  </span>
+                </div>
 
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setIsPlaying(!isPlaying)}
-                className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-mono font-bold bg-slate-100 text-slate-800 border border-slate-200 hover:bg-slate-200"
-              >
-                {isPlaying ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
-                {isPlaying ? 'Freeze Frame' : 'Resume'}
-              </button>
-              <button
-                onClick={handleReset}
-                className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-mono font-bold bg-slate-100 text-slate-800 border border-slate-200 hover:bg-slate-200"
-              >
-                <RotateCcw className="w-3.5 h-3.5" />
-                Reset
-              </button>
-            </div>
-          </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setIsPlaying(!isPlaying)}
+                    className="p-1.5 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 text-slate-700"
+                    title={isPlaying ? "Pause" : "Play"}
+                  >
+                    {isPlaying ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
+                  </button>
 
-          {/* Canvas Viewport */}
-          <div className="relative rounded-2xl border border-slate-300 bg-white shadow-sm overflow-hidden">
-            <canvas
-              ref={canvasRef}
-              width={760}
-              height={360}
-              className="w-full h-auto block"
-            />
+                  <button
+                    onClick={handleReset}
+                    className="p-1.5 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 text-slate-700"
+                    title="Reset chamber"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
 
-            {/* Overlaid Live Badges */}
-            <div className="absolute top-3 left-3 flex flex-wrap gap-2 pointer-events-none">
-              <div className="px-2.5 py-1 rounded-md bg-white/90 backdrop-blur border border-slate-200 text-[11px] font-mono shadow-sm">
-                <span className="text-slate-500">Pressure: </span>
-                <span className="font-bold text-blue-700">{calculatedPressureAtm} atm ({calculatedPressureKpa} kPa)</span>
-              </div>
-              <div className="px-2.5 py-1 rounded-md bg-white/90 backdrop-blur border border-slate-200 text-[11px] font-mono shadow-sm">
-                <span className="text-slate-500">Temperature: </span>
-                <span className="font-bold text-slate-800">{temperatureK} K ({temperatureK - 273}°C)</span>
-              </div>
-              <div className="px-2.5 py-1 rounded-md bg-white/90 backdrop-blur border border-slate-200 text-[11px] font-mono shadow-sm">
-                <span className="text-slate-500">Volume: </span>
-                <span className="font-bold text-slate-800">{volumeL.toFixed(1)} L</span>
-              </div>
-            </div>
-          </div>
+              {/* Canvas with Direct Piston Dragging */}
+              <div className="relative w-full bg-slate-50 select-none">
+                <canvas
+                  ref={canvasRef}
+                  width={760}
+                  height={380}
+                  onMouseDown={handleCanvasMouseDown}
+                  onMouseMove={handleCanvasMouseMove}
+                  onMouseUp={handleCanvasMouseUp}
+                  className="w-full h-auto block cursor-ns-resize"
+                />
 
-          {/* Interactive Gas Controls */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Control 1: Temperature */}
-            <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-sm space-y-2">
-              <div className="flex justify-between items-center text-xs font-mono">
-                <span className="font-bold text-slate-700 flex items-center gap-1">
-                  <Flame className="w-3.5 h-3.5 text-amber-500" /> Temperature (T):
-                </span>
-                <span className="font-bold text-amber-700">{temperatureK} K</span>
+                <div className="absolute bottom-2 left-3 px-2 py-1 rounded-md bg-white/80 backdrop-blur-sm border border-slate-200 text-[10px] font-mono text-slate-500 pointer-events-none">
+                  Drag the piston handle on canvas to compress or expand gas
+                </div>
               </div>
-              <input
-                type="range"
-                min={150}
-                max={600}
-                step={10}
-                value={temperatureK}
-                onChange={(e) => setTemperatureK(Number(e.target.value))}
-                className="w-full accent-amber-600 cursor-pointer"
-              />
-              <div className="flex justify-between text-[10px] font-mono text-slate-400">
-                <span>150 K (Cryo)</span>
-                <span>300 K (Room)</span>
-                <span>600 K (Hot)</span>
-              </div>
-            </div>
 
-            {/* Control 2: Volume */}
-            <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-sm space-y-2">
-              <div className="flex justify-between items-center text-xs font-mono">
-                <span className="font-bold text-slate-700 flex items-center gap-1">
-                  <Maximize2 className="w-3.5 h-3.5 text-blue-500" /> Piston Volume (V):
-                </span>
-                <span className="font-bold text-blue-700">{volumeL.toFixed(1)} L</span>
-              </div>
-              <input
-                type="range"
-                min={2.0}
-                max={10.0}
-                step={0.5}
-                value={volumeL}
-                onChange={(e) => setVolumeL(Number(e.target.value))}
-                className="w-full accent-blue-600 cursor-pointer"
-              />
-              <div className="flex justify-between text-[10px] font-mono text-slate-400">
-                <span>2.0 L (Compressed)</span>
-                <span>5.0 L</span>
-                <span>10.0 L (Expanded)</span>
-              </div>
-            </div>
+              {/* Telemetry Dashboard */}
+              <div className="p-4 bg-white border-t border-slate-200 grid grid-cols-2 sm:grid-cols-4 gap-3 text-center font-mono">
+                <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+                  <div className="text-[10px] text-slate-500 uppercase">Pressure (P)</div>
+                  <div className={`text-base font-bold ${calculatedPressureAtm > 4.5 ? 'text-rose-600' : 'text-emerald-700'}`}>
+                    {calculatedPressureAtm} atm
+                  </div>
+                  <div className="text-[10px] text-slate-400">{calculatedPressureKpa} kPa</div>
+                </div>
 
-            {/* Control 3: Moles / Particles */}
-            <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-sm space-y-2">
-              <div className="flex justify-between items-center text-xs font-mono">
-                <span className="font-bold text-slate-700 flex items-center gap-1">
-                  <Layers className="w-3.5 h-3.5 text-emerald-500" /> Gas Quantity (n):
-                </span>
-                <span className="font-bold text-emerald-700">{nMoles.toFixed(2)} mol ({particleCount} part.)</span>
-              </div>
-              <input
-                type="range"
-                min={15}
-                max={80}
-                step={5}
-                value={particleCount}
-                onChange={(e) => setParticleCount(Number(e.target.value))}
-                className="w-full accent-emerald-600 cursor-pointer"
-              />
-              <div className="flex justify-between text-[10px] font-mono text-slate-400">
-                <span>0.75 mol</span>
-                <span>2.0 mol</span>
-                <span>4.0 mol</span>
+                <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+                  <div className="text-[10px] text-slate-500 uppercase">Volume (V)</div>
+                  <div className="text-base font-bold text-sky-700">{volumeL.toFixed(1)} L</div>
+                  <div className="text-[10px] text-slate-400">Piston position</div>
+                </div>
+
+                <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+                  <div className="text-[10px] text-slate-500 uppercase">Temperature (T)</div>
+                  <div className="text-base font-bold text-amber-700">{temperatureK} K</div>
+                  <div className="text-[10px] text-slate-400">{(temperatureK - 273.15).toFixed(0)} °C</div>
+                </div>
+
+                <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+                  <div className="text-[10px] text-slate-500 uppercase">Mole Quantity (n)</div>
+                  <div className="text-base font-bold text-indigo-700">{nMoles.toFixed(2)} mol</div>
+                  <div className="text-[10px] text-slate-400">{particleCount} particles</div>
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Live Equation Verification Deck */}
-          <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
-            <div className="text-xs font-mono font-bold text-slate-700 uppercase">
-              Ideal Gas Law Solution (PV = nRT):
-            </div>
-            <div className="p-3 rounded-lg bg-white border border-slate-200 text-xs font-mono text-slate-800 space-y-1">
+          {/* Right Controls (4 Cols) */}
+          <div className="lg:col-span-4 space-y-4">
+            <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-4">
               <div>
-                {"P = (n · R · T) / V = ("}
-                <span className="text-emerald-700 font-bold">{nMoles.toFixed(2)} mol</span>
-                {" · 0.0821 L·atm/(mol·K) · "}
-                <span className="text-amber-700 font-bold">{temperatureK} K</span>
-                {") / "}
-                <span className="text-blue-700 font-bold">{volumeL.toFixed(1)} L</span>
+                <h3 className="text-sm font-bold font-mono text-slate-900 uppercase">
+                  Thermodynamic Controls
+                </h3>
+                <p className="text-xs text-slate-500 font-sans">
+                  Regulate temperature, volume, and chemical species.
+                </p>
               </div>
-              <div className="text-sm font-bold text-blue-700 pt-1">
-                {"P = "}{calculatedPressureAtm}{" atm = "}{calculatedPressureKpa}{" kPa"}
+
+              {/* Slider: Volume */}
+              <div className="space-y-1.5">
+                <div className="flex justify-between text-xs font-mono">
+                  <span className="text-slate-700 font-bold">VOLUME (V):</span>
+                  <span className="font-bold text-sky-700">{volumeL.toFixed(1)} Liters</span>
+                </div>
+                <input
+                  type="range"
+                  min={2.0}
+                  max={10.0}
+                  step={0.5}
+                  value={volumeL}
+                  onChange={(e) => {
+                    sounds.playTick();
+                    setVolumeL(Number(e.target.value));
+                  }}
+                  className="w-full accent-sky-600 cursor-pointer"
+                />
+              </div>
+
+              {/* Slider: Temperature */}
+              <div className="space-y-1.5">
+                <div className="flex justify-between text-xs font-mono">
+                  <span className="text-slate-700 font-bold">TEMPERATURE (T):</span>
+                  <span className="font-bold text-amber-700">{temperatureK} K</span>
+                </div>
+                <input
+                  type="range"
+                  min={150}
+                  max={600}
+                  step={10}
+                  value={temperatureK}
+                  onChange={(e) => {
+                    sounds.playTick();
+                    setTemperatureK(Number(e.target.value));
+                  }}
+                  className="w-full accent-amber-600 cursor-pointer"
+                />
+                <div className="flex justify-between text-[10px] font-mono text-slate-400">
+                  <span>150K (Ice)</span>
+                  <span className="text-amber-700 font-bold">300K (Room)</span>
+                  <span>600K (Hot)</span>
+                </div>
+              </div>
+
+              {/* Slider: Particle Count */}
+              <div className="space-y-1.5">
+                <div className="flex justify-between text-xs font-mono">
+                  <span className="text-slate-700 font-bold">MOLECULE COUNT (n):</span>
+                  <span className="font-bold text-indigo-700">{particleCount}</span>
+                </div>
+                <input
+                  type="range"
+                  min={15}
+                  max={80}
+                  step={5}
+                  value={particleCount}
+                  onChange={(e) => {
+                    sounds.playTick();
+                    setParticleCount(Number(e.target.value));
+                  }}
+                  className="w-full accent-indigo-600 cursor-pointer"
+                />
+              </div>
+
+              {/* Gas Species Selector */}
+              <div className="space-y-1.5 pt-2 border-t border-slate-100">
+                <div className="text-xs font-mono font-bold text-slate-700">GAS ELEMENT SPECIES:</div>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {[
+                    { id: 'helium', label: 'Helium (He)', desc: 'Light & Fast' },
+                    { id: 'nitrogen', label: 'Nitrogen (N₂)', desc: 'Medium' },
+                    { id: 'xenon', label: 'Xenon (Xe)', desc: 'Heavy & Slow' }
+                  ].map(g => (
+                    <button
+                      key={g.id}
+                      onClick={() => { sounds.playTick(); setGasType(g.id); }}
+                      className={`p-2 rounded-xl text-center border transition-all ${
+                        gasType === g.id 
+                          ? 'bg-slate-900 border-slate-950 text-white font-bold'
+                          : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
+                      }`}
+                    >
+                      <div className="text-xs">{g.label}</div>
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* TAB 3: APPLICATIONS */}
-      {activeTab === 'applications' && (
-        <div className="max-w-4xl mx-auto space-y-6 text-left">
-          <div className="p-6 md:p-8 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-6">
-            <div>
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 mb-2">
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                APPLIED THERMODYNAMICS & INDUSTRIAL CHEMISTRY
-              </div>
-              <h3 className="text-xl font-bold font-sans text-slate-900">
-                Engineering Implementations of Gas Laws
-              </h3>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
-                <div className="text-xs font-mono font-bold text-amber-800 uppercase">
-                  1. Pressure Cookers & Boiling Elevation
-                </div>
-                <p className="text-xs text-slate-600 leading-relaxed font-sans">
-                  By sealing steam inside a rigid pot, Gay-Lussac's law drives internal pressure up to 2 atm (200 kPa). Under this elevated pressure, the boiling point of water rises from 100°C to 121°C, cooking meats and legumes up to 70% faster.
-                </p>
-              </div>
-
-              <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
-                <div className="text-xs font-mono font-bold text-blue-800 uppercase">
-                  2. SCUBA Diving & Boyle's Law
-                </div>
-                <p className="text-xs text-slate-600 leading-relaxed font-sans">
-                  For every 10 meters of ocean depth, hydrostatic pressure increases by 1 atm. A diver at 20 meters breathes air at 3 atm. If they ascend rapidly while holding their breath, the volume of gas in their lungs would triple (P1V1 = P2V2), causing severe pulmonary barotrauma.
-                </p>
-              </div>
-
-              <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
-                <div className="text-xs font-mono font-bold text-rose-800 uppercase">
-                  3. Diesel Engine Auto-Ignition
-                </div>
-                <p className="text-xs text-slate-600 leading-relaxed font-sans">
-                  Unlike gasoline cars that require spark plugs, diesel engines compress intake air rapidly from 20:1. This adiabatic compression instantly spikes air temperature past 550°C, causing injected diesel droplets to spontaneously detonate on contact.
-                </p>
-              </div>
-
-              <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
-                <div className="text-xs font-mono font-bold text-purple-800 uppercase">
-                  4. Hot Air Balloons & Charles's Law
-                </div>
-                <p className="text-xs text-slate-600 leading-relaxed font-sans">
-                  Propane burners heat air inside the nylon envelope. According to Charles's Law, heating gas causes it to expand, reducing its density (ρ = m/V). The surrounding cooler, denser atmosphere exerts an Archimedean buoyant force greater than the balloon's weight, allowing it to lift passengers aloft.
-                </p>
-              </div>
-            </div>
+      {/* TAB 3: CHALLENGES */}
+      {activeTab === 'challenges' && (
+        <div className="max-w-3xl mx-auto space-y-5 text-left">
+          <div className="p-4 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-900 text-xs font-sans">
+            <strong>Ideal Gas Inquiry:</strong> Test your understanding of Boyle's Law, Charles' Law, and the kinetic theory of gases. Earn up to 75 laboratory score points!
           </div>
-        </div>
-      )}
 
-      {/* TAB 4: CHALLENGE QUIZ */}
-      {(activeTab === 'challenge' || activeTab === 'challenges') && (
-        <div className="max-w-4xl mx-auto space-y-6 text-left">
-          <div className="p-6 md:p-8 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-6">
-            <div>
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-bold bg-purple-50 text-purple-800 border border-purple-200 mb-2">
-                <CheckCircle2 className="w-3.5 h-3.5 text-purple-600" />
-                GAS LAWS INQUIRY CHALLENGE
-              </div>
-              <h3 className="text-xl font-bold font-sans text-slate-900">
-                Thermodynamic Reasoning Assessment
-              </h3>
+          {/* Question 1 */}
+          <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-3">
+            <div className="text-xs font-mono text-slate-400 font-bold uppercase">
+              Challenge 1 of 2 // Boyle's Law Proportionality
             </div>
+            <h3 className="text-sm font-bold font-sans text-slate-900">
+              If temperature and number of moles are kept strictly constant, what happens to the internal pressure P when you push the piston down to halve the volume from 10.0L to 5.0L?
+            </h3>
 
-            <div className="space-y-4">
-              {/* Question 1 */}
-              <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
-                <div className="text-xs font-mono font-bold text-slate-800">
-                  Q1: If a sealed 4.0 L gas cylinder at 2.0 atm is compressed at constant temperature until its volume is 1.0 L, what is the new pressure?
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs font-mono">
-                  {[
-                    { text: 'A) 0.5 atm', correct: false },
-                    { text: 'B) 4.0 atm', correct: false },
-                    { text: 'C) 8.0 atm', correct: true },
-                    { text: 'D) 16.0 atm', correct: false }
-                  ].map((opt, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => handleAnswerSubmit('q1', idx, opt.correct)}
-                      className={`p-2.5 rounded-lg border text-left transition-colors ${
-                        selectedAnswers['q1'] === idx
-                          ? opt.correct
-                            ? 'bg-emerald-100 border-emerald-300 text-emerald-900'
-                            : 'bg-rose-100 border-rose-300 text-rose-900'
-                          : 'bg-white border-slate-200 hover:bg-slate-100 text-slate-700'
-                      }`}
-                    >
-                      {opt.text}
-                    </button>
-                  ))}
-                </div>
-                {challengeFeedback['q1'] && (
-                  <p className={`text-xs font-mono ${challengeFeedback['q1'] === 'correct' ? 'text-emerald-700' : 'text-rose-700'}`}>
-                    {challengeFeedback['q1'] === 'correct' 
-                      ? '✓ Correct! By Boyle\'s Law (P1V1 = P2V2), P2 = (2.0 atm · 4.0 L) / 1.0 L = 8.0 atm.' 
-                      : '✗ Incorrect. Apply Boyle\'s Law: P1 · V1 = P2 · V2.'}
-                  </p>
-                )}
-              </div>
-
-              {/* Question 2 */}
-              <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
-                <div className="text-xs font-mono font-bold text-slate-800">
-                  Q2: Microscopic kinetic theory dictates that absolute temperature (Kelvin) is directly proportional to what property of gas molecules?
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs font-mono">
-                  {[
-                    { text: 'A) Average translational kinetic energy (½mv²)', correct: true },
-                    { text: 'B) Total molecular volume', correct: false },
-                    { text: 'C) Attractive van der Waals forces', correct: false },
-                    { text: 'D) Average molar mass', correct: false }
-                  ].map((opt, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => handleAnswerSubmit('q2', idx, opt.correct)}
-                      className={`p-2.5 rounded-lg border text-left transition-colors ${
-                        selectedAnswers['q2'] === idx
-                          ? opt.correct
-                            ? 'bg-emerald-100 border-emerald-300 text-emerald-900'
-                            : 'bg-rose-100 border-rose-300 text-rose-900'
-                          : 'bg-white border-slate-200 hover:bg-slate-100 text-slate-700'
-                      }`}
-                    >
-                      {opt.text}
-                    </button>
-                  ))}
-                </div>
-                {challengeFeedback['q2'] && (
-                  <p className={`text-xs font-mono ${challengeFeedback['q2'] === 'correct' ? 'text-emerald-700' : 'text-rose-700'}`}>
-                    {challengeFeedback['q2'] === 'correct' 
-                      ? '✓ Correct! Absolute temperature is directly proportional to the average translational kinetic energy of the molecules: KE_avg = (3/2)·k_B·T.' 
-                      : '✗ Incorrect. Temperature is the direct macroscopic measure of average particle kinetic energy.'}
-                  </p>
-                )}
-              </div>
+            <div className="space-y-2">
+              {[
+                { text: "Pressure doubles (P₂ = 2 · P₁) due to inverse proportionality P ∝ 1/V", correct: true },
+                { text: "Pressure is cut in half", correct: false },
+                { text: "Pressure stays exactly the same", correct: false },
+                { text: "Pressure drops to absolute zero", correct: false }
+              ].map((opt, idx) => {
+                const isSelected = selectedAnswers['q1'] === idx;
+                return (
+                  <button
+                    key={idx}
+                    onClick={() => handleAnswerSubmit('q1', idx, opt.correct)}
+                    className={`w-full p-3 rounded-xl border text-left text-xs font-sans transition-all flex items-center justify-between ${
+                      isSelected 
+                        ? opt.correct 
+                          ? 'bg-emerald-50 border-emerald-400 text-emerald-900 font-bold'
+                          : 'bg-rose-50 border-rose-400 text-rose-900'
+                        : 'bg-slate-50 border-slate-200 hover:bg-slate-100 text-slate-800'
+                    }`}
+                  >
+                    <span>{opt.text}</span>
+                    {isSelected && (
+                      opt.correct 
+                        ? <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                        : <Activity className="w-4 h-4 text-rose-600 flex-shrink-0" />
+                    )}
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>
