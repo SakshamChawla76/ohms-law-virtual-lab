@@ -589,8 +589,10 @@ export const CircuitCanvas = ({
         {/* SVG Heavy-Duty Silicone Banana Lead Cables */}
         <svg className="absolute inset-0 w-full h-full pointer-events-none z-20">
           {wires.map(w => {
-            const p1 = allTerminals[w.fromTerminalId];
-            const p2 = allTerminals[w.toTerminalId];
+            const fromTerm = w.fromTerminalId || `${w.fromCompId}-${w.fromTermId}`;
+            const toTerm = w.toTerminalId || `${w.toCompId}-${w.toTermId}`;
+            const p1 = allTerminals[fromTerm];
+            const p2 = allTerminals[toTerm];
             if (!p1 || !p2) return null;
 
             const dx = p2.x - p1.x;

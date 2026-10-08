@@ -30,12 +30,13 @@ export const ObservationTable = ({
 
   // Calculate statistics: Mean, Standard Deviation
   const n = trials.length;
+  const getCalcR = (t) => t.calculatedResistance ?? (t.current > 0 ? t.voltage / t.current : 0);
   const meanR = n > 0 
-    ? trials.reduce((acc, t) => acc + t.calculatedResistance, 0) / n 
+    ? trials.reduce((acc, t) => acc + getCalcR(t), 0) / n 
     : 0;
   
   const stdDevR = n > 1 
-    ? Math.sqrt(trials.reduce((acc, t) => acc + Math.pow(t.calculatedResistance - meanR, 2), 0) / (n - 1))
+    ? Math.sqrt(trials.reduce((acc, t) => acc + Math.pow(getCalcR(t) - meanR, 2), 0) / (n - 1))
     : 0;
 
   return (
@@ -114,7 +115,7 @@ export const ObservationTable = ({
               </tr>
             ) : (
               trials.map((t, idx) => (
-                <tr key={t.id} className="hover:bg-surface-container/60 transition-colors">
+                <tr key={t.id || t.trialNumber || idx} className="hover:bg-surface-container/60 transition-colors">
                   <td className="py-2 px-3.5 font-bold text-on-surface">
                     <span className="px-2 py-0.5 rounded-md bg-surface-container border border-outline-variant/20 text-[10px] text-on-surface-variant font-mono">
                       T-{String(idx + 1).padStart(2, '0')}
@@ -123,7 +124,7 @@ export const ObservationTable = ({
                   <td className="py-2 px-3.5 text-emerald-800 font-bold">{t.voltage.toFixed(2)}</td>
                   <td className="py-2 px-3.5 text-amber-800 font-bold">{t.current.toFixed(3)}</td>
                   <td className="py-2 px-3.5 text-teal-800 font-bold font-mono text-sm">
-                    {t.calculatedResistance.toFixed(2)} Ω
+                    {getCalcR(t).toFixed(2)} Ω
                   </td>
                   <td className="py-2 px-3.5 text-right">
                     <button

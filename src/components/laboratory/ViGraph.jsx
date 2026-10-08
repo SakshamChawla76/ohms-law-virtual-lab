@@ -300,7 +300,7 @@ export const ViGraph = ({
 
             return (
               <g
-                key={t.id}
+                key={t.id || t.trialNumber || idx}
                 onMouseEnter={() => setHoveredPoint(t)}
                 onMouseLeave={() => setHoveredPoint(null)}
                 className="cursor-pointer group"

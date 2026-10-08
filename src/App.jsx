@@ -158,6 +158,8 @@ export const App = () => {
       fromTermId,
       toCompId,
       toTermId,
+      fromTerminalId: `${fromCompId}-${fromTermId}`,
+      toTerminalId: `${toCompId}-${toTermId}`,
       color: color || (fromTermId === 'pos' || toTermId === 'pos' ? '#ef4444' : '#1e293b')
     };
 
@@ -198,12 +200,12 @@ export const App = () => {
     sounds.playClick();
     setComponents(INITIAL_COMPONENTS);
     const demoWires = [
-      { id: 'w-auto-1', fromCompId: 'battery', fromTermId: 'pos', toCompId: 'switch', toTermId: 'in', color: '#dc2626' },
-      { id: 'w-auto-2', fromCompId: 'switch', fromTermId: 'out', toCompId: 'ammeter', toTermId: 'pos', color: '#ea580c' },
-      { id: 'w-auto-3', fromCompId: 'ammeter', fromTermId: 'neg', toCompId: 'resistor', toTermId: 'pos', color: '#d97706' },
-      { id: 'w-auto-4', fromCompId: 'resistor', fromTermId: 'pos', toCompId: 'voltmeter', toTermId: 'pos', color: '#16a34a' },
-      { id: 'w-auto-5', fromCompId: 'resistor', fromTermId: 'neg', toCompId: 'voltmeter', toTermId: 'neg', color: '#2563eb' },
-      { id: 'w-auto-6', fromCompId: 'resistor', fromTermId: 'neg', toCompId: 'battery', toTermId: 'neg', color: '#1e293b' },
+      { id: 'w-auto-1', fromTerminalId: 'battery-pos', toTerminalId: 'switch-in', fromCompId: 'battery', fromTermId: 'pos', toCompId: 'switch', toTermId: 'in', color: '#dc2626' },
+      { id: 'w-auto-2', fromTerminalId: 'switch-out', toTerminalId: 'ammeter-pos', fromCompId: 'switch', fromTermId: 'out', toCompId: 'ammeter', toTermId: 'pos', color: '#ea580c' },
+      { id: 'w-auto-3', fromTerminalId: 'ammeter-neg', toTerminalId: 'resistor-a', fromCompId: 'ammeter', fromTermId: 'neg', toCompId: 'resistor', toTermId: 'a', color: '#d97706' },
+      { id: 'w-auto-4', fromTerminalId: 'resistor-a', toTerminalId: 'voltmeter-pos', fromCompId: 'resistor', fromTermId: 'a', toCompId: 'voltmeter', toTermId: 'pos', color: '#16a34a' },
+      { id: 'w-auto-5', fromTerminalId: 'resistor-b', toTerminalId: 'voltmeter-neg', fromCompId: 'resistor', fromTermId: 'b', toCompId: 'voltmeter', toTermId: 'neg', color: '#2563eb' },
+      { id: 'w-auto-6', fromTerminalId: 'resistor-b', toTerminalId: 'battery-neg', fromCompId: 'resistor', fromTermId: 'b', toCompId: 'battery', toTermId: 'neg', color: '#1e293b' },
     ];
     setWires(demoWires);
   };
@@ -212,10 +214,16 @@ export const App = () => {
     if (analysis.state !== 'ACTIVE' || !isSwitchClosed) return;
     sounds.playSnap();
 
+    const calcR = analysis.measuredCurrent > 0 
+      ? Number((analysis.measuredVoltage / analysis.measuredCurrent).toFixed(2))
+      : config.nominalResistance;
+
     const newTrial = {
+      id: `trial-${Date.now()}-${trials.length + 1}`,
       trialNumber: trials.length + 1,
       voltage: Number(analysis.measuredVoltage.toFixed(2)),
       current: Number(analysis.measuredCurrent.toFixed(3)),
+      calculatedResistance: calcR,
       timestamp: Date.now(),
     };
 
